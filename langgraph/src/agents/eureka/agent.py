@@ -108,26 +108,18 @@ class Agent():
     def extract_and_save_to_langmem(self, query: str, student_id: str) -> None:
         """Extract facts from query and save to langmem store.
         """
-        if not query or len(query) < 3 or not student_id:
+        if not query or not student_id:
             return
         
         fact_extraction_prompt = PromptTemplate(
-            template="""Extract key facts about the student from this message.
-Do NOT extract homework questions or course content.
-If no relevant personal facts, respond with "NO FACTS".
-
-Message: {query}
-
-Extracted facts:""",
+            template=FACT_EXTRACTION_PROMPT,
             input_variables=["query"]
         )
-        
-        logger.debug(f"Extracting facts from query for student {student_id}: '{query}'")
-        
+                
         chain = fact_extraction_prompt | openai_model | StrOutputParser()
         facts = chain.invoke({"query": query}).strip()
             
-        if facts and facts != "NO FACTS" and len(facts) > 2:
+        if facts and facts != "NO FACTS":
             memory_id = f"{student_id}_memory_{int(__import__('time').time() * 1000)}"
             self.store.put(namespace, memory_id, {"facts": facts, "query": query})
 

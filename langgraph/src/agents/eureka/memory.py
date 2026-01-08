@@ -7,10 +7,11 @@ from .nodes import ClassroomNodes
 logger = logging.getLogger(__name__)
 
 class MemoryHandlers:    
-    def __init__(self, agent: Agent):
+    def __init__(self, agent: Agent, store=None):
         """Initialize with agent instance for memory access."""
         self.agent = agent
         self.nodes = ClassroomNodes()
+        self.store = store
 
     def receive_query_with_memory(self, state: GraphState) -> GraphState:
         """Receive query and add to conversation history.
@@ -28,6 +29,11 @@ class MemoryHandlers:
         
         student_id = state.get("student_id")
         if student_id:
+            # Save to LangGraph store for long-term memory
+            if self.store:
+                namespace = ("student", student_id)
+                self.store.put(namespace, "last_query", query)
+            
             self.agent.extract_and_save_to_langmem(query, student_id)
             
             student_context = self.agent.retrieve_from_langmem(student_id)
@@ -53,7 +59,6 @@ class MemoryHandlers:
             state["query_category"] = result.category
             state["query_reasoning"] = getattr(result, "reasoning", "")
         except Exception as e:
-            logger.error(f"Error categorizing query: {e}")
             state["query_category"] = "general"
             state["query_reasoning"] = ""
         
@@ -70,7 +75,6 @@ class MemoryHandlers:
             
             if ai_response:
                 self.agent.add_to_history("assistant", ai_response)
-                logger.info(f"Response generated and added to memory: {len(ai_response)} chars")
             
             return result
             
@@ -80,7 +84,7 @@ class MemoryHandlers:
     
     def finalize_with_memory(self, state: GraphState) -> GraphState:
         """Finalize response and save to memory.
-        """        
+        """
         final_response = state.get("final_response", state.get("ai_response", ""))
         
         if final_response:
@@ -93,13 +97,26 @@ class MemoryHandlers:
             query = state["current_interaction"].get("student_question")
         
         student_id = state.get("student_id")
-        if student_id and state.get("query_category"):
-            insight = (
-                f"Student {student_id} asked about {state['query_category']}: "
-                f"{query or 'unknown'}"
-            )
-            self.agent.save_student_insight(student_id, insight)        
+        if student_id:
+            # Save interaction to store for long-term memory
+            if self.store:
+                namespace = ("student", student_id)
+                interaction_data = {
+                    "query": query,
+                    "response": final_response,
+                    "category": state.get("query_category", "general")
+                }
+                self.store.put(namespace, "last_interaction", interaction_data)
+            
+            if state.get("query_category"):
+                insight = (
+                    f"Student {student_id} asked about {state['query_category']}: "
+                    f"{query or 'unknown'}"
+                )
+                self.agent.save_student_insight(student_id, insight)
+        
         state["memory_updated"] = True
+        return state
         
         return state
     

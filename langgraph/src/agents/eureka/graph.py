@@ -1,4 +1,6 @@
 from langgraph.graph import END, StateGraph
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
 from .state import GraphState
 from .nodes import ClassroomNodes
 from .memory import MemoryHandlers
@@ -10,7 +12,9 @@ class ClassroomWorkflow():
         workflow = StateGraph(GraphState)
         agent = Agent()
         nodes = ClassroomNodes()
-        memory = MemoryHandlers(agent)
+        checkpointer = InMemorySaver()  
+        store = InMemoryStore()  
+        memory = MemoryHandlers(agent, store)
 
         workflow.add_node("load_courses", nodes.load_courses)
         workflow.add_node("load_coursework", nodes.load_coursework)
@@ -41,7 +45,7 @@ class ClassroomWorkflow():
             }
         )
 
-        self.app = workflow.compile()
+        self.app = workflow.compile(checkpointer=checkpointer, store=store)
 
 
 graph = ClassroomWorkflow().app

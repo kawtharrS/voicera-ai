@@ -82,7 +82,11 @@ async def ask_question(query: StudentQuestion):
             "rewrite_feedback": "",
         }
         
-        result = graph.invoke(initial_state)
+        # Invoke graph with thread_id for memory persistence
+        result = graph.invoke(
+            initial_state,
+            {"configurable": {"thread_id": str(query.student_id or "default")}}
+        )
         
         interaction = result.get("current_interaction", {})
         

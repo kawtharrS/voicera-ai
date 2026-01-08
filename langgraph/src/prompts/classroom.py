@@ -144,3 +144,13 @@ Context: {context_text}
             
 Question: {user_question}
 """
+
+FACT_EXTRACTION_PROMPT="""
+Extract key facts about the student from this message.
+Do NOT extract homework questions or course content.
+If no relevant personal facts, respond with "NO FACTS".
+
+Message: {query}
+
+Extracted facts:
+"""

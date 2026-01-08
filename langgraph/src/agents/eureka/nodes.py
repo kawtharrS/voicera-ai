@@ -158,7 +158,6 @@ class ClassroomNodes:
         history = state["agent_messages"]
         rewrite_feedback = (state["rewrite_feedback"] or "").strip()
         
-        # Handle both dict and object access patterns
         if isinstance(interaction, dict):
             previous_answer = (interaction.get("ai_response") or "").strip()
             coursework = interaction.get("current_coursework")

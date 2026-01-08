@@ -66,12 +66,10 @@ class PDFProcessor:
             api_key=os.getenv("OPENAI_API_KEY")
         )
         
-        # Text/Table summarization chain
         prompt_text = TEXT_TABLE_SUMMARIZATION_PROMPT
         prompt = ChatPromptTemplate.from_template(prompt_text)
         self.summarize_chain = {"element": lambda x: x} | prompt | self.llm | StrOutputParser()
         
-        # Image summarization chain using vision model
         prompt_template = IMAGE_PROMPT_TEMPLATE
         messages = [
             (
@@ -121,7 +119,6 @@ class PDFProcessor:
                 new_after_n_chars=6000,
             )
             
-            # Extract images from chunks properly
             images_b64 = []
             for chunk in chunks:
                 if "CompositeElement" in str(type(chunk)):
@@ -132,8 +129,7 @@ class PDFProcessor:
                                 if hasattr(el.metadata, 'image_base64') and el.metadata.image_base64:
                                     images_b64.append(el.metadata.image_base64)
             
-            # Tables are not always emitted as a dedicated Table element.
-            # A reliable signal is presence of `metadata.text_as_html`.
+
             tables: List[Dict[str, str]] = []
             texts = []
 
@@ -152,7 +148,6 @@ class PDFProcessor:
                     chunk_text = chunk.text if hasattr(chunk, "text") else str(chunk)
                     tables.append({"html": "", "text": str(chunk_text)})
 
-                # Some chunking strategies (e.g. by_title) keep tables inside CompositeElement.orig_elements
                 if "CompositeElement" in str(type(chunk)) and hasattr(chunk, "metadata") and hasattr(chunk.metadata, "orig_elements"):
                     for el in chunk.metadata.orig_elements or []:
                         if "Table" not in str(type(el)):
@@ -165,7 +160,6 @@ class PDFProcessor:
                         el_text = el.text if hasattr(el, "text") else str(el)
                         tables.append({"html": str(el_html or ""), "text": str(el_text)})
 
-                # Capture text blocks
                 if "CompositeElement" in str(type(chunk)):
                     texts.append(chunk)
 
@@ -214,7 +208,6 @@ class PDFProcessor:
             
             logger.info(f"Extracted {len(content['texts'])} texts, {len(content['tables'])} tables, {len(content['images'])} images")
 
-            # Use full extracted content for text/tables (simpler + more reliable than multivector docstores).
             text_chunks = [t.text if hasattr(t, "text") else str(t) for t in content["texts"]]
             table_chunks = []
             for tbl in content["tables"]:
@@ -229,7 +222,6 @@ class PDFProcessor:
                     else (tbl.text if hasattr(tbl, "text") else str(tbl))
                 )
             
-            # Summarize images using vision model
             image_summaries = []
             if content["images"]:
                 try:
@@ -252,11 +244,9 @@ class PDFProcessor:
                 "source": "google_classroom"
             }
 
-            # Index texts and tables directly in Chroma
             indexed += self._add_to_vectorstore(text_chunks, {**base_metadata, "type": "text"})
             indexed += self._add_to_vectorstore(table_chunks, {**base_metadata, "type": "table"})
 
-            # Index image summaries in Chroma and store image payloads on disk (by image_key)
             if content["images"] and image_summaries and len(image_summaries) == len(content["images"]):
                 image_docs = []
                 for i, (img_b64, img_summary) in enumerate(zip(content["images"], image_summaries)):
