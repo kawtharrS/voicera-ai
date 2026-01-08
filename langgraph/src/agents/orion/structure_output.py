@@ -20,3 +20,19 @@ class RAGQueriesOutput(BaseModel):
         ..., 
         description="A list of up to three short, actionable guidance items to help the user immediately"
     )
+
+class AIResponseOutput(BaseModel):
+    response : str = Field(
+        ..., 
+        description= "The draft response provided by the AI to the user's query, including explanation, guidance and study tips"
+    )
+
+class ProofReaderOutput(BaseModel):
+    feedback : str = Field(
+        ...,
+        description= "Detailed feedback explaining whether the AI's response is complete clear, and helpful"
+    )
+    send : bool = Field (
+        ...,
+        description= "Indicates whether the AI response is ready to be sent (true) or requires revisions (false)"
+    )
