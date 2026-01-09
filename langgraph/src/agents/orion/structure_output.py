@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from enum import Enum 
 
 class QueryCategory(str, Enum):
@@ -30,3 +30,17 @@ class ProofReaderOutput(BaseModel):
         ...,
         description= "Indicates whether the AI response is ready to be sent (true) or requires revisions (false)"
     )
+
+class CreateEventArgs(BaseModel):
+    summary: str = Field(..., description="Short title of the event")
+    start_datetime: str = Field(..., description="Event start datetime, format: 'YYYY-MM-DD HH:MM:SS'")
+    end_datetime: Optional[str] = Field(
+        default=None,
+        description="Optional event end datetime, format: 'YYYY-MM-DD HH:MM:SS'",
+    )
+    timezone: str = Field(
+        default="Asia/Beirut",
+        description="IANA timezone (e.g., 'Asia/Beirut', 'UTC', 'Europe/Paris')",
+    )
+    location: Optional[str] = Field(default=None, description="Optional event location")
+    description: Optional[str] = Field(default=None, description="Optional event description")

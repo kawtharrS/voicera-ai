@@ -36,15 +36,14 @@ openai_model = ChatOpenAI(
 )
 
 class Agent():
-    def __init__(self, calendar_tool):
+    def __init__(self, calendar_tool=None):
         self.calendar_tool = calendar_tool
-        embeddings = OpenAIEmbeddings(openai_api_key= os.getenv("OPENAI_API_KEY"))
+        embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
         db_path = str(Path(__file__).parent.parent.parent / "vectorstore")
         self.vectorstore = Chroma(
             persist_directory = db_path,
-            embedding_finction= embeddings
+            embedding_function= embeddings
         )
-        retriever= self.vectorstore.as_retriever(search_kwargs={"k":3})
         self.conversation_history: List[BaseMessage] = []
         self.memory_tools = memory_tools 
         self.store = store
@@ -78,6 +77,15 @@ class Agent():
         self.response_proofreader = (
             proofreader_prompt | 
             openai_model.with_structured_output(ProofReaderOutput)
+        )
+
+        extract_prompt = PromptTemplate(
+            template=CREATE_EVENT_PROMT,
+            input_variables=["query", "reference_datetime", "timezone"],
+        )
+        self.create_event_extractor = (
+            extract_prompt |
+            openai_model.with_structured_output(CreateEventArgs)
         )
     
     

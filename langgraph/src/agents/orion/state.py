@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field 
-from typing import List, Optional, Annotated
+from typing import Any, List, Optional, Annotated
 from typing_extensions import TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
@@ -34,4 +34,6 @@ class GraphState(TypedDict):
     user_context: Optional[str]
     conversation_history: List[BaseMessage]
     query_category: Optional[str]
+    route: Optional[str]
+    calendar_result: Optional[Any]
 

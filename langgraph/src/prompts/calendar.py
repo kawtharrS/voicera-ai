@@ -26,3 +26,15 @@ Student Question: {student_question}
 AI Response: {ai_response}
 the response should contain if the action was successful or not 
 """
+
+
+CREATE_EVENT_PROMT = """
+                "Extract calendar event details from the user query.\n"
+                "Use the reference datetime and timezone below to resolve relative date phrases "
+                "(e.g., 'today', 'tomorrow', 'yesterday', 'next Monday', 'in 2 hours') into exact datetimes.\n"
+                "If the user doesn't specify a timezone, use the provided timezone.\n"
+                "Return start_datetime/end_datetime in 'YYYY-MM-DD HH:MM:SS' format and an IANA timezone.\n\n"
+                "Reference datetime: {reference_datetime}\n"
+                "Reference timezone: {timezone}\n\n"
+                "User query: {query}"
+"""

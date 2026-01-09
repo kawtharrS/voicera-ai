@@ -10,7 +10,6 @@ langgraph_src = str(Path(__file__).parent.parent / "langgraph" / "src")
 sys.path.insert(0, langgraph_src)
 
 from agents.eureka.graph import graph
-from agents.orion.graph import graph as orion_graph
 
 
 app = FastAPI(
@@ -62,6 +61,20 @@ class OrionTestResponse(BaseModel):
     user_request: str
     category: Optional[str]
     observation: str
+
+
+class OrionRunRequest(BaseModel):
+    user_request: str = Field(..., description="User request (e.g., create/search/update/delete calendar)")
+    thread_id: Optional[str] = Field(None, description="Thread id for short-term memory")
+
+
+class OrionRunResponse(BaseModel):
+    user_request: str
+    category: Optional[str]
+    route: Optional[str]
+    ai_response: str
+    observation: str
+    calendar_result: Optional[dict] = None
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -143,6 +156,11 @@ async def ask_simple(question: str):
 async def orion_test_receive_categorize(payload: OrionTestRequest):
     """Test Orion graph receive + categorize only."""
     try:
+        # Import inside the endpoint to avoid triggering Google Calendar credential loading at app startup.
+        from agents.orion.nodes import CalendarNodes
+
+        nodes = CalendarNodes()
+
         initial_state = {
             "events": [],
             "current_interaction": {
@@ -161,20 +179,75 @@ async def orion_test_receive_categorize(payload: OrionTestRequest):
             "query_category": None,
         }
 
-        thread_id = payload.thread_id or "orion_test"
-        result = orion_graph.invoke(initial_state, {"configurable": {"thread_id": thread_id}})
+        # Run only the two nodes (no routing / calendar calls).
+        state1 = {**initial_state, **nodes.receive_user_query(initial_state)}
+        state2 = {**state1, **nodes.categorize_user_query(state1)}
 
-        interaction = result.get("current_interaction")
+        interaction = state2.get("current_interaction")
         if isinstance(interaction, dict):
             observation = interaction.get("observation", "")
         else:
             observation = getattr(interaction, "observation", "")
 
-        category = result.get("query_category")
+        category = state2.get("query_category")
         return OrionTestResponse(
             user_request=payload.user_request,
             category=category,
             observation=observation or "",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/orion/run", response_model=OrionRunResponse)
+async def orion_run(payload: OrionRunRequest):
+    """Run the full Orion graph (includes routing and may create events)."""
+    try:
+        # Import inside the endpoint to avoid side effects at app startup.
+        from agents.orion.graph import graph as orion_graph
+
+        initial_state = {
+            "events": [],
+            "current_interaction": {
+                "user_request": payload.user_request,
+                "ai_response": "",
+                "recommendations": [],
+                "observation": "",
+            },
+            "agent_messages": [],
+            "sendable": False,
+            "trials": 0,
+            "max_trials": 1,
+            "rewrite_feedback": "",
+            "user_context": "",
+            "conversation_history": [],
+            "query_category": None,
+        }
+
+        thread_id = payload.thread_id or "orion"
+        result = orion_graph.invoke(initial_state, {"configurable": {"thread_id": thread_id}})
+
+        interaction = result.get("current_interaction")
+        if isinstance(interaction, dict):
+            ai_response = interaction.get("ai_response", "")
+            observation = interaction.get("observation", "")
+        else:
+            ai_response = getattr(interaction, "ai_response", "")
+            observation = getattr(interaction, "observation", "")
+
+        category = result.get("query_category")
+        route = result.get("route")
+        calendar_result = result.get("calendar_result")
+        if calendar_result is not None and not isinstance(calendar_result, dict):
+            calendar_result = {"result": str(calendar_result)}
+
+        return OrionRunResponse(
+            user_request=payload.user_request,
+            category=category,
+            route=route,
+            ai_response=ai_response or "",
+            observation=observation or "",
+            calendar_result=calendar_result,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
