@@ -279,7 +279,6 @@ class ClassroomNodes:
                     suffix = "\n\n[PDF context truncated]"
                 return "\n\nRELEVANT PDF CONTENT (includes text, tables, and image descriptions):\n" + "\n\n".join(pdf_texts) + suffix
             else:
-                print(Fore.YELLOW + "No relevant PDF chunks found for this question" + Style.RESET_ALL)
                 return ""
         except Exception as e:
             print(Fore.YELLOW + f"Could not retrieve PDF content: {str(e)}" + Style.RESET_ALL)

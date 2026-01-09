@@ -27,6 +27,14 @@ class MemoryHandlers:
                 
         self.agent.add_to_history("user", query)
         
+        # Set the current course from loaded courses
+        courses = state.get("courses", [])
+        current_course = courses[0] if courses else None
+        
+        # Update interaction with current course
+        if "current_interaction" in state and isinstance(state["current_interaction"], dict):
+            state["current_interaction"]["current_course"] = current_course
+        
         student_id = state.get("student_id")
         if student_id:
             # Save to LangGraph store for long-term memory

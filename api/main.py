@@ -88,7 +88,16 @@ async def ask_question(query: StudentQuestion):
             {"configurable": {"thread_id": str(query.student_id or "default")}}
         )
         
+        # Extract the course from result if it was loaded
+        courses = result.get("courses", [])
+        current_course = courses[0] if courses else None
+        
         interaction = result.get("current_interaction", {})
+        
+        # Ensure current_course is set in interaction
+        if isinstance(interaction, dict):
+            if current_course and not interaction.get("current_course"):
+                interaction["current_course"] = current_course
         
         ai_response = interaction.get("ai_response", "") if isinstance(interaction, dict) else getattr(interaction, "ai_response", "")
         recommendations = interaction.get("recommendations", []) if isinstance(interaction, dict) else getattr(interaction, "recommendations", [])

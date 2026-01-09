@@ -15,12 +15,6 @@ class CategorizeQueryOutput(BaseModel):
     )
 
 
-class RAGQueriesOutput(BaseModel):
-    queries : List[str] = Field(
-        ..., 
-        description="A list of up to three short, actionable guidance items to help the user immediately"
-    )
-
 class AIResponseOutput(BaseModel):
     response : str = Field(
         ..., 
