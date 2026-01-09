@@ -3,12 +3,10 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore
 from .state import GraphState
 from .nodes import CalendarNodes
-from .agent import Agent
 
 class CalendarWorkflow():
     def __init__(self):
         workflow = StateGraph(GraphState)
-        agent = Agent()
         nodes = CalendarNodes()
         checkpointer = InMemorySaver()  
         store = InMemoryStore()  

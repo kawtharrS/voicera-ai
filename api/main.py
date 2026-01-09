@@ -10,6 +10,7 @@ langgraph_src = str(Path(__file__).parent.parent / "langgraph" / "src")
 sys.path.insert(0, langgraph_src)
 
 from agents.eureka.graph import graph
+from agents.orion.graph import graph as orion_graph
 
 
 app = FastAPI(
@@ -50,6 +51,17 @@ class AIResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     message: str
+
+
+class OrionTestRequest(BaseModel):
+    user_request: str = Field(..., description="User request to categorize")
+    thread_id: Optional[str] = Field(None, description="Thread id for short-term memory")
+
+
+class OrionTestResponse(BaseModel):
+    user_request: str
+    category: Optional[str]
+    observation: str
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -123,6 +135,47 @@ async def ask_simple(question: str):
     try:
         query = StudentQuestion(question=question)
         return await ask_question(query)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/orion/test-receive-categorize", response_model=OrionTestResponse)
+async def orion_test_receive_categorize(payload: OrionTestRequest):
+    """Test Orion graph receive + categorize only."""
+    try:
+        initial_state = {
+            "events": [],
+            "current_interaction": {
+                "user_request": payload.user_request,
+                "ai_response": "",
+                "recommendations": [],
+                "observation": "",
+            },
+            "agent_messages": [],
+            "sendable": False,
+            "trials": 0,
+            "max_trials": 1,
+            "rewrite_feedback": "",
+            "user_context": "",
+            "conversation_history": [],
+            "query_category": None,
+        }
+
+        thread_id = payload.thread_id or "orion_test"
+        result = orion_graph.invoke(initial_state, {"configurable": {"thread_id": thread_id}})
+
+        interaction = result.get("current_interaction")
+        if isinstance(interaction, dict):
+            observation = interaction.get("observation", "")
+        else:
+            observation = getattr(interaction, "observation", "")
+
+        category = result.get("query_category")
+        return OrionTestResponse(
+            user_request=payload.user_request,
+            category=category,
+            observation=observation or "",
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

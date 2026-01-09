@@ -25,7 +25,7 @@ class UserInteraction(BaseModel):
 
 class GraphState(TypedDict):
     events: List[Event]
-    current_inteaction: UserInteraction
+    current_interaction: UserInteraction
     agent_messages: Annotated[list, add_messages]
     sendable:bool
     trials:int
