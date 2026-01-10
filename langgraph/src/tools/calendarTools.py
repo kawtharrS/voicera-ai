@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from googleapiclient.discovery import build
+from langchain_google_community.calendar.get_calendars_info import GetCalendarsInfo
 from langchain_google_community.calendar.create_event import CalendarCreateEvent
 from langchain_google_community.calendar.delete_event import CalendarDeleteEvent
 from langchain_google_community.calendar.search_events import CalendarSearchEvents
@@ -50,6 +51,9 @@ class CalendarTool:
 
     def createEvent(self):
         return CalendarCreateEvent(api_resource=self._get_api_resource())
+
+    def getCalendarsInfo(self):
+        return GetCalendarsInfo(api_resource=self._get_api_resource())
     
     def searchEvents(self):
         return CalendarSearchEvents(api_resource=self._get_api_resource())

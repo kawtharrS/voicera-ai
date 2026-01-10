@@ -157,7 +157,7 @@ async def orion_test_receive_categorize(payload: OrionTestRequest):
     """Test Orion graph receive + categorize only."""
     try:
         # Import inside the endpoint to avoid triggering Google Calendar credential loading at app startup.
-        from agents.orion.nodes import CalendarNodes
+        from agents.orion.nodes.calendar_nodes import CalendarNodes
 
         nodes = CalendarNodes()
 
@@ -204,7 +204,7 @@ async def orion_run(payload: OrionRunRequest):
     """Run the full Orion graph (includes routing and may create events)."""
     try:
         # Import inside the endpoint to avoid side effects at app startup.
-        from agents.orion.graph import graph as orion_graph
+        from agents.orion.graphs.calendar_graph import graph as orion_graph
 
         initial_state = {
             "events": [],
