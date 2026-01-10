@@ -76,6 +76,36 @@ class OrionRunResponse(BaseModel):
     observation: str
     calendar_result: Optional[dict] = None
 
+
+class GmailTestRequest(BaseModel):
+    email_subject: str = Field(..., description="Email subject")
+    email_body: str = Field(..., description="Email body content")
+
+
+class GmailTestResponse(BaseModel):
+    email_subject: str
+    email_body: str
+    category: Optional[str]
+    observation: str
+
+
+class GmailRunRequest(BaseModel):
+    email_subject: Optional[str] = None
+    email_body: Optional[str] = None
+    sender: Optional[str] = None
+    thread_id: Optional[str] = None
+    user_approved: Optional[bool] = Field(False, description="User approves sending (default: False = creates draft)")
+
+
+class GmailRunResponse(BaseModel):
+    email_subject: str
+    email_category: Optional[str]
+    generated_email: str
+    sendable: bool
+    trials: int
+    observation: str
+
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     return {
@@ -248,6 +278,105 @@ async def orion_run(payload: OrionRunRequest):
             ai_response=ai_response or "",
             observation=observation or "",
             calendar_result=calendar_result,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/gmail/test-categorize", response_model=GmailTestResponse)
+async def gmail_test_categorize(payload: GmailTestRequest):
+    """Test Gmail agent: categorize email only."""
+    try:
+        from agents.orion.nodes.gmail_nodes import GmailNodes
+
+        nodes = GmailNodes()
+
+        email_content = f"Subject: {payload.email_subject}\n\n{payload.email_body}"
+        
+        result = nodes.agents.categorize_email.invoke({
+            "email": email_content
+        })
+        category = result.category.value
+
+        return GmailTestResponse(
+            email_subject=payload.email_subject,
+            email_body=payload.email_body,
+            category=category,
+            observation=f"Email categorized as: {category}"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/gmail/run", response_model=GmailRunResponse)
+async def gmail_run(payload: GmailRunRequest):
+    """Run full Gmail workflow: fetch real emails from Gmail → categorize → generate → verify."""
+    try:
+        from agents.orion.graphs.gmail_graph import graph as gmail_graph
+        from tools.gmailTools import GmailTool
+
+        # Fetch real emails from Gmail
+        gmail_tool = GmailTool()
+        unanswered_emails = gmail_tool.fetch_unanswered_emails(max_results=10)
+
+        if not unanswered_emails:
+            return GmailRunResponse(
+                email_subject="No emails",
+                email_category="none",
+                generated_email="",
+                sendable=False,
+                trials=0,
+                observation="No unanswered emails found in your inbox"
+            )
+
+        # Process emails through the workflow
+        initial_state = {
+            "emails": [],  # Will be loaded by graph
+            "current_email": None,
+            "current_interaction": None,
+            "email_category": None,
+            "rag_queries": [],
+            "retrieved_documents": "",
+            "generated_email": "",
+            "sendable": False,
+            "trials": 0,
+            "writer_messages": [],
+            "agent_messages": [],
+            "conversation_history": [],
+            "is_processing": False,
+            "route": None,
+            "user_approved": payload.user_approved or False,
+        }
+
+        # Convert to Email objects and add to state
+        from agents.orion.states.gmail_state import Email
+        emails = [
+            Email(
+                id=email.get("id"),
+                thread_id=email.get("threadId"),
+                message_id=email.get("messageId"),
+                sender=email.get("sender"),
+                subject=email.get("subject"),
+                body=email.get("body")
+            )
+            for email in unanswered_emails
+        ]
+        initial_state["emails"] = emails
+
+        thread_id = payload.thread_id or "gmail_auto_run"
+        result = gmail_graph.invoke(initial_state, {"configurable": {"thread_id": thread_id}})
+
+        # Return summary of processing
+        emails_processed = len(unanswered_emails)
+        user_approved = payload.user_approved or False
+
+        return GmailRunResponse(
+            email_subject=f"Processed {emails_processed} email(s)",
+            email_category="batch_processed",
+            generated_email="",
+            sendable=user_approved,
+            trials=0,
+            observation=f"✓ Processed {emails_processed} email(s) from Gmail - Mode: {'Send' if user_approved else 'Draft (for review)'}"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
