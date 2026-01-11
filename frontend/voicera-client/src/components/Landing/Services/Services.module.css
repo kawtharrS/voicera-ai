@@ -76,3 +76,100 @@
   color: #333;
   line-height: 1.4;
 }
+
+/* --- New card layout (used by Services.tsx) --- */
+
+.cards {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 56px;
+  flex-wrap: wrap;
+}
+
+.card {
+  width: 265px;
+  background: transparent;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
+}
+
+.cardTop {
+  padding: 26px 22px 20px;
+  color: #ffffff;
+  min-height: 285px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cardOrange {
+  background-color: #f28c3a;
+}
+
+.cardPurple {
+  background-color: #b57adf;
+}
+
+.cardGreen {
+  background-color: #43b7a4;
+}
+
+.cardTitle {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin-top: 8px;
+  margin-bottom: 18px;
+}
+
+.cardText {
+  font-size: 11px;
+  line-height: 1.55;
+  max-width: 220px;
+}
+
+.cardBottom {
+  background-color: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 18px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 92px;
+}
+
+.bottomIcon {
+  color: #9aa0a6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottomLabel {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #2e2e2e;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .services {
+    padding: 48px 20px;
+  }
+
+  .cards {
+    gap: 28px;
+  }
+
+  .card {
+    width: min(320px, 92vw);
+  }
+
+  .cardTop {
+    min-height: 260px;
+  }
+}

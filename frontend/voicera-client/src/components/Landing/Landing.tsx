@@ -3,7 +3,6 @@ import styles from "./Landing.module.css";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import Services from "./Services";
-import Showcase from "./Showcase";
 import Footer from "./Footer";
 import SignUp from "../SignUp";
 
@@ -19,7 +18,6 @@ const Landing: React.FC = () => {
       <Navbar onSignUpClick={() => setShowSignUp(true)} />
       <Hero />
       <Services />
-      <Showcase />
       <Footer />
     </div>
   );

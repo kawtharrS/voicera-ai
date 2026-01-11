@@ -3,118 +3,110 @@ import styles from "./Showcase.module.css";
 
 const Showcase: React.FC = () => {
   return (
-    <section className={styles.showcase}>
-      <div className={styles.imageSection}>
-        <div className={styles.personImage}>
-          <div className={styles.personPlaceholder}>
-            <svg
-              width="300"
-              height="350"
-              viewBox="0 0 300 350"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Person with headphones illustration */}
-              <ellipse cx="150" cy="320" rx="100" ry="30" fill="#d4956a" />
-              <rect
-                x="100"
-                y="180"
-                width="100"
-                height="140"
-                rx="10"
-                fill="#87CEEB"
-              />
-              <circle cx="150" cy="120" r="60" fill="#d4a574" />
-              <circle cx="150" cy="110" r="50" fill="#e8c4a0" />
-              {/* Hair */}
-              <path
-                d="M100 100 Q150 40 200 100"
-                fill="#4a3728"
-                stroke="#4a3728"
-                strokeWidth="20"
-              />
-              {/* Face */}
-              <circle cx="130" cy="105" r="5" fill="#333" />
-              <circle cx="170" cy="105" r="5" fill="#333" />
-              <path
-                d="M135 130 Q150 145 165 130"
-                stroke="#333"
-                strokeWidth="3"
-                fill="none"
-              />
-              {/* Headphones */}
-              <path
-                d="M85 110 Q85 50 150 50 Q215 50 215 110"
-                stroke="#333"
-                strokeWidth="12"
-                fill="none"
-                strokeLinecap="round"
-              />
-              <rect x="75" y="100" width="25" height="45" rx="8" fill="#333" />
-              <rect x="200" y="100" width="25" height="45" rx="8" fill="#333" />
-              <rect
-                x="78"
-                y="105"
-                width="19"
-                height="35"
-                rx="6"
-                fill="#ff9800"
-              />
-              <rect
-                x="203"
-                y="105"
-                width="19"
-                height="35"
-                rx="6"
-                fill="#ff9800"
-              />
-            </svg>
+    <section className={styles.wrapper}>
+      <div className={styles.container}>
+        <div className={styles.accessibilityBanner}>
+          <h2 className={styles.bannerTitle}>
+            Designed for Accessibility Perfect
+            <br />
+            for Students &amp; Workers
+          </h2>
+          <p className={styles.bannerSubtitle}>
+            AI that understands everyone, built with WCAG standards
+          </p>
+          <div className={styles.bannerIcons} aria-hidden="true">
+            <span className={styles.icon}>
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="currentColor"
+              >
+                <path d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3Zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm8 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5Zm-8 0c-.29 0-.62.02-.97.06C5.13 13.24 2 14.34 2 16.5V19h5v-2.5c0-1.23.58-2.2 1.55-2.95-.21-.03-.4-.05-.55-.05Z" />
+              </svg>
+            </span>
+            <span className={styles.icon}>
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="currentColor"
+              >
+                <path d="M4 5h16v10H4V5Zm0 12h6v2H4v-2Zm10 0h6v2h-6v-2Z" />
+              </svg>
+            </span>
+            <span className={styles.icon}>
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="currentColor"
+              >
+                <path d="M18 2H8C6.9 2 6 2.9 6 4v16c0 1.1.9 2 2 2h10v-2H8V4h10V2Zm2 4H10c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2Zm0 16H10V8h10v14Z" />
+              </svg>
+            </span>
+            <span className={styles.icon}>
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="currentColor"
+              >
+                <path d="M12 2a10 10 0 1 0 10 10A10.01 10.01 0 0 0 12 2Zm1 17.93c-2.83.48-5.5-.76-7.03-3.01H8v-2H4.69a7.96 7.96 0 0 1 0-2H8v-2H5.97c1.53-2.25 4.2-3.49 7.03-3.01V9h-2v2h2v2h-2v2h2v2h-2v2h2Z" />
+              </svg>
+            </span>
+            <span className={styles.icon}>
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="currentColor"
+              >
+                <path d="M10 2h4v2h-4V2Zm-3 4h10v7c0 2.76-2.24 5-5 5s-5-2.24-5-5V6Zm5 14c3.87 0 7-3.13 7-7h2c0 4.97-4.03 9-9 9s-9-4.03-9-9h2c0 3.87 3.13 7 7 7Z" />
+              </svg>
+            </span>
           </div>
         </div>
-      </div>
 
-      <div className={styles.appSection}>
-        <div className={styles.phoneMockup}>
-          <div className={styles.phoneNotch}></div>
-          <div className={styles.phoneContent}>
-            <div className={styles.appHeader}>
-              <div className={styles.appLogo}></div>
-              <span className={styles.appName}>Voice Assistant</span>
+        <div className={styles.main}>
+          <div className={styles.pitch}>
+            <h3 className={styles.heading}>Turn speech into action</h3>
+            <p className={styles.lead}>
+              Voicera helps you manage tasks, access information, and stay
+              productive — using your voice.
+            </p>
+            <button type="button" className={styles.primaryBtn}>
+              Get Started
+            </button>
+          </div>
+
+          <div className={styles.featureCards}>
+            <div className={styles.featureCard}>
+              <div className={`${styles.featureTop} ${styles.topOrange}`}>
+                Voice Commands
+              </div>
+              <div className={styles.featureBody}>
+                Speak naturally to set reminders, open pages, and trigger
+                actions.
+              </div>
             </div>
 
-            <div className={`${styles.chatBubble} ${styles.aiBubble}`}>
-              Hello! How can I help you today?
+            <div className={styles.featureCard}>
+              <div className={`${styles.featureTop} ${styles.topPurple}`}>
+                Smart Understanding
+              </div>
+              <div className={styles.featureBody}>
+                Understands intent and responds with clear, simple guidance.
+              </div>
             </div>
 
-            <div className={`${styles.chatBubble} ${styles.userBubble}`}>
-              What's the weather like?
-            </div>
-
-            <div className={`${styles.chatBubble} ${styles.aiBubble}`}>
-              It's currently 72°F and sunny in your area.
-            </div>
-
-            <div className={styles.inputBar}>
-              <span className={styles.inputPlaceholder}>Speak or type...</span>
-              <div className={styles.micButton}>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z"
-                    fill="#ffffff"
-                  />
-                  <path
-                    d="M19 10V12C19 15.87 15.87 19 12 19C8.13 19 5 15.87 5 12V10"
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
+            <div className={styles.featureCard}>
+              <div className={`${styles.featureTop} ${styles.topTeal}`}>
+                Accessibility First
+              </div>
+              <div className={styles.featureBody}>
+                Designed with contrast, spacing, and voice feedback for
+                everyone.
               </div>
             </div>
           </div>

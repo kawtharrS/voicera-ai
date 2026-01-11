@@ -12,7 +12,7 @@
 }
 
 .content {
-  flex: 0 1 clamp(320px, 38vw, 560px);
+  flex: 0 0 clamp(320px, 38vw, 560px);
   max-width: 560px;
   min-width: 0;
   margin: 0;
@@ -68,18 +68,19 @@
 
 .heroImage {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  max-width: min(1040px, 70vw);
+  max-height: calc(100vh - 75px - 80px);
+  height: auto;
+  transform: translateX(9%) translateY(5%);
 }
 
 .heroImg {
   width: 100%;
-  max-width: min(980px, 62vw);
-  max-height: calc(100vh - 75px - 120px);
+  max-width: min(1120px, 68vw);
+  max-height: calc(100vh - 75px - 40px);
   height: auto;
   object-fit: contain;
-  transform: translateX(9%) translateY(5%);
+  transform: translateX(3%) translateY(-10%) scale(1.4);
 }
 
 /* Small/tablet screens */
@@ -109,8 +110,8 @@
   }
 
   .heroImg {
-    max-width: min(640px, 92vw);
-    max-height: 42vh;
+    max-width: min(780px, 96vw);
+    max-height: 52vh;
     transform: none;
   }
 }
@@ -128,7 +129,7 @@
 
   .heroImg {
     max-width: 92vw;
-    max-height: 38vh;
+    max-height: 42vh;
   }
 }
 
@@ -244,7 +245,7 @@
   }
 
   .heroImg {
-    max-width: min(1100px, 56vw);
+    max-width: min(1240px, 62vw);
   }
 }
 
@@ -267,7 +268,7 @@
   }
 
   .heroImg {
-    max-width: min(1250px, 58vw);
+    max-width: min(1400px, 62vw);
   }
 }
 
@@ -286,6 +287,6 @@
   }
 
   .heroImg {
-    max-width: min(1100px, 45vw);
+    max-width: min(1600px, 62vw);
   }
 }

@@ -13,13 +13,13 @@
   gap: 8px;
   font-size: 20px;
   font-weight: 600;
-  color: #333;
+  color: #4db6ac;
   text-decoration: none;
 }
 
 .logoIcon {
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
 }
 
 .navLinks {
@@ -42,7 +42,7 @@
 }
 
 .signUpBtn {
-  background-color: #7c5cfc;
+  background-color: #f08c00;
   color: #ffffff;
   padding: 10px 24px;
   border-radius: 20px;
