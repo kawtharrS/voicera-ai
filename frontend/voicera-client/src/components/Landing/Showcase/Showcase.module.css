@@ -1,0 +1,194 @@
+.showcase {
+  display: flex;
+  align-items: stretch;
+  background-color: #ffffff;
+  min-height: 400px;
+}
+
+.imageSection {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.personImage {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8d4c0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.personPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #f8b500 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.personSilhouette {
+  width: 200px;
+  height: 250px;
+  background: linear-gradient(180deg, #d4a574 0%, #c4956a 100%);
+  border-radius: 50% 50% 0 0;
+  position: relative;
+}
+
+.personSilhouette::before {
+  content: "";
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  background: #e8c4a0;
+  border-radius: 50%;
+}
+
+.headphones {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 100px;
+}
+
+.headphoneBand {
+  width: 100px;
+  height: 50px;
+  border: 8px solid #333;
+  border-bottom: none;
+  border-radius: 50px 50px 0 0;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.headphoneLeft,
+.headphoneRight {
+  width: 25px;
+  height: 35px;
+  background: #333;
+  border-radius: 5px;
+  position: absolute;
+  top: 40px;
+}
+
+.headphoneLeft {
+  left: 0;
+}
+
+.headphoneRight {
+  right: 0;
+}
+
+.appSection {
+  flex: 1;
+  background: linear-gradient(180deg, #4db6ac 0%, #3d9a90 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  position: relative;
+}
+
+.phoneMockup {
+  width: 220px;
+  height: 420px;
+  background: #ffffff;
+  border-radius: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  position: relative;
+}
+
+.phoneNotch {
+  width: 80px;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  margin: 0 auto 15px;
+}
+
+.phoneContent {
+  background: #f5f5f5;
+  border-radius: 20px;
+  height: calc(100% - 30px);
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.appLogo {
+  width: 24px;
+  height: 24px;
+  background: #4db6ac;
+  border-radius: 50%;
+}
+
+.appName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.chatBubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 10px;
+  max-width: 80%;
+}
+
+.userBubble {
+  background: #e8e8e8;
+  color: #333;
+  align-self: flex-end;
+}
+
+.aiBubble {
+  background: #4db6ac;
+  color: #ffffff;
+  align-self: flex-start;
+}
+
+.inputBar {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.inputPlaceholder {
+  flex: 1;
+  font-size: 10px;
+  color: #999;
+}
+
+.micButton {
+  width: 28px;
+  height: 28px;
+  background: #ff9800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
