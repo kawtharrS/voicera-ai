@@ -27,6 +27,12 @@ func main() {
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/logout", common.LogoutHandler).Methods("POST")
+	router.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
+
 	http.Handle("/", router)
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("🚀 Go server running on http://localhost:8080")
+if err := http.ListenAndServe(":8080", nil); err != nil {
+	panic(err)
+}
+
 }

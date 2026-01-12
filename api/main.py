@@ -110,7 +110,7 @@ class GmailRunResponse(BaseModel):
 async def health_check():
     return {
         "status": "healthy",
-        "message": "Voicera ClassroomAI API is running"
+        "message": "Voicera API is running"
     }
 
 @app.post("/ask", response_model=AIResponse)
