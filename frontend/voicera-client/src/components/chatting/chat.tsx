@@ -1,13 +1,20 @@
 import { useState, useRef } from "react";
 import styles from "./chat.module.css";
-import Button from "../common/Button";
 
 export default function VoiceraSwipeScreen() {
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-
   const startY = useRef(0);
   const currentY = useRef(0);
+
+
+  const [messages, setMessages] = useState([
+    { sender: "ai", text: "Hi! Ask me anything." },
+  ]);
+  const [input, setInput] = useState("");
+  const [waiting, setWaiting] = useState(false);
+  const [isSecondScreenActive, setIsSecondScreenActive] = useState(false);
+
 
   const handleTouchStart = (e) => {
     setIsDragging(true);
@@ -17,19 +24,19 @@ export default function VoiceraSwipeScreen() {
 
   const handleTouchMove = (e) => {
     if (!isDragging) return;
-
     const deltaY = e.touches[0].clientY - startY.current;
     const newPosition = Math.max(
       -100,
       Math.min(0, currentY.current + (deltaY / window.innerHeight) * 100)
     );
-
     setPosition(newPosition);
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    setPosition(position < -50 ? -100 : 0);
+    const isOpening = position < -30; 
+    setPosition(isOpening ? -100 : 0);
+    setIsSecondScreenActive(isOpening);
   };
 
   const handleMouseDown = (e) => {
@@ -40,24 +47,51 @@ export default function VoiceraSwipeScreen() {
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
-
     const deltaY = e.clientY - startY.current;
     const newPosition = Math.max(
       -100,
       Math.min(0, currentY.current + (deltaY / window.innerHeight) * 100)
     );
-
     setPosition(newPosition);
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    setPosition(position < -50 ? -100 : 0);
+    const isOpening = position < -30;
+    setPosition(isOpening ? -100 : 0);
+    setIsSecondScreenActive(isOpening);
+  };
+
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || waiting) return;
+    
+    const userMessage = input.trim();
+    setMessages((msgs) => [...msgs, { sender: "user", text: userMessage }]);
+    setInput("");
+    setWaiting(true);
+
+    setTimeout(() => {
+      setMessages((msgs) => [
+        ...msgs,
+        { 
+          sender: "ai", 
+          text: `I heard: "${userMessage}". How can I help you with that?` 
+        },
+      ]);
+      setWaiting(false);
+    }, 1500);
+  };
+
+  const handleGoBack = () => {
+    setPosition(0);
+    setIsSecondScreenActive(false);
   };
 
   return (
     <div
-      className={styles["voicera-container"]}
+      className={styles.voiceraContainer}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -66,27 +100,104 @@ export default function VoiceraSwipeScreen() {
       onMouseUp={handleMouseUp}
       onMouseLeave={() => isDragging && handleMouseUp()}
     >
-      {/* First Screen */}
       <div
-        className={styles["screen-first"]}
+        className={styles.screenFirst}
         style={{
           transform: `translateY(${position}%)`,
-          pointerEvents: position === -100 ? "none" : "auto",
+          opacity: position === -100 ? 0 : 1,
+          pointerEvents: isSecondScreenActive ? "none" : "auto",
         }}
       >
-        <div className={styles["screen-first-content"]}>
-          <div className={styles["logo-container"]}>
+        <div className={styles.screenFirstContent}>
+          <div className={styles.logoContainer}>
             <img
               src="/image.png"
               alt="Voicera logo"
-              className={styles["logo-icon"]}
+              className={styles.logoIcon}
             />
           </div>
-          <h1 className={styles["title"]}>ASK VOICERA</h1>
+          <h1 className={styles.title}>ASK VOICERA</h1>
+          <button 
+            className={styles.transcriptionButton}
+            onClick={() => {
+              setPosition(-100);
+              setIsSecondScreenActive(true);
+            }}
+          >
+            Start Chat
+          </button>
+          <p style={{ color: "#999", fontSize: "0.875rem", marginTop: "1rem" }}>
+            Swipe up or tap button to open chat
+          </p>
+        </div>
+      </div>
 
-        <Button>
-          See transcription
-        </Button>
+      <div
+        className={styles.screenSecond}
+        style={{
+          transform: `translateY(${100 + position}%)`,
+          pointerEvents: isSecondScreenActive ? "auto" : "none",
+        }}
+      >
+        <div className={styles.screenSecondContent}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <button
+              onClick={handleGoBack}
+              style={{
+                background: "none",
+                border: "none",
+                color: "white",
+                fontSize: "1.5rem",
+                cursor: "pointer",
+                padding: "0.5rem",
+              }}
+              aria-label="Go back"
+            >
+              ←
+            </button>
+            <h1 className={styles.titleLarge}>Chat with Voicera</h1>
+          </div>
+          
+          <div className={styles.chatArea}>
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`${styles.chatMessage} ${
+                  msg.sender === "user" ? styles.user : styles.ai
+                }`}
+              >
+                <span className={styles.chatBubble}>{msg.text}</span>
+              </div>
+            ))}
+            {waiting && (
+              <div className={`${styles.chatMessage} ${styles.ai}`}>
+                <div className={styles.typingIndicator}>
+                  <div className={styles.typingDot}></div>
+                  <div className={styles.typingDot}></div>
+                  <div className={styles.typingDot}></div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <form onSubmit={handleSend} className={styles.chatForm}>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              className={styles.chatInput}
+              disabled={waiting}
+            />
+            <button 
+              type="submit" 
+              className={styles.transcriptionButton}
+              disabled={waiting || !input.trim()}
+              style={{ flexShrink: 0 }}
+            >
+              Send
+            </button>
+          </form>
         </div>
       </div>
     </div>

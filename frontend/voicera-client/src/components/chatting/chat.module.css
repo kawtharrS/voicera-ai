@@ -8,10 +8,12 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, sans-serif;
+  background-color: #4a4a4a;
+  overflow: hidden;
 }
 
 /* Main container */
-.voicera-container {
+.voiceraContainer {
   position: relative;
   width: 100%;
   height: 100vh;
@@ -21,83 +23,245 @@ body {
   user-select: none;
 }
 
-/* First screen */
-.screen-first {
+/* Screens */
+.screenFirst {
   position: absolute;
   inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 0.3s ease-out;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+  background-color: #4a4a4a;
 }
 
-.screen-first-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Second screen */
-.screen-second {
+.screenSecond {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 2rem;
-  transition: transform 0.3s ease-out;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  background-color: #4a4a4a;
 }
 
-.screen-second-content {
+/* First screen content */
+.screenFirstContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  text-align: center;
+}
+
+/* Second screen content */
+.screenSecondContent {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  gap: 1rem;
 }
 
 /* Logo */
-.logo-container {
-  margin-bottom: 1.5rem;
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.logo-icon {
-  width: 200px;
-  height: 200px;
+.logoIcon {
+  width: 150px;
+  height: 150px;
   animation: spin 6s linear infinite;
   transform-origin: center;
+  border-radius: 50%;
 }
 
-/* Title */
+/* Titles */
 .title {
   color: white;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: 0.15em;
+  text-transform: uppercase;
 }
 
-.title-large {
+.titleLarge {
   color: white;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: 0.15em;
-  margin-bottom: 4rem;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
 }
 
-/* Button */
-.transcription-button {
-  background-color: #374151;
+/* Chat area */
+.chatArea {
+  flex: 1;
+  min-height: 200px;
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  background: #232323;
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Chat messages */
+.chatMessage {
+  display: flex;
+  margin: 0.25rem 0;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.chatMessage.user {
+  justify-content: flex-end;
+}
+
+.chatMessage.ai {
+  justify-content: flex-start;
+}
+
+.chatBubble {
+  max-width: 75%;
+  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chatMessage.ai .chatBubble {
+  background: #5eadad;
   color: white;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
+  border-bottom-left-radius: 4px;
+}
+
+.chatMessage.user .chatBubble {
+  background: #8b7ab8;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+/* Chat form */
+.chatForm {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.chatInput {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 2px solid #8b7ab8;
+  background: #2d2d2d;
+  color: white;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.chatInput:focus {
+  border-color: #9b8ac8;
+}
+
+.chatInput::placeholder {
+  color: #999;
+}
+
+.chatInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+.transcriptionButton {
+  background-color: #8b7ab8;
+  color: white;
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
   border: none;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.transcription-button:hover {
-  background-color: #1f2937;
+.transcriptionButton:hover:not(:disabled) {
+  background-color: #7a69a7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Rotation animation */
+.transcriptionButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.transcriptionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Typing indicator */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: #5eadad;
+  color: white;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  max-width: 75%;
+  align-self: flex-start;
+}
+
+.typingDot {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+
+.typingDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Scrollbar */
+.chatArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatArea::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 3px;
+}
+
+.chatArea::-webkit-scrollbar-thumb {
+  background: #8b7ab8;
+  border-radius: 3px;
+}
+
+/* Animations */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -107,9 +271,66 @@ body {
   }
 }
 
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
-  .logo-icon {
+  .logoIcon {
     animation: none;
+  }
+  
+  .transcriptionButton:hover {
+    transform: none;
+  }
+  
+  .typingDot {
+    animation: none;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .screenSecond {
+    padding: 1rem;
+  }
+  
+  .logoIcon {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  .titleLarge {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .chatArea {
+    max-height: calc(100vh - 250px);
+  }
+  
+  .chatBubble {
+    max-width: 85%;
   }
 }
