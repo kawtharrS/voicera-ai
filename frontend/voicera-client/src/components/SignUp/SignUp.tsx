@@ -28,6 +28,10 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
     confirmPassword: "",
   });
 
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -36,10 +40,52 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your signup logic here
+
+    setError(null);
+    setSuccess(null);
+
+    if (!formData.name || !formData.email || !formData.password) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+      } | null;
+
+      if (!res.ok) {
+        setError(data?.message || "Sign up failed.");
+        return;
+      }
+
+      setSuccess("Account created successfully.");
+      setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+
+      // Optional: go back to Landing after a short delay
+      setTimeout(() => {
+        onBack?.();
+      }, 600);
+    } catch {
+      setError("Could not connect to server.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -67,6 +113,12 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          {error && (
+            <div style={{ color: "#b00020", fontSize: 13 }}>{error}</div>
+          )}
+          {success && (
+            <div style={{ color: "#2e7d32", fontSize: 13 }}>{success}</div>
+          )}
           <div className={styles.inputGroup}>
             <InputField
               type="text"
@@ -112,8 +164,12 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
             Sign in with Google
           </Button>
 
-          <button type="submit" className={styles.submitButton}>
-            SIGN IN
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={submitting}
+          >
+            {submitting ? "SIGNING UP..." : "SIGN UP"}
           </button>
         </form>
       </div>

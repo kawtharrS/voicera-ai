@@ -1,34 +1,34 @@
+// This package contains all HTTP request handlers
 package common
 
 import (
-	"fmt"
-	"net/http"
+	"encoding/json" 
+	"fmt"           
+	"net/http"     
 
 	"voicera-backend/data"
 	"voicera-backend/helpers"
 
-	"github.com/gorilla/securecookie"
+	"github.com/gorilla/securecookie" 
 )
 
+
 var cookieHandler = securecookie.New(
-	securecookie.GenerateRandomKey(64),
-	securecookie.GenerateRandomKey(32))
+	securecookie.GenerateRandomKey(64), 
+	securecookie.GenerateRandomKey(32)) 
 
-// Handlers
 
-// for GET
 func LoginPageHandler(response http.ResponseWriter, request *http.Request) {
 	var body, _ = helpers.LoadFile("templates/login.html")
-	fmt.Fprintf(response, body)
+	fmt.Fprint(response, body)
 }
 
-// for POST
 func LoginHandler(response http.ResponseWriter, request *http.Request) {
-	name := request.FormValue("name")
-	pass := request.FormValue("password")
-	redirectTarget := "/"
+	name := request.FormValue("name")      
+	pass := request.FormValue("password")   
+	redirectTarget := "/"                  
+	
 	if !helpers.IsEmpty(name) && !helpers.IsEmpty(pass) {
-		// Database check for user data!
 		_userIsValid := data.UserIsValid(name, pass)
 
 		if _userIsValid {
@@ -41,13 +41,104 @@ func LoginHandler(response http.ResponseWriter, request *http.Request) {
 	http.Redirect(response, request, redirectTarget, 302)
 }
 
-// for GET
+
 func RegisterPageHandler(response http.ResponseWriter, request *http.Request) {
 	var body, _ = helpers.LoadFile("templates/register.html")
-	fmt.Fprintf(response, body)
+	fmt.Fprint(response, body)
 }
 
-// for POST
+type registerRequest struct {
+	Name            string `json:"name"`           
+	Email           string `json:"email"`       
+	Password        string `json:"password"`        
+	ConfirmPassword string `json:"confirmPassword"` 
+}
+
+type apiResponse struct {
+	Ok      bool   `json:"ok"`      
+	Message string `json:"message"` 
+}
+
+func writeJSON(w http.ResponseWriter, status int, payload apiResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(payload)
+}
+
+
+func RegisterAPIHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	var req registerRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "invalid JSON"})
+		return
+	}
+
+	if helpers.IsEmpty(req.Name) || helpers.IsEmpty(req.Email) || helpers.IsEmpty(req.Password) {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "name, email, and password are required"})
+		return
+	}
+
+	if req.Password != req.ConfirmPassword {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "passwords do not match"})
+		return
+	}
+
+
+	if err := data.RegisterUser(req.Name, req.Email, req.Password); err != nil {
+		writeJSON(w, http.StatusConflict, apiResponse{Ok: false, Message: err.Error()})
+		return
+	}
+
+	SetCookie(req.Name, w)
+
+	writeJSON(w, http.StatusCreated, apiResponse{Ok: true, Message: "registered"})
+}
+
+func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	var payload struct {
+		Name     string `json:"name"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "invalid JSON"})
+		return
+	}
+
+	if helpers.IsEmpty(payload.Name) || helpers.IsEmpty(payload.Password) {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "name and password are required"})
+		return
+	}
+
+	if !data.UserIsValid(payload.Name, payload.Password) {
+		writeJSON(w, http.StatusUnauthorized, apiResponse{Ok: false, Message: "invalid credentials"})
+		return
+	}
+
+	SetCookie(payload.Name, w)
+	writeJSON(w, http.StatusOK, apiResponse{Ok: true, Message: "logged in"})
+}
+
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
@@ -57,11 +148,10 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	confirmPwd := r.FormValue("confirmPassword")
 
 	_uName, _email, _pwd, _confirmPwd := false, false, false, false
-	_uName = !helpers.IsEmpty(uName)
-	_email = !helpers.IsEmpty(email)
-	_pwd = !helpers.IsEmpty(pwd)
-	_confirmPwd = !helpers.IsEmpty(confirmPwd)
-
+	_uName = !helpers.IsEmpty(uName)    
+	_email = !helpers.IsEmpty(email)       
+	_pwd = !helpers.IsEmpty(pwd)          
+	_confirmPwd = !helpers.IsEmpty(confirmPwd) 
 	if _uName && _email && _pwd && _confirmPwd {
 		fmt.Fprintln(w, "Username for Register : ", uName)
 		fmt.Fprintln(w, "Email for Register : ", email)
@@ -72,52 +162,44 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// for GET
-func IndexPageHandler(response http.ResponseWriter, request *http.Request) {
-	userName := GetUserName(request)
-	if !helpers.IsEmpty(userName) {
-		var indexBody, _ = helpers.LoadFile("templates/index.html")
-		fmt.Fprintf(response, indexBody, userName)
-	} else {
-		http.Redirect(response, request, "/", 302)
-	}
-}
 
-// for POST
 func LogoutHandler(response http.ResponseWriter, request *http.Request) {
 	ClearCookie(response)
 	http.Redirect(response, request, "/", 302)
 }
 
-// Cookie
-
 func SetCookie(userName string, response http.ResponseWriter) {
 	value := map[string]string{
 		"name": userName,
 	}
+	
+
 	if encoded, err := cookieHandler.Encode("cookie", value); err == nil {
 		cookie := &http.Cookie{
-			Name:  "cookie",
-			Value: encoded,
-			Path:  "/",
+			Name:  "cookie",           
+			Value: encoded,            
+			Path:  "/",                
 		}
 		http.SetCookie(response, cookie)
 	}
 }
 
+
 func ClearCookie(response http.ResponseWriter) {
 	cookie := &http.Cookie{
-		Name:   "cookie",
-		Value:  "",
-		Path:   "/",
-		MaxAge: -1,
+		Name:   "cookie",  
+		Value:  "",       
+		Path:   "/",       
+		MaxAge: -1,      
 	}
 	http.SetCookie(response, cookie)
 }
 
+
 func GetUserName(request *http.Request) (userName string) {
 	if cookie, err := request.Cookie("cookie"); err == nil {
-		cookieValue := make(map[string]string)
+		cookieValue := make(map[string]string) 
+		
 		if err = cookieHandler.Decode("cookie", cookie.Value, &cookieValue); err == nil {
 			userName = cookieValue["name"]
 		}
