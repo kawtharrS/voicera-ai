@@ -1,7 +1,7 @@
-import Landing from "./components/Landing";
+import VoiceraSwipeScreen from "./components/chatting/chat";
 
 function App() {
-  return <Landing />;
+  return <VoiceraSwipeScreen />;
 }
 
 export default App;

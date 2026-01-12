@@ -1,7 +1,11 @@
 import React from "react";
 import styles from "./Hero.module.css";
 
-const Hero: React.FC = () => {
+interface HeroProps {
+  onLoginClick?: () => void;
+}
+
+const Hero: React.FC<HeroProps> = ({onLoginClick}) => {
   return (
     <section className={styles.hero}>
       <div className={styles.content}>
@@ -11,7 +15,7 @@ const Hero: React.FC = () => {
           Voice Assistant
         </h1>
         <p className={styles.subtitle}>Speech into Action Effortlessly</p>
-        <button className={styles.getStartedBtn}>Get Started</button>
+        <button className={styles.getStartedBtn} onClick={onLoginClick} >Get Started</button>
         <p className={styles.tagline}>Experience hands-free Productivity</p>
       </div>
 
