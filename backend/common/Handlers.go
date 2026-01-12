@@ -1,4 +1,3 @@
-// This package contains all HTTP request handlers
 package common
 
 import (
@@ -16,11 +15,6 @@ var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
 	securecookie.GenerateRandomKey(32))
 
-func LoginPageHandler(response http.ResponseWriter, request *http.Request) {
-	var body, _ = helpers.LoadFile("templates/login.html")
-	fmt.Fprint(response, body)
-}
-
 func LoginHandler(response http.ResponseWriter, request *http.Request) {
 	name := request.FormValue("name")
 	pass := request.FormValue("password")
@@ -37,11 +31,6 @@ func LoginHandler(response http.ResponseWriter, request *http.Request) {
 		}
 	}
 	http.Redirect(response, request, redirectTarget, 302)
-}
-
-func RegisterPageHandler(response http.ResponseWriter, request *http.Request) {
-	var body, _ = helpers.LoadFile("templates/register.html")
-	fmt.Fprint(response, body)
 }
 
 type registerRequest struct {
@@ -124,14 +113,12 @@ func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Try email-based login first (frontend sends `email` field)
 	if data.UserIsValidByEmail(payload.Email, payload.Password) {
 		SetCookie(payload.Email, w)
 		writeJSON(w, http.StatusOK, apiResponse{Ok: true, Message: "logged in"})
 		return
 	}
 
-	// Fallback: treat the provided value as a username
 	if data.UserIsValid(payload.Email, payload.Password) {
 		SetCookie(payload.Email, w)
 		writeJSON(w, http.StatusOK, apiResponse{Ok: true, Message: "logged in"})
@@ -179,7 +166,7 @@ func SetCookie(userName string, response http.ResponseWriter) {
 			Name:   "cookie",
 			Value:  encoded,
 			Path:   "/",
-			MaxAge: 86400, // 24 hours
+			MaxAge: 86400, 
 		}
 		http.SetCookie(response, cookie)
 	}

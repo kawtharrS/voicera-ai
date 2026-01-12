@@ -22,10 +22,7 @@ func main() {
 	}
 
 	data.InitSupabase()
-
-	router.HandleFunc("/", common.LoginPageHandler)
 	router.HandleFunc("/login", common.LoginHandler).Methods("POST")
-	router.HandleFunc("/register", common.RegisterPageHandler).Methods("GET")
 	router.HandleFunc("/register", common.RegisterHandler).Methods("POST")
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")

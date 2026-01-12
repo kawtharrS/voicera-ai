@@ -1,7 +1,7 @@
 import VoiceraSwipeScreen from "./components/chatting/chat";
 
-function App() {
+function Chat() {
   return <VoiceraSwipeScreen />;
 }
 
-export default App;
+export default Chat;

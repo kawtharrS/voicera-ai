@@ -2,27 +2,19 @@ import React, { useState } from "react";
 import styles from "./SignUp.module.css";
 import InputField from "../common/InputField";
 import Button from "../common/Button";
+import type{LoginFormData, LoginProps} from "./index";
 import {
   UserIcon,
   LockIcon,
   ChevronLeftIcon,
 } from "../common/Icons";
-
-interface LoginFormData {
-  email: string;
-  password: string;
-}
-
-interface LoginProps {
-  onBack?: () => void;
-}
+import api from "../../api/axios";
 
 const Login: React.FC<LoginProps> = ({ onBack }) => {
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
   });
-
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -42,35 +34,15 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
     setSuccess(null);
     try {
       setSubmitting(true);
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-
-      const data = (await res.json().catch(() => null)) as {
-        ok?: boolean;
-        message?: string;
-      } | null;
-
-      if (!res.ok) {
-        setError(data?.message || "Login failed.");
-        return;
-      }
-
+      await api.post("/login", formData);
       setSuccess("Account logged in successfully.");
       setFormData({ email: "", password: "", });
-      setTimeout(() => {
-        onBack?.();
-      }, 600);
     } catch {
       setError("Could not connect to server.");
     } finally {
-      setSubmitting(false);
-    }
+    setSubmitting(false);
+  }
   };
-
 
   const handleBack = () => {
     if (onBack) {

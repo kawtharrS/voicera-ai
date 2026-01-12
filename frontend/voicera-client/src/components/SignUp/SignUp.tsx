@@ -2,23 +2,14 @@ import React, { useState } from "react";
 import styles from "./SignUp.module.css";
 import InputField from "../common/InputField";
 import Button from "../common/Button";
+import type{SignUpFormData, SignUpProps} from "./index";
 import {
   UserIcon,
   LockIcon,
   GoogleIcon,
   ChevronLeftIcon,
 } from "../common/Icons";
-
-interface SignUpFormData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-interface SignUpProps {
-  onBack?: () => void;
-}
+import api from "../../api/axios";
 
 const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
   const [formData, setFormData] = useState<SignUpFormData>({
@@ -57,49 +48,24 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
 
     try {
       setSubmitting(true);
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-
-      const data = (await res.json().catch(() => null)) as {
-        ok?: boolean;
-        message?: string;
-      } | null;
-
-      if (!res.ok) {
-        setError(data?.message || "Sign up failed.");
-        return;
-      }
-
+      await api.post("/register", formData);
       setSuccess("Account created successfully.");
       setFormData({ name: "", email: "", password: "", confirmPassword: "" });
-
-      // Optional: go back to Landing after a short delay
-      setTimeout(() => {
-        onBack?.();
-      }, 600);
     } catch {
       setError("Could not connect to server.");
     } finally {
-      setSubmitting(false);
-    }
+    setSubmitting(false);
+  }
   };
 
   const handleGoogleSignIn = () => {
     console.log("Google sign in clicked");
-    // Add Google sign-in logic here
   };
 
   const handleBack = () => {
     if (onBack) {
       onBack();
-    } else {
-      console.log("Back clicked");
-    }
-  };
+    }};
 
   return (
     <div className={styles.container}>
