@@ -1,10 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./chat.module.css";
-import {speak} from "../../functions/screen_reader";
 import api from "../../api/axios";
 
 export default function VoiceraSwipeScreen() {
-
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [input, setInput] = useState("");
@@ -14,8 +12,60 @@ export default function VoiceraSwipeScreen() {
     { sender: "ai", text: "Hi Ask me anything." },
   ]);
 
+  const [userInteracted, setUserInteracted] = useState(false);
+  const ttsQueue = useRef<string[]>([]);
+
   const startY = useRef(0);
   const currentY = useRef(0);
+
+  const speak = useCallback(
+    async (text: string) => {
+      if (!text) return;
+      if (!userInteracted) {
+        ttsQueue.current.push(text);
+        return;
+      }
+
+      try {
+        const response = await api.get("/tts", {
+          params: { text },
+          responseType: "blob",
+        });
+        if (response.data.size === 0) {
+          console.error("Empty audio blob received");
+          return;
+        }
+
+        const url = URL.createObjectURL(response.data);
+        const audio = new Audio(url);
+        
+        audio.onloadeddata = () => console.log("Audio loaded successfully");
+        audio.onerror = (e) => console.error("Audio playback error:", e);
+        
+        await audio.play();
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+        };
+      } catch (err) {
+        console.error("TTS error:", err);
+      }
+    },
+    [userInteracted]
+  );
+
+  useEffect(() => {
+    const handleFirstClick = () => setUserInteracted(true);
+    document.addEventListener("click", handleFirstClick, { once: true });
+    return () => document.removeEventListener("click", handleFirstClick);
+  }, []);
+
+  useEffect(() => {
+    if (userInteracted && ttsQueue.current.length > 0) {
+      ttsQueue.current.forEach((text) => speak(text));
+      ttsQueue.current = [];
+    }
+  }, [userInteracted, speak]);
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     setIsDragging(true);
@@ -73,27 +123,31 @@ export default function VoiceraSwipeScreen() {
     setWaiting(true);
 
     try {
-        const response = await api.post("/ask", { question: userMessage });
-        setMessages((msgs) => [
-            ...msgs,
-            {
-                sender: "ai",
-                text: response.data.response || "No answer received.",
-            },
-        ]);
+      const response = await api.post("/ask", { question: userMessage });
+      const aiText = response.data.response || "No answer received.";
+      setMessages((msgs) => [
+        ...msgs,
+        {
+          sender: "ai",
+          text: aiText,
+        },
+      ]);
+      speak(aiText); 
     } catch (error) {
-        console.error("Error:", error); 
-        setMessages((msgs) => [
-            ...msgs,
-            {
-                sender: "ai",
-                text: "Sorry, there was an error contacting the server.",
-            },
-        ]);
+      console.error("Error:", error);
+      const errorText = "Sorry, there was an error contacting the server.";
+      setMessages((msgs) => [
+        ...msgs,
+        {
+          sender: "ai",
+          text: errorText,
+        },
+      ]);
+      speak(errorText);
     } finally {
-        setWaiting(false);
+      setWaiting(false);
     }
-    };
+  };
 
   const handleGoBack = () => {
     setPosition(0);

@@ -25,13 +25,15 @@ func main() {
 	}
 
 	data.InitSupabase()
-	router.HandleFunc("/login", common.LoginHandler).Methods("POST")
-	router.HandleFunc("/register", common.RegisterHandler).Methods("POST")
+	router.HandleFunc("api/login", common.LoginHandler).Methods("POST")
+	router.HandleFunc("api/register", common.RegisterHandler).Methods("POST")
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/logout", common.LogoutHandler).Methods("POST")
+	router.HandleFunc("api/logout", common.LogoutHandler).Methods("POST")
 	router.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
 	router.HandleFunc("/api/ask", common.AskAIHandler).Methods("POST")
+	router.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
+
 
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
@@ -40,6 +42,6 @@ func main() {
 		handlers.AllowCredentials(),
 	)
 
-	fmt.Println("🚀 Go server running on http://localhost:8080")
+	fmt.Println("Go server running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
 }

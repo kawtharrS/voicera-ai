@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 	"fmt"
+	"net/url"
 )
 
 type HealthResponse struct {
@@ -95,4 +96,43 @@ func AskAI(question StudentQuestion) (*AIResponse, error){
 		return nil, err
 	}
 	return &aiResp, nil
+}
+func TTSHandler(w http.ResponseWriter, r *http.Request) {
+    text := r.URL.Query().Get("text")
+    if text == "" {
+        http.Error(w, "text parameter required", http.StatusBadRequest)
+        return
+    }
+
+    fastAPIURL := os.Getenv("FASTAPI_URL")
+    if fastAPIURL == "" {
+        http.Error(w, "FASTAPI_URL not configured", http.StatusInternalServerError)
+        return
+    }
+    
+    requestURL := fmt.Sprintf("%s/tts?text=%s", fastAPIURL, url.QueryEscape(text))
+    fmt.Printf("TTS Request: %s\n", requestURL) 
+    
+    resp, err := http.Get(requestURL)
+    if err != nil {
+        fmt.Printf("TTS Error: %v\n", err)
+        http.Error(w, "Failed to contact TTS service", http.StatusBadGateway)
+        return
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        fmt.Printf("TTS service error (%d): %s\n", resp.StatusCode, string(body))
+        http.Error(w, "TTS service error", resp.StatusCode)
+        return
+    }
+
+    w.Header().Set("Content-Type", "audio/mpeg")
+    w.Header().Set("Content-Disposition", "inline; filename=speech.mp3")
+    
+    _, err = io.Copy(w, resp.Body)
+    if err != nil {
+        fmt.Printf("Failed to stream audio: %v\n", err)
+    }
 }

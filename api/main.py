@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import uvicorn
-
+from fastapi.responses import StreamingResponse
+import openai
+import os 
+import httpx
 langgraph_src = str(Path(__file__).parent.parent / "langgraph" / "src")
 sys.path.insert(0, langgraph_src)
 
@@ -381,6 +384,41 @@ async def gmail_run(payload: GmailRunRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/tts")
+async def text_to_speech(text: str):
+    """Convert text to speech using OpenAI TTS API"""
+    try:
+        api_key = os.getenv("OPENAI_API_KEY")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.openai.com/v1/audio/speech",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "tts-1",
+                    "input": text,
+                    "voice": "alloy",
+                    "speed": 1.0
+                },
+                timeout=30.0  
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail="TTS API error")
+            
+            return StreamingResponse(
+                iter([response.content]),
+                media_type="audio/mpeg",
+                headers={
+                    "Content-Disposition": "inline; filename=speech.mp3"
+                }
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 if __name__ == "__main__":
     uvicorn.run(
         app,
