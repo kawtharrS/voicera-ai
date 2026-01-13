@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import styles from "./chat.module.css";
-import {speak} from "../../functions/screen_reader"
+import {speak} from "../../functions/screen_reader";
+import api from "../../api/axios";
 
 export default function VoiceraSwipeScreen() {
 
@@ -71,17 +72,28 @@ export default function VoiceraSwipeScreen() {
     setInput("");
     setWaiting(true);
 
-    setTimeout(() => {
-      setMessages((msgs) => [
-        ...msgs,
-        {
-          sender: "ai",
-          text: `I heard: "${userMessage}". How can I help you with that?`,
-        },
-      ]);
-      setWaiting(false);
-    }, 1500);
-  };
+    try {
+        const response = await api.post("/ask", { question: userMessage });
+        setMessages((msgs) => [
+            ...msgs,
+            {
+                sender: "ai",
+                text: response.data.response || "No answer received.",
+            },
+        ]);
+    } catch (error) {
+        console.error("Error:", error); 
+        setMessages((msgs) => [
+            ...msgs,
+            {
+                sender: "ai",
+                text: "Sorry, there was an error contacting the server.",
+            },
+        ]);
+    } finally {
+        setWaiting(false);
+    }
+    };
 
   const handleGoBack = () => {
     setPosition(0);

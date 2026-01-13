@@ -192,3 +192,21 @@ func GetUserName(request *http.Request) (userName string) {
 	}
 	return userName
 }
+
+func AskAIHandler(w http.ResponseWriter, r *http.Request) {
+	var req StudentQuestion
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := AskAI(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}

@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"     
 	"net/http" 
+	"log"
 
 	"github.com/gorilla/mux"  
+	"github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
 
 	"voicera-backend/common" 
 	"voicera-backend/data"   
+
 )
 
 var router = mux.NewRouter()
@@ -28,11 +31,15 @@ func main() {
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/logout", common.LogoutHandler).Methods("POST")
 	router.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
+	router.HandleFunc("/api/ask", common.AskAIHandler).Methods("POST")
 
-	http.Handle("/", router)
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+		handlers.AllowCredentials(),
+	)
+
 	fmt.Println("🚀 Go server running on http://localhost:8080")
-if err := http.ListenAndServe(":8080", nil); err != nil {
-	panic(err)
-}
-
+	log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
 }
