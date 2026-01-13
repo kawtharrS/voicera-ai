@@ -10,6 +10,7 @@ import {
   ChevronLeftIcon,
 } from "../common/Icons";
 import api from "../../api/axios";
+import { useNavigate } from "react-router-dom";
 
 const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
   const [formData, setFormData] = useState<SignUpFormData>({
@@ -18,6 +19,8 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
     password: "",
     confirmPassword: "",
   });
+  const navigate = useNavigate();
+
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +54,7 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
       await api.post("/register", formData);
       setSuccess("Account created successfully.");
       setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+      setTimeout(() => navigate("/login"), 1000);
     } catch {
       setError("Could not connect to server.");
     } finally {

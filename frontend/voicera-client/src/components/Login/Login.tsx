@@ -9,6 +9,7 @@ import {
   ChevronLeftIcon,
 } from "../common/Icons";
 import api from "../../api/axios";
+import { useNavigate } from "react-router-dom";
 
 const Login: React.FC<LoginProps> = ({ onBack }) => {
   const [formData, setFormData] = useState<LoginFormData>({
@@ -18,6 +19,7 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -37,6 +39,7 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
       await api.post("/login", formData);
       setSuccess("Account logged in successfully.");
       setFormData({ email: "", password: "", });
+      setTimeout(() => navigate("/chat"), 1000);
     } catch {
       setError("Could not connect to server.");
     } finally {
