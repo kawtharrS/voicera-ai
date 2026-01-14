@@ -1,6 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import styles from "./chat.module.css";
 import api from "../../api/axios";
+
+const fetchTTS = async (text: string) => {
+  const response = await api.get("/tts", {
+    params: { text },
+    responseType: "blob",
+  });
+  if (response.data.size === 0) throw new Error("Empty audio blob received");
+  return response.data;
+};
 
 export default function VoiceraSwipeScreen() {
   const [position, setPosition] = useState(0);
@@ -34,40 +44,34 @@ export default function VoiceraSwipeScreen() {
     fetchCurrentUser();
   }, []);
 
+  const ttsMutation = useMutation({
+    mutationFn: fetchTTS,
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onloadeddata = () => console.log("Audio loaded successfully");
+      audio.onerror = (e) => console.error("Audio playback error:", e);
+      audio.play().then(() => {
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+        };
+      });
+    },
+    onError: (err) => {
+      console.error("TTS error:", err);
+    },
+  });
+
   const speak = useCallback(
-    async (text: string) => {
+    (text: string) => {
       if (!text) return;
       if (!userInteracted) {
         ttsQueue.current.push(text);
         return;
       }
-
-      try {
-        const response = await api.get("/tts", {
-          params: { text },
-          responseType: "blob",
-        });
-        if (response.data.size === 0) {
-          console.error("Empty audio blob received");
-          return;
-        }
-
-        const url = URL.createObjectURL(response.data);
-        const audio = new Audio(url);
-        
-        audio.onloadeddata = () => console.log("Audio loaded successfully");
-        audio.onerror = (e) => console.error("Audio playback error:", e);
-        
-        await audio.play();
-        
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-        };
-      } catch (err) {
-        console.error("TTS error:", err);
-      }
+      ttsMutation.mutate(text);
     },
-    [userInteracted]
+    [userInteracted, ttsMutation]
   );
 
   useEffect(() => {
@@ -142,7 +146,7 @@ export default function VoiceraSwipeScreen() {
     try {
       const response = await api.post("/ask", { question: userMessage });
       const aiText = response.data.response || "No answer received.";
-      
+
       setMessages((msgs) => [
         ...msgs,
         {
@@ -150,7 +154,7 @@ export default function VoiceraSwipeScreen() {
           text: aiText,
         },
       ]);
-      
+
       speak(aiText);
 
       if (userId) {
@@ -158,7 +162,7 @@ export default function VoiceraSwipeScreen() {
           await api.post("/save-memo", {
             user_id: userId,
             user_query: userMessage,
-            ai_query: aiText, 
+            ai_query: aiText,
           });
         } catch (saveError: unknown) {
           console.error("  - Error:", saveError);
