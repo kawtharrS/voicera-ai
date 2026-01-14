@@ -163,12 +163,18 @@ func SetCookie(userName string, response http.ResponseWriter) {
 
 	if encoded, err := cookieHandler.Encode("cookie", value); err == nil {
 		cookie := &http.Cookie{
-			Name:   "cookie",
-			Value:  encoded,
-			Path:   "/",
-			MaxAge: 86400, 
+			Name:     "cookie",
+			Value:    encoded,
+			Path:     "/",
+			MaxAge:   86400, 
+			HttpOnly: true, 
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
 		}
 		http.SetCookie(response, cookie)
+		fmt.Printf("Cookie set for user: %s\n", userName)
+	} else {
+		fmt.Printf("Failed to encode cookie: %v\n", err)
 	}
 }
 

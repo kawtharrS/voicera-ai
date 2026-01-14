@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+
 	"github.com/supabase-community/supabase-go"
 )
 
@@ -257,4 +258,138 @@ func userIsValidSupabase(uName, pwd string) bool {
 
 	fmt.Printf("DEBUG: Retrieved user %s. Password match? %v\n", uName, result.Password == pwd)
 	return result.Password == pwd
+}
+
+type UserMemo struct {
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"user_id"`
+	UserQuery string    `json:"user_query"`
+	AIQuery   string    `json:"ai_query"`
+}
+
+type SaveMemoRequest struct {
+	UserID    int64  `json:"user_id"`
+	UserQuery string `json:"user_query"`
+	AIQuery   string `json:"ai_query"`
+}
+
+func SaveUserMemo(userID int64, userQuery, aiQuery string) (*UserMemo, error) {
+	if userQuery == "" || aiQuery == "" {
+		return nil, errors.New("user_query and ai_query are required")
+	}
+
+	if supabaseClient == nil {
+		return nil, errors.New("supabase client not initialized")
+	}
+
+	memoRecord := map[string]interface{}{
+		"user_id":    userID,
+		"user_query": userQuery,
+		"ai_query":   aiQuery,
+	}
+
+	fmt.Printf("Attempting to save memo for user %d\n", userID)
+
+	var result []UserMemo
+	_, err := supabaseClient.
+		From("user_memo").
+		Insert(memoRecord, false, "", "", "").
+		ExecuteTo(&result)
+
+	if err != nil {
+		fmt.Println("Supabase insert memo error:", err.Error())
+		return nil, errors.New("failed to save memo: " + err.Error())
+	}
+
+	if len(result) == 0 {
+		return nil, errors.New("no memo returned after insert")
+	}
+
+	fmt.Printf("Memo saved successfully - ID: %d\n", result[0].ID)
+	return &result[0], nil
+}
+
+func GetUserMemos(userID int64, limit int) ([]UserMemo, error) {
+	if supabaseClient == nil {
+		return nil, errors.New("supabase client not initialized")
+	}
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	fmt.Printf("Fetching memos for user %d (limit: %d)\n", userID, limit)
+
+	var memos []UserMemo
+	
+	_, err := supabaseClient.
+		From("user_memo").
+		Select("*", "", false).
+		Eq("user_id", fmt.Sprintf("%d", userID)).
+		Limit(limit, "").
+		ExecuteTo(&memos)
+
+	if err != nil {
+		fmt.Println("Error fetching memos:", err.Error())
+		return nil, err
+	}
+
+	fmt.Printf("Retrieved %d memos\n", len(memos))
+	return memos, nil
+}
+
+func GetUserByEmail(email string) (*User, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	
+	if supabaseClient == nil {
+		userMu.RLock()
+		defer userMu.RUnlock()
+		for _, u := range users {
+			if strings.ToLower(u.Email) == email {
+				return &u, nil
+			}
+		}
+		return nil, errors.New("user not found")
+	}
+
+	var result User
+	_, err := supabaseClient.
+		From("users").
+		Select("*", "", false).
+		Eq("email", email).
+		Single().
+		ExecuteTo(&result)
+
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	return &result, nil
+}
+
+func GetUserByName(name string) (*User, error) {
+	name = strings.TrimSpace(name)
+	
+	if supabaseClient == nil {
+		userMu.RLock()
+		defer userMu.RUnlock()
+		if u, ok := users[name]; ok {
+			return &u, nil
+		}
+		return nil, errors.New("user not found")
+	}
+
+	var result User
+	_, err := supabaseClient.
+		From("users").
+		Select("*", "", false).
+		Eq("name", name).
+		Single().
+		ExecuteTo(&result)
+
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	return &result, nil
 }

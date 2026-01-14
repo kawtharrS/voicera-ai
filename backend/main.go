@@ -11,7 +11,6 @@ import (
 
 	"voicera-backend/common" 
 	"voicera-backend/data"   
-
 )
 
 var router = mux.NewRouter()
@@ -25,15 +24,16 @@ func main() {
 	}
 
 	data.InitSupabase()
-	router.HandleFunc("api/login", common.LoginHandler).Methods("POST")
-	router.HandleFunc("api/register", common.RegisterHandler).Methods("POST")
+	
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("api/logout", common.LogoutHandler).Methods("POST")
+	router.HandleFunc("/api/logout", common.LogoutHandler).Methods("POST")
+	
 	router.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
 	router.HandleFunc("/api/ask", common.AskAIHandler).Methods("POST")
 	router.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
-
+	
+	router.HandleFunc("/api/save-memo", common.SaveMemoHandler).Methods("POST", "OPTIONS")
 
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
