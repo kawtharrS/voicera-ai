@@ -11,12 +11,28 @@ export default function VoiceraSwipeScreen() {
   const [messages, setMessages] = useState([
     { sender: "ai", text: "Hi Ask me anything." },
   ]);
+  const [userId, setUserId] = useState<number | null>(null);
 
   const [userInteracted, setUserInteracted] = useState(false);
   const ttsQueue = useRef<string[]>([]);
 
   const startY = useRef(0);
   const currentY = useRef(0);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get("/current-user");
+        if (response.data.ok && response.data.user) {
+          setUserId(response.data.user.id);
+          console.log("full user object:", response.data.user);
+        }
+      } catch (error: unknown) {
+        console.error("  - Error:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   const speak = useCallback(
     async (text: string) => {
@@ -118,6 +134,7 @@ export default function VoiceraSwipeScreen() {
     if (!input.trim() || waiting) return;
 
     const userMessage = input.trim();
+
     setMessages((msgs) => [...msgs, { sender: "user", text: userMessage }]);
     setInput("");
     setWaiting(true);
@@ -125,6 +142,7 @@ export default function VoiceraSwipeScreen() {
     try {
       const response = await api.post("/ask", { question: userMessage });
       const aiText = response.data.response || "No answer received.";
+      
       setMessages((msgs) => [
         ...msgs,
         {
@@ -132,9 +150,21 @@ export default function VoiceraSwipeScreen() {
           text: aiText,
         },
       ]);
-      speak(aiText); 
-    } catch (error) {
-      console.error("Error:", error);
+      
+      speak(aiText);
+
+      if (userId) {
+        try {
+          await api.post("/save-memo", {
+            user_id: userId,
+            user_query: userMessage,
+            ai_query: aiText, 
+          });
+        } catch (saveError: unknown) {
+          console.error("  - Error:", saveError);
+        }
+      }
+    } catch {
       const errorText = "Sorry, there was an error contacting the server.";
       setMessages((msgs) => [
         ...msgs,
