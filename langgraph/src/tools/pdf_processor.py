@@ -363,7 +363,6 @@ class PDFProcessor:
             
             prompt_content = [{"type": "text", "text": prompt_template}]
             
-            # add images to prompt
             if docs_by_type["images"]:
                 for image in docs_by_type["images"]:
                     prompt_content.append({
