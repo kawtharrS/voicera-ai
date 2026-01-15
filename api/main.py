@@ -12,7 +12,8 @@ import httpx
 langgraph_src = str(Path(__file__).parent.parent / "langgraph" / "src")
 sys.path.insert(0, langgraph_src)
 
-from agents.eureka.graph import graph
+from agents.router.router_graph import graph
+
 
 
 app = FastAPI(
@@ -138,6 +139,9 @@ async def ask_question(query: StudentQuestion):
             "trials": 0,
             "max_trials": DEFAULT_MAX_TRIALS,
             "rewrite_feedback": "",
+            # Router specific fields
+            "query": query.question,
+            "category": None,
         }
         
         # Invoke graph with thread_id for memory persistence
@@ -416,6 +420,141 @@ async def text_to_speech(text: str):
                     "Content-Disposition": "inline; filename=speech.mp3"
                 }
             )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class UniversalQueryRequest(BaseModel):
+    question: str = Field(..., description="User's question - can be about anything")
+    student_id: Optional[str] = Field(None, description="Optional user ID for context")
+    course_id: Optional[str] = Field(None, description="Optional course ID for study-related queries")
+    thread_id: Optional[str] = Field(None, description="Thread ID for conversation memory")
+    conversation_history: Optional[List[dict]] = Field(
+        default=None,
+        description="Previous messages for context"
+    )
+
+
+class UniversalQueryResponse(BaseModel):
+    question: str
+    category: str
+    response: str
+    recommendations: Optional[List[str]] = []
+    observation: Optional[str] = ""
+    metadata: Optional[dict] = {}
+
+
+@app.post("/ask-anything", response_model=UniversalQueryResponse)
+async def ask_anything(query: UniversalQueryRequest):
+    """
+    Universal endpoint that routes any question to the appropriate agent.
+    Automatically detects if it's work, study, or personal related.
+    """
+    try:
+        # Prepare initial state for router
+        initial_state = {
+            # Router fields
+            "query": query.question,
+            "category": None,
+            "messages": [],
+            
+            # Eureka/Study agent fields
+            "question": query.question,
+            "course_id": query.course_id,
+            "student_id": query.student_id or "default_student",
+            "conversation_history": query.conversation_history or [],
+            
+            # Response tracking
+            "ai_response": "",
+            "recommendations": [],
+            "sendable": False,
+            "trials": 0,
+            "max_trials": DEFAULT_MAX_TRIALS,
+            "observation": "",
+            
+            # Eureka specific
+            "courses": [],
+            "courseworks": [],
+            "requested_course_id": query.course_id,
+            "current_interaction": {
+                "current_course": None,
+                "current_coursework": None,
+                "student_question": query.question,
+                "ai_response": "",
+                "recommendations": [],
+                "observation": ""
+            },
+            "agent_messages": query.conversation_history or [],
+            "rewrite_feedback": "",
+        }
+        
+        # Use thread_id for memory persistence
+        thread_id = query.thread_id or query.student_id or "default"
+        
+        # Invoke the router graph
+        result = graph.invoke(
+            initial_state,
+            {"configurable": {"thread_id": thread_id}}
+        )
+        
+        # Extract results based on category
+        category = result.get("category", "personal")
+        
+        # Extract response based on agent used
+        if category == "study":
+            interaction = result.get("current_interaction", {})
+            if isinstance(interaction, dict):
+                ai_response = interaction.get("ai_response", "")
+                recommendations = interaction.get("recommendations", [])
+                observation = interaction.get("observation", "")
+            else:
+                ai_response = getattr(interaction, "ai_response", "")
+                recommendations = getattr(interaction, "recommendations", [])
+                observation = getattr(interaction, "observation", "")
+            
+            metadata = {
+                "sendable": result.get("sendable", False),
+                "trials": result.get("trials", 0),
+                "courses_loaded": len(result.get("courses", []))
+            }
+            
+        elif category == "work":
+            # Handle work-related queries (placeholder for now)
+            ai_response = "Work-related queries are not yet implemented. This will route to calendar, email, or task management."
+            recommendations = ["Enable work agent in settings"]
+            observation = "Routed to work category - implementation pending"
+            metadata = {}
+            
+        else:  # personal
+            # Handle personal queries (placeholder for now)
+            ai_response = "Personal queries are not yet implemented. This will route to personal assistant features."
+            recommendations = ["Enable personal agent in settings"]
+            observation = "Routed to personal category - implementation pending"
+            metadata = {}
+        
+        return UniversalQueryResponse(
+            question=query.question,
+            category=category,
+            response=ai_response,
+            recommendations=recommendations,
+            observation=observation,
+            metadata=metadata
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+
+
+@app.post("/ask-anything-simple")
+async def ask_anything_simple(question: str):
+    """
+    Simplified version - just send a question string.
+    Example: POST /ask-anything-simple?question=What is photosynthesis?
+    """
+    try:
+        query = UniversalQueryRequest(question=question)
+        return await ask_anything(query)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

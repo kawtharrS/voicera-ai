@@ -12,6 +12,20 @@ const fetchTTS = async (text: string) => {
   return response.data;
 };
 
+interface UniversalQueryResponse {
+  question: string;
+  category: string;
+  response: string;
+  recommendations?: string[];
+  observation?: string;
+  metadata?: {
+    sendable?: boolean;
+    trials?: number;
+    courses_loaded?: number;
+    [key: string]: any;
+  };
+}
+
 export default function VoiceraSwipeScreen() {
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -19,9 +33,12 @@ export default function VoiceraSwipeScreen() {
   const [waiting, setWaiting] = useState(false);
   const [isSecondScreenActive, setIsSecondScreenActive] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: "ai", text: "Hi Ask me anything." },
+    { sender: "ai", text: "Hi! Ask me anything about study, work, or personal topics.", category: "greeting" },
   ]);
-  const [userId, setUserId] = useState<number | null>(null);
+
+  const [userId] = useState<number>(6); 
+  
+  const [currentCategory, setCurrentCategory] = useState<string | null>(null);
 
   const [userInteracted, setUserInteracted] = useState(false);
   const ttsQueue = useRef<string[]>([]);
@@ -30,19 +47,8 @@ export default function VoiceraSwipeScreen() {
   const currentY = useRef(0);
 
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const response = await api.get("/current-user");
-        if (response.data.ok && response.data.user) {
-          setUserId(response.data.user.id);
-          console.log("full user object:", response.data.user);
-        }
-      } catch (error: unknown) {
-        console.error("  - Error:", error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+    console.log("Using user ID:", userId)
+  }, [userId]);
 
   const ttsMutation = useMutation({
     mutationFn: fetchTTS,
@@ -139,53 +145,119 @@ export default function VoiceraSwipeScreen() {
 
     const userMessage = input.trim();
 
-    setMessages((msgs) => [...msgs, { sender: "user", text: userMessage }]);
+    setMessages((msgs) => [...msgs, { sender: "user", text: userMessage, category: "user" }]);
     setInput("");
     setWaiting(true);
 
     try {
-      const response = await api.post("/ask", { question: userMessage });
-      const aiText = response.data.response || "No answer received.";
+      console.log("Sending request to /ask-anything...");
+      console.log("Question:", userMessage);
+      console.log("User ID:", userId);
+      
+      const response = await api.post<UniversalQueryResponse>("/ask-anything", {
+        question: userMessage,
+        student_id: userId.toString(),
+        thread_id: `session_${userId}`,
+      });
+
+      console.log("Response received from server");
+      console.log("Full response data:", response.data);
+
+      const aiText = response.data.response || 
+                     (response.data as any).ai_response || 
+                     "No answer received. Please check the server logs.";
+      
+      const category = response.data.category || "unknown";
+      const recommendations = response.data.recommendations || [];
+
+      setCurrentCategory(category);
 
       setMessages((msgs) => [
         ...msgs,
         {
           sender: "ai",
           text: aiText,
+          category: category,
+          recommendations: recommendations,
         },
       ]);
 
       speak(aiText);
 
-      if (userId) {
-        try {
-          await api.post("/save-memo", {
-            user_id: userId,
-            user_query: userMessage,
-            ai_query: aiText,
-          });
-        } catch (saveError: unknown) {
-          console.error("  - Error:", saveError);
-        }
+      if (recommendations.length > 0 && recommendations.length <= 3) {
+        setTimeout(() => {
+          const recsText = `Suggestions: ${recommendations.slice(0, 3).join(", ")}`;
+          speak(recsText);
+        }, 500);
       }
-    } catch {
-      const errorText = "Sorry, there was an error contacting the server.";
+
+      try {
+        console.log("Saving memo for user ID:", userId);
+        await api.post("/save-memo", {
+          user_id: userId,
+          user_query: userMessage,
+          ai_query: aiText,
+        });
+        console.log("Memo saved successfully");
+      } catch (saveError: any) {
+        console.error("Memo save failed:", saveError.response?.data || saveError.message);
+      }
+
+      if (response.data.metadata) {
+        console.log("Metadata:", response.data.metadata);
+      }
+      if (response.data.observation) {
+        console.log("Observation:", response.data.observation);
+      }
+
+    } catch (error: any) {
+      console.error("Error object:", error);
+      
+      let errorText = "Sorry, there was an error.";
+      
+      if (error.response?.status === 404) {
+        errorText = "The /ask-anything endpoint was not found. Please check your Go server is running and has the route registered.";
+      } else if (error.response?.status === 500) {
+        errorText = `Server error: ${error.response?.data?.detail || error.response?.data || "Unknown error"}`;
+      } else if (error.response?.data?.detail) {
+        errorText = `Error: ${error.response.data.detail}`;
+      } else if (error.message) {
+        errorText = `Error: ${error.message}`;
+      }
+      
+      console.log("Displaying error:", errorText);
+      
       setMessages((msgs) => [
         ...msgs,
         {
           sender: "ai",
           text: errorText,
+          category: "error",
         },
       ]);
       speak(errorText);
     } finally {
       setWaiting(false);
+      console.log("Request completed\n");
     }
   };
 
   const handleGoBack = () => {
     setPosition(0);
     setIsSecondScreenActive(false);
+  };
+
+  const getCategoryColor = (category?: string) => {
+    switch (category) {
+      case "study":
+        return "#4CAF50"; 
+      case "work":
+        return "#2196F3"; 
+      case "personal":
+        return "#FF9800"; 
+      default:
+        return "#999"; 
+    }
   };
 
   return (
@@ -243,53 +315,73 @@ export default function VoiceraSwipeScreen() {
         }}
       >
         <div className={styles.screenSecondContent}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <button
-              onClick={handleGoBack}
-              style={{
-                background: "none",
-                border: "none",
-                color: "white",
-                fontSize: "1.5rem",
-                cursor: "pointer",
-                padding: "0.5rem",
-              }}
-              aria-label="Go back"
-              onMouseEnter={() => speak("Go back")}
-            >
-              ←
-            </button>
-            <h1 className={styles.titleLarge}>Chat with Voicera</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <button
+                onClick={handleGoBack}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "white",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  padding: "0.5rem",
+                }}
+                aria-label="Go back"
+                onMouseEnter={() => speak("Go back")}
+              >
+                ←
+              </button>
+              <h1 className={styles.titleLarge}>Chat with Voicera</h1>
+            </div>
+            
+            {currentCategory && currentCategory !== "greeting" && (
+              <div
+                style={{
+                  padding: "0.25rem 0.75rem",
+                  borderRadius: "12px",
+                  backgroundColor: getCategoryColor(currentCategory),
+                  color: "white",
+                  fontSize: "0.75rem",
+                  fontWeight: "600",
+                  textTransform: "uppercase",
+                }}
+                onMouseEnter={() => speak(`Current mode: ${currentCategory}`)}
+              >
+                {currentCategory}
+              </div>
+            )}
           </div>
 
           <div className={styles.chatArea}>
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`${styles.chatMessage} ${
-                  msg.sender === "user" ? styles.user : styles.ai
-                }`}
-              >
-                <span
-                  className={styles.chatBubble}
-                  tabIndex={0}
-                  onMouseEnter={() =>
-                    speak(
-                      msg.sender === "user"
-                        ? `You said: ${msg.text}`
-                        : `AI says: ${msg.text}`
-                    )
-                  }
-                  onFocus={() =>
-                    speak(
-                      msg.sender === "user"
-                        ? `You said: ${msg.text}`
-                        : `AI says: ${msg.text}`
-                    )
-                  }
+            {messages.map((msg: any, i) => (
+              <div key={i}>
+                <div
+                  className={`${styles.chatMessage} ${
+                    msg.sender === "user" ? styles.user : styles.ai
+                  }`}
                 >
-                  {msg.text}
-                </span>
+                  <span
+                    className={styles.chatBubble}
+                    tabIndex={0}
+                    onMouseEnter={() =>
+                      speak(
+                        msg.sender === "user"
+                          ? `You said: ${msg.text}`
+                          : `AI says: ${msg.text}`
+                      )
+                    }
+                    onFocus={() =>
+                      speak(
+                        msg.sender === "user"
+                          ? `You said: ${msg.text}`
+                          : `AI says: ${msg.text}`
+                      )
+                    }
+                  >
+                    {msg.text}
+                  </span>
+                </div>
               </div>
             ))}
             {waiting && (
@@ -313,7 +405,7 @@ export default function VoiceraSwipeScreen() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
+              placeholder="Ask about study, work, or anything..."
               className={styles.chatInput}
               disabled={waiting}
               onMouseEnter={() => speak("Type your message")}
