@@ -22,6 +22,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Voice Mapping Configuration
+VOICE_MAPPING = {
+    "study": "alloy",     # Personal, smoother voice
+    "work": "onyx",       # Professional, deeper voice
+    "personal": "shimmer" # Bright, clear voice
+}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -50,6 +57,7 @@ class AIResponse(BaseModel):
     sendable: bool
     trials: int
     observation: Optional[str] = Field(default="", description="Agent observation")
+    category: Optional[str] = Field(default=None, description="Query category")
 
 class HealthResponse(BaseModel):
     status: str
@@ -164,6 +172,7 @@ async def ask_question(query: StudentQuestion):
         ai_response = interaction.get("ai_response", "") if isinstance(interaction, dict) else getattr(interaction, "ai_response", "")
         recommendations = interaction.get("recommendations", []) if isinstance(interaction, dict) else getattr(interaction, "recommendations", [])
         observation = interaction.get("observation", "") if isinstance(interaction, dict) else getattr(interaction, "observation", "")
+        category = result.get("category")
         
         return AIResponse(
             question=query.question,
@@ -172,7 +181,8 @@ async def ask_question(query: StudentQuestion):
             feedback="Response generated successfully",
             sendable=result.get("sendable", False),
             trials=result.get("trials", 0),
-            observation=observation
+            observation=observation,
+            category=category
         )
         
     except Exception as e:
@@ -186,6 +196,92 @@ async def ask_simple(question: str):
         query = StudentQuestion(question=question)
         return await ask_question(query)
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ask-anything", response_model=AIResponse)
+async def ask_anything(query: StudentQuestion):
+    """Universal endpoint that routes to appropriate agent based on query category."""
+    return await ask_question(query)
+
+@app.post("/ask-anything-simple")
+async def ask_anything_simple(question: str):
+    """Simple universal endpoint for quick queries."""
+    try:
+        query = StudentQuestion(question=question)
+        return await ask_question(query)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/personal/ask", response_model=AIResponse)
+async def ask_personal(query: StudentQuestion):
+    """Direct endpoint for personal queries."""
+    try:
+        from agents.router.router_response_nodes import ResponseNodes
+        nodes = ResponseNodes()
+        
+        initial_state = {
+            "query": query.question,
+            "category": "personal",
+            "student_id": query.student_id or "default_student",
+            "current_interaction": {
+                "student_question": query.question,
+                "ai_response": "",
+                "recommendations": []
+            },
+            "agent_messages": query.conversation_history or [],
+        }
+        
+        result = nodes.generate_personal_response(initial_state)
+        
+        return AIResponse(
+            question=query.question,
+            response=result.get("ai_response", ""),
+            recommendations=result.get("recommendations", []),
+            feedback="Personal response generated",
+            sendable=result.get("sendable", True),
+            trials=0,
+            observation="Personal agent",
+            category="personal"
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/work/ask", response_model=AIResponse)
+async def ask_work(query: StudentQuestion):
+    """Direct endpoint for work queries."""
+    try:
+        from agents.router.router_response_nodes import ResponseNodes
+        nodes = ResponseNodes()
+        
+        initial_state = {
+            "query": query.question,
+            "category": "work",
+            "student_id": query.student_id or "default_student",
+            "current_interaction": {
+                "student_question": query.question,
+                "ai_response": "",
+                "recommendations": []
+            },
+            "agent_messages": query.conversation_history or [],
+        }
+        
+        result = nodes.generate_work_response(initial_state)
+        
+        return AIResponse(
+            question=query.question,
+            response=result.get("ai_response", ""),
+            recommendations=result.get("recommendations", []),
+            feedback="Work response generated",
+            sendable=result.get("sendable", True),
+            trials=0,
+            observation="Work agent",
+            category="work"
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -389,10 +485,28 @@ async def gmail_run(payload: GmailRunRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/tts")
-async def text_to_speech(text: str):
-    """Convert text to speech using OpenAI TTS API"""
+async def text_to_speech(text: str, voice: Optional[str] = "alloy", category: Optional[str] = None):
+    """Convert text to speech using OpenAI TTS API
+    
+    Args:
+        text: The text to convert to speech
+        voice: Specific voice to use (default: alloy)
+        category: Optional category to determine voice automatically (overrides voice default if matches mapping)
+    """
     try:
+        print(f"Request received - text: {text[:50]}..., category: {category}")
         api_key = os.getenv("OPENAI_API_KEY")
+        
+        if not api_key:
+            print("[TTS ERROR] OPENAI_API_KEY not found in environment")
+            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        
+        # Determine voice based on category if provided, otherwise use requested voice
+        selected_voice = voice
+        if category and category in VOICE_MAPPING:
+            selected_voice = VOICE_MAPPING[category]
+        
+        print(f"[TTS] Using voice: {selected_voice}")
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -404,15 +518,20 @@ async def text_to_speech(text: str):
                 json={
                     "model": "tts-1",
                     "input": text,
-                    "voice": "alloy",
+                    "voice": selected_voice,
                     "speed": 1.0
                 },
                 timeout=30.0  
             )
             
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail="TTS API error")
+            print(f"[TTS] OpenAI response status: {response.status_code}")
             
+            if response.status_code != 200:
+                error_detail = response.text
+                print(f"[TTS ERROR] OpenAI API error: {error_detail}")
+                raise HTTPException(status_code=response.status_code, detail=f"TTS API error: {error_detail}")
+            
+            print("Successfully generated audio")
             return StreamingResponse(
                 iter([response.content]),
                 media_type="audio/mpeg",
@@ -420,143 +539,15 @@ async def text_to_speech(text: str):
                     "Content-Disposition": "inline; filename=speech.mp3"
                 }
             )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-class UniversalQueryRequest(BaseModel):
-    question: str = Field(..., description="User's question - can be about anything")
-    student_id: Optional[str] = Field(None, description="Optional user ID for context")
-    course_id: Optional[str] = Field(None, description="Optional course ID for study-related queries")
-    thread_id: Optional[str] = Field(None, description="Thread ID for conversation memory")
-    conversation_history: Optional[List[dict]] = Field(
-        default=None,
-        description="Previous messages for context"
-    )
-
-
-class UniversalQueryResponse(BaseModel):
-    question: str
-    category: str
-    response: str
-    recommendations: Optional[List[str]] = []
-    observation: Optional[str] = ""
-    metadata: Optional[dict] = {}
-
-
-@app.post("/ask-anything", response_model=UniversalQueryResponse)
-async def ask_anything(query: UniversalQueryRequest):
-    """
-    Universal endpoint that routes any question to the appropriate agent.
-    Automatically detects if it's work, study, or personal related.
-    """
-    try:
-        # Prepare initial state for router
-        initial_state = {
-            # Router fields
-            "query": query.question,
-            "category": None,
-            "messages": [],
-            
-            # Eureka/Study agent fields
-            "question": query.question,
-            "course_id": query.course_id,
-            "student_id": query.student_id or "default_student",
-            "conversation_history": query.conversation_history or [],
-            
-            # Response tracking
-            "ai_response": "",
-            "recommendations": [],
-            "sendable": False,
-            "trials": 0,
-            "max_trials": DEFAULT_MAX_TRIALS,
-            "observation": "",
-            
-            # Eureka specific
-            "courses": [],
-            "courseworks": [],
-            "requested_course_id": query.course_id,
-            "current_interaction": {
-                "current_course": None,
-                "current_coursework": None,
-                "student_question": query.question,
-                "ai_response": "",
-                "recommendations": [],
-                "observation": ""
-            },
-            "agent_messages": query.conversation_history or [],
-            "rewrite_feedback": "",
-        }
-        
-        # Use thread_id for memory persistence
-        thread_id = query.thread_id or query.student_id or "default"
-        
-        # Invoke the router graph
-        result = graph.invoke(
-            initial_state,
-            {"configurable": {"thread_id": thread_id}}
-        )
-        
-        # Extract results based on category
-        category = result.get("category", "personal")
-        
-        # Extract response based on agent used
-        if category == "study":
-            interaction = result.get("current_interaction", {})
-            if isinstance(interaction, dict):
-                ai_response = interaction.get("ai_response", "")
-                recommendations = interaction.get("recommendations", [])
-                observation = interaction.get("observation", "")
-            else:
-                ai_response = getattr(interaction, "ai_response", "")
-                recommendations = getattr(interaction, "recommendations", [])
-                observation = getattr(interaction, "observation", "")
-            
-            metadata = {
-                "sendable": result.get("sendable", False),
-                "trials": result.get("trials", 0),
-                "courses_loaded": len(result.get("courses", []))
-            }
-            
-        elif category == "work":
-            # Handle work-related queries (placeholder for now)
-            ai_response = "Work-related queries are not yet implemented. This will route to calendar, email, or task management."
-            recommendations = ["Enable work agent in settings"]
-            observation = "Routed to work category - implementation pending"
-            metadata = {}
-            
-        else:  # personal
-            # Handle personal queries (placeholder for now)
-            ai_response = "Personal queries are not yet implemented. This will route to personal assistant features."
-            recommendations = ["Enable personal agent in settings"]
-            observation = "Routed to personal category - implementation pending"
-            metadata = {}
-        
-        return UniversalQueryResponse(
-            question=query.question,
-            category=category,
-            response=ai_response,
-            recommendations=recommendations,
-            observation=observation,
-            metadata=metadata
-        )
-        
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+        error_trace = traceback.format_exc()
+        print(f"[TTS ERROR] Exception occurred:\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"TTS error: {str(e)}")
 
 
-@app.post("/ask-anything-simple")
-async def ask_anything_simple(question: str):
-    """
-    Simplified version - just send a question string.
-    Example: POST /ask-anything-simple?question=What is photosynthesis?
-    """
-    try:
-        query = UniversalQueryRequest(question=question)
-        return await ask_anything(query)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
     
 if __name__ == "__main__":
     uvicorn.run(

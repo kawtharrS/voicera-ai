@@ -32,7 +32,7 @@ body {
   align-items: center;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 2;
-  background-color: #4a4a4a;
+  background-color: #ffffff;
 }
 
 .screenSecond {
@@ -86,7 +86,7 @@ body {
 
 /* Titles */
 .title {
-  color: white;
+  color: rgb(105, 105, 105);
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: 0.15em;

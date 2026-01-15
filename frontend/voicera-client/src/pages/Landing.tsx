@@ -1,4 +1,4 @@
-import Landing from "../components/Landing/Landing";
+import Landing from "../components/Landing";
 
 function LandingPage() {
   return <Landing />;

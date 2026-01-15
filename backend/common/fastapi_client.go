@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
-	"fmt"
-	"net/url"
 )
 
 type HealthResponse struct {
@@ -187,6 +187,8 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	category := r.URL.Query().Get("category")
+
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 	if fastAPIURL == "" {
 		http.Error(w, "FASTAPI_URL not configured", http.StatusInternalServerError)
@@ -194,6 +196,9 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	requestURL := fmt.Sprintf("%s/tts?text=%s", fastAPIURL, url.QueryEscape(text))
+	if category != "" {
+		requestURL = fmt.Sprintf("%s&category=%s", requestURL, url.QueryEscape(category))
+	}
 	fmt.Printf("TTS Request: %s\n", requestURL)
 
 	resp, err := http.Get(requestURL)
@@ -254,3 +259,116 @@ func AskAnythingSimpleHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// AskPersonal calls the personal agent endpoint
+func AskPersonal(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
+	fastAPIURL := os.Getenv("FASTAPI_URL")
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fastAPIURL+"/personal/ask",
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := http.Client{Timeout: 120 * time.Second}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("FastAPI error: %s", string(b))
+	}
+
+	var universalResp UniversalQueryResponse
+	if err := json.NewDecoder(resp.Body).Decode(&universalResp); err != nil {
+		return nil, err
+	}
+	return &universalResp, nil
+}
+
+// AskWork calls the work agent endpoint
+func AskWork(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
+	fastAPIURL := os.Getenv("FASTAPI_URL")
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fastAPIURL+"/work/ask",
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := http.Client{Timeout: 120 * time.Second}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("FastAPI error: %s", string(b))
+	}
+
+	var universalResp UniversalQueryResponse
+	if err := json.NewDecoder(resp.Body).Decode(&universalResp); err != nil {
+		return nil, err
+	}
+	return &universalResp, nil
+}
+
+func AskPersonalHandler(w http.ResponseWriter, r *http.Request) {
+	var query UniversalQueryRequest
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	response, err := AskPersonal(query)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func AskWorkHandler(w http.ResponseWriter, r *http.Request) {
+	var query UniversalQueryRequest
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	response, err := AskWork(query)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
