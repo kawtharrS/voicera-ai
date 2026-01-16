@@ -28,18 +28,9 @@ func main() {
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/logout", common.LogoutHandler).Methods("POST")
-
 	router.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
-
-	router.HandleFunc("/api/ask", common.AskAIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/ask-anything", common.AskAnythingHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/ask-anything-simple", common.AskAnythingSimpleHandler).Methods("GET", "POST", "OPTIONS")
-
-	router.HandleFunc("/api/ask-personal", common.AskPersonalHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/ask-work", common.AskWorkHandler).Methods("POST", "OPTIONS")
-
 	router.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
-
 	router.HandleFunc("/api/save-memo", common.SaveMemoHandler).Methods("POST", "OPTIONS")
 
 	corsHandler := handlers.CORS(
