@@ -10,49 +10,11 @@ import (
 	"net/url"
 	"os"
 	"time"
+	"voicera-backend/types"
+
 )
 
-type HealthResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-type StudentQuestion struct {
-	Question            string                   `json:"question"`
-	CourseID            string                   `json:"course_id,omitempty"`
-	StudentID           string                   `json:"student_id,omitempty"`
-	ConversationHistory []map[string]interface{} `json:"conversation_history,omitempty"`
-}
-
-type UniversalQueryRequest struct {
-	Question            string                   `json:"question"`
-	StudentID           string                   `json:"student_id,omitempty"`
-	CourseID            string                   `json:"course_id,omitempty"`
-	ThreadID            string                   `json:"thread_id,omitempty"`
-	ConversationHistory []map[string]interface{} `json:"conversation_history,omitempty"`
-}
-
-type AIResponse struct {
-	Question        string          `json:"question"`
-	Response        string          `json:"response"`
-	Recommendations json.RawMessage `json:"recommendations"`
-	Feedback        string          `json:"feedback"`
-	Sendable        bool            `json:"sendable"`
-	Trials          int             `json:"trials"`
-	Observation     string          `json:"observation"`
-	Category        string          `json:"category,omitempty"`
-}
-
-type UniversalQueryResponse struct {
-	Question        string                 `json:"question"`
-	Category        string                 `json:"category"`
-	Response        string                 `json:"response"`
-	Recommendations []string               `json:"recommendations,omitempty"`
-	Observation     string                 `json:"observation,omitempty"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
-}
-
-func GetFastAPIHealth() (*HealthResponse, error) {
+func GetFastAPIHealth() (*types.HealthResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	client := http.Client{
@@ -70,16 +32,19 @@ func GetFastAPIHealth() (*HealthResponse, error) {
 		return nil, errors.New("FastAPI health check failed")
 	}
 
-	var health HealthResponse
+	var health types.HealthResponse
 	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
 		return nil, err
 	}
 
-	return &health, err
+	converted := &types.HealthResponse{
+		Status:  health.Status,
+		Message: health.Message,
+	}
+	return converted, err
 }
 
-// New: Universal query function with automatic routing
-func AskAnything(query UniversalQueryRequest) (*AIResponse, error) {
+func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	body, err := json.Marshal(query)
@@ -111,11 +76,21 @@ func AskAnything(query UniversalQueryRequest) (*AIResponse, error) {
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
 	}
 
-	var aiResp AIResponse
+	var aiResp types.AIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
-	return &aiResp, nil
+	converted := &types.AIResponse{
+		Question:        aiResp.Question,
+		Response:        aiResp.Response,
+		Recommendations: aiResp.Recommendations,
+		Feedback:        aiResp.Feedback,
+		Sendable:        aiResp.Sendable,
+		Trials:          aiResp.Trials,
+		Observation:     aiResp.Observation,
+		Category:        aiResp.Category,
+	}
+	return converted, nil
 }
 
 func TTSHandler(w http.ResponseWriter, r *http.Request) {
@@ -164,7 +139,7 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
-	var query UniversalQueryRequest
+	var query types.UniversalQueryRequest
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return

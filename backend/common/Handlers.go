@@ -15,6 +15,18 @@ var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
 	securecookie.GenerateRandomKey(32))
 
+type registerRequest struct {
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirmPassword"`
+}
+
+type apiResponse struct {
+	Ok      bool   `json:"ok"`
+	Message string `json:"message"`
+}
+
 func LoginHandler(response http.ResponseWriter, request *http.Request) {
 	name := request.FormValue("name")
 	pass := request.FormValue("password")
@@ -33,18 +45,6 @@ func LoginHandler(response http.ResponseWriter, request *http.Request) {
 	http.Redirect(response, request, redirectTarget, 302)
 }
 
-type registerRequest struct {
-	Name            string `json:"name"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	ConfirmPassword string `json:"confirmPassword"`
-}
-
-type apiResponse struct {
-	Ok      bool   `json:"ok"`
-	Message string `json:"message"`
-}
-
 func writeJSON(w http.ResponseWriter, status int, payload apiResponse) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -52,10 +52,7 @@ func writeJSON(w http.ResponseWriter, status int, payload apiResponse) {
 }
 
 func RegisterAPIHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	helpers.SetHeaders(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
@@ -89,10 +86,7 @@ func RegisterAPIHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	helpers.SetHeaders(w)
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
