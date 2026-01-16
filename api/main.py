@@ -26,7 +26,9 @@ app = FastAPI(
 VOICE_MAPPING = {
     "study": "alloy",     # Personal, smoother voice
     "work": "onyx",       # Professional, deeper voice
-    "personal": "shimmer" # Bright, clear voice
+    "personal": "shimmer", # Bright, clear voice
+    "gmail": "onyx",      # Work/Orion
+    "calendar": "onyx"    # Work/Orion
 }
 
 app.add_middleware(

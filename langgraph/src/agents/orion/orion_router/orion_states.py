@@ -8,7 +8,18 @@ class GraphState(TypedDict):
     Includes fields necessary for routing through orion router
     """
 
-    query:str
+    query: str
     category: Optional[str]
     messages: Annotated[List[BaseMessage], add_messages]
+    
+    # Standard fields for compatibility with main router
+    student_id: Optional[str]
+    current_interaction: Optional[dict]
+    agent_messages: Optional[List[dict]]
+    sendable: Optional[bool]
+    trials: Optional[int]
+    max_trials: Optional[int]
+    rewrite_feedback: Optional[str]
+    user_context: Optional[str]
+    conversation_history: Optional[List[dict]]
     

@@ -1,9 +1,9 @@
 CATEGORIZE_QUERY_PROMPT = """
 Analyze the user's query and categorize it into one of the following types:
-- create: create a new event to the calendar
-- search: serach for event from calendar
-- update: update a certain event in the user's calendar
-- delete: delete an event from the user's calendar
+- create: create a new event in the calendar (e.g., "schedule a meeting", "add an event", "create appointment", "remind me to")
+- search: search for events in the calendar (e.g., "what do I have tomorrow", "find meeting", "check schedule", "do I have any events")
+- update: update an existing event (e.g., "reschedule", "change time", "move event", "edit event")
+- delete: delete an event (e.g., "cancel meeting", "remove event", "delete appointment")
 
 User Query: {query}
 
@@ -102,7 +102,7 @@ IMPORTANT: Split the request into two parts:
 2) How to delete it (calendar, send_updates)
 
 Use the reference datetime and timezone below to resolve relative date phrases
-+(e.g., 'today', 'tomorrow', 'next Monday', 'in 2 hours') into exact datetimes.
+(e.g., 'today', 'tomorrow', 'next Monday', 'in 2 hours') into exact datetimes.
 
 Return (JSON fields):
 - event_id (optional): if you don't know it, return null (do NOT invent placeholders)

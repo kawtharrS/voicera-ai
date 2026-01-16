@@ -46,10 +46,14 @@ class CalendarNodes:
         print(Fore.YELLOW + "Receiving user query ..." + Style.RESET_ALL)
 
         incoming = state.get("current_interaction")
+        request = ""
         if isinstance(incoming, dict):
-            request = incoming.get("user_request", "")
-        else:
-            request = getattr(incoming, "user_request", "")
+            request = incoming.get("user_request") or incoming.get("student_question", "")
+        elif incoming is not None:
+            request = getattr(incoming, "user_request", getattr(incoming, "student_question", ""))
+        
+        if not request:
+            request = state.get("query", "")
 
         return {
             "current_interaction": UserInteraction(

@@ -17,15 +17,15 @@ class RouterWorkflow:
 
         workflow.add_conditional_edges(
             "orion_router",
-            lambda x:x["category"],
+            lambda x: x["category"],
             {
-                "gmail":"gmail_agent",
-                "calendar":"calendar_agent"
+                "gmail": "gmail_router",
+                "calendar": "calendar_router"
             }
         )
 
-        workflow.add_edge("gmail_edge", END)
-        workflow.add_edge("calendar_agent", END)
+        workflow.add_edge("gmail_router", END)
+        workflow.add_edge("calendar_router", END)
 
         self.app = workflow.compile()
 

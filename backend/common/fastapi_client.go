@@ -40,6 +40,7 @@ type AIResponse struct {
 	Sendable        bool            `json:"sendable"`
 	Trials          int             `json:"trials"`
 	Observation     string          `json:"observation"`
+	Category        string          `json:"category,omitempty"`
 }
 
 type UniversalQueryResponse struct {
@@ -115,7 +116,7 @@ func AskAI(question StudentQuestion) (*AIResponse, error) {
 }
 
 // New: Universal query function with automatic routing
-func AskAnything(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
+func AskAnything(query UniversalQueryRequest) (*AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	body, err := json.Marshal(query)
@@ -147,14 +148,14 @@ func AskAnything(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
 	}
 
-	var universalResp UniversalQueryResponse
-	if err := json.NewDecoder(resp.Body).Decode(&universalResp); err != nil {
+	var aiResp AIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
-	return &universalResp, nil
+	return &aiResp, nil
 }
 
-func AskAnythingSimple(question string) (*UniversalQueryResponse, error) {
+func AskAnythingSimple(question string) (*AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	encodedQuestion := url.QueryEscape(question)
@@ -173,11 +174,11 @@ func AskAnythingSimple(question string) (*UniversalQueryResponse, error) {
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
 	}
 
-	var universalResp UniversalQueryResponse
-	if err := json.NewDecoder(resp.Body).Decode(&universalResp); err != nil {
+	var aiResp AIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
-	return &universalResp, nil
+	return &aiResp, nil
 }
 
 func TTSHandler(w http.ResponseWriter, r *http.Request) {
@@ -260,7 +261,7 @@ func AskAnythingSimpleHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // AskPersonal calls the personal agent endpoint
-func AskPersonal(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
+func AskPersonal(query UniversalQueryRequest) (*AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	body, err := json.Marshal(query)
@@ -292,15 +293,15 @@ func AskPersonal(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
 	}
 
-	var universalResp UniversalQueryResponse
-	if err := json.NewDecoder(resp.Body).Decode(&universalResp); err != nil {
+	var aiResp AIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
-	return &universalResp, nil
+	return &aiResp, nil
 }
 
 // AskWork calls the work agent endpoint
-func AskWork(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
+func AskWork(query UniversalQueryRequest) (*AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	body, err := json.Marshal(query)
@@ -332,11 +333,11 @@ func AskWork(query UniversalQueryRequest) (*UniversalQueryResponse, error) {
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
 	}
 
-	var universalResp UniversalQueryResponse
-	if err := json.NewDecoder(resp.Body).Decode(&universalResp); err != nil {
+	var aiResp AIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
-	return &universalResp, nil
+	return &aiResp, nil
 }
 
 func AskPersonalHandler(w http.ResponseWriter, r *http.Request) {

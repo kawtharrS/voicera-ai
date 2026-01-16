@@ -3,7 +3,7 @@ from .router_state import GraphState
 from .router_nodes import RouterNodes
 from .router_response_nodes import ResponseNodes
 from ..eureka.graph import ClassroomWorkflow
-
+from ..orion.orion_router.orion_graph import graph as orion_graph
 
 class RouterWorkflow:
     def __init__(self):
@@ -14,7 +14,7 @@ class RouterWorkflow:
         workflow.add_node("router", router_nodes.route_query)
         workflow.add_node("study_agent", ClassroomWorkflow().app)
         workflow.add_node("personal_agent", response_nodes.generate_personal_response)
-        workflow.add_node("work_agent", response_nodes.generate_work_response)
+        workflow.add_node("work_agent", orion_graph)
 
         workflow.set_entry_point("router")
         

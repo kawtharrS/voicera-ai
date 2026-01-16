@@ -11,7 +11,7 @@ class OrionRouterAgent():
     def __init__(self):
         self.model = ChatOpenAI(
             model = "gpt-4o-mini", 
-            tempreture=0,
+            temperature=0,
             openai_api_key= os.getenv("OPENAI_API_KEY")
         )
 
@@ -25,6 +25,6 @@ class OrionRouterAgent():
             | self.model.with_structured_output(RouterOutput)
         )
 
-        def route(self, query:str) -> RouterOutput:
-            """Routes the user query to the appropriate category"""
-            return self.router_runnable.invoke({"query":query})
+    def route(self, query:str) -> RouterOutput:
+        """Routes the user query to the appropriate category"""
+        return self.router_runnable.invoke({"query":query})
