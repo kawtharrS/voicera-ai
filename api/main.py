@@ -14,11 +14,9 @@ sys.path.insert(0, langgraph_src)
 
 from agents.router.router_graph import graph
 
-
-
 app = FastAPI(
     title="Voicera ClassroomAI API",
-    description="AI-powered classroom assistant API",
+    description="AI-powered assistant API",
     version="1.0.0"
 )
 

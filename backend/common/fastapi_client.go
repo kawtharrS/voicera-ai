@@ -48,6 +48,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	body, err := json.Marshal(query)
+
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // prevents memory leaks 
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
