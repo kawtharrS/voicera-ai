@@ -9,10 +9,12 @@ require (
 	github.com/supabase-community/supabase-go v0.0.4
 )
 
+require github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
+
 require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/handlers v1.5.2 
+	github.com/gorilla/handlers v1.5.2
 	github.com/supabase-community/functions-go v0.0.0-20220927045802-22373e6cb51d // indirect
 	github.com/supabase-community/gotrue-go v1.2.0 // indirect
 	github.com/supabase-community/postgrest-go v0.0.11 // indirect

@@ -1,285 +1,32 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useMutation } from "@tanstack/react-query";
 import styles from "./chat.module.css";
-import api from "../../api/axios";
-
-const fetchTTS = async (text: string, category?: string) => {
-  const response = await api.get("/tts", {
-    params: {
-      text,
-      category: category || "default"
-    },
-    responseType: "blob",
-  });
-  if (response.data.size === 0) throw new Error("Empty audio blob received");
-  return response.data;
-};
-
-interface UniversalQueryResponse {
-  question: string;
-  category: string;
-  response: string;
-  recommendations?: string[];
-  observation?: string;
-  metadata?: {
-    sendable?: boolean;
-    trials?: number;
-    courses_loaded?: number;
-    [key: string]: any;
-  };
-}
+import { useSwipeScreen } from "../../hooks/useSwipeScreen";
+import { useAudioTTS } from "../../hooks/useAudioTTS";
+import { useChat } from "../../hooks/useChat";
 
 export default function VoiceraSwipeScreen() {
-  const [position, setPosition] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [input, setInput] = useState("");
-  const [waiting, setWaiting] = useState(false);
-  const [isSecondScreenActive, setIsSecondScreenActive] = useState(false);
-  const [messages, setMessages] = useState([
-    { sender: "ai", text: "Hi! Ask me anything about study, work, or personal topics.", category: "greeting" },
-  ]);
+  const {
+    position,
+    isDragging,
+    isSecondScreenActive,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    openSecondScreen,
+    closeSecondScreen,
+  } = useSwipeScreen();
 
+  const { speak } = useAudioTTS(null);
 
-  const [userId] = useState<number>(6);
-
-  const [currentCategory, setCurrentCategory] = useState<string | null>(null);
-
-  const [userInteracted, setUserInteracted] = useState(false);
-  const ttsQueue = useRef<string[]>([]);
-  const currentAudio = useRef<HTMLAudioElement | null>(null);
-
-  const startY = useRef(0);
-  const currentY = useRef(0);
-
-
-  useEffect(() => {
-    console.log("Using user ID:", userId);
-
-  }, [userId]);
-
-  const ttsMutation = useMutation({
-    mutationFn: ({ text, category }: { text: string; category?: string }) =>
-      fetchTTS(text, category),
-    onSuccess: (blob) => {
-      // Stop previous audio if playing
-      if (currentAudio.current) {
-        currentAudio.current.pause();
-        currentAudio.current.currentTime = 0;
-      }
-
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      currentAudio.current = audio;
-
-      audio.onloadeddata = () => console.log("Audio loaded successfully");
-      audio.onerror = (e) => console.error("Audio playback error:", e);
-      audio.play().then(() => {
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          if (currentAudio.current === audio) {
-            currentAudio.current = null;
-          }
-        };
-      });
-    },
-    onError: (err) => {
-      console.error("TTS error:", err);
-    },
-  });
-
-  const speak = useCallback(
-    (text: string, category?: string) => {
-      if (!text) return;
-      if (!userInteracted) {
-        ttsQueue.current.push(text);
-        return;
-      }
-      ttsMutation.mutate({ text, category });
-    },
-    [userInteracted, ttsMutation]
+  const { input, setInput, messages, waiting, currentCategory, sendMessage } = useChat(
+    (text, category) => speak(text, category)
   );
 
-  useEffect(() => {
-    const handleFirstClick = () => setUserInteracted(true);
-    document.addEventListener("click", handleFirstClick, { once: true });
-    return () => document.removeEventListener("click", handleFirstClick);
-  }, []);
-
-  useEffect(() => {
-    if (userInteracted && ttsQueue.current.length > 0) {
-      ttsQueue.current.forEach((text) => speak(text, currentCategory || "default"));
-      ttsQueue.current = [];
-    }
-  }, [userInteracted, speak, currentCategory]);
-
-  // ESC key to stop audio
-  useEffect(() => {
-    const handleEscKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && currentAudio.current) {
-        currentAudio.current.pause();
-        currentAudio.current.currentTime = 0;
-        currentAudio.current = null;
-        console.log("Audio stopped by ESC key");
-      }
-    };
-
-    document.addEventListener("keydown", handleEscKey);
-    return () => document.removeEventListener("keydown", handleEscKey);
-  }, []);
-
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    setIsDragging(true);
-    startY.current = e.touches[0].clientY;
-    currentY.current = position;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    const deltaY = e.touches[0].clientY - startY.current;
-    const newPosition = Math.max(
-      -100,
-      Math.min(0, currentY.current + (deltaY / window.innerHeight) * 100)
-    );
-    setPosition(newPosition);
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    const isOpening = position < -30;
-    setPosition(isOpening ? -100 : 0);
-    setIsSecondScreenActive(isOpening);
-  };
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsDragging(true);
-    startY.current = e.clientY;
-    currentY.current = position;
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    const deltaY = e.clientY - startY.current;
-    const newPosition = Math.max(
-      -100,
-      Math.min(0, currentY.current + (deltaY / window.innerHeight) * 100)
-    );
-    setPosition(newPosition);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    const isOpening = position < -30;
-    setPosition(isOpening ? -100 : 0);
-    setIsSecondScreenActive(isOpening);
-  };
-
-  const handleSend = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || waiting) return;
-
-    const userMessage = input.trim();
-
-    setMessages((msgs) => [...msgs, { sender: "user", text: userMessage, category: "user" }]);
-    setInput("");
-    setWaiting(true);
-
-    try {
-      console.log("Sending request to /ask-anything...");
-      console.log("Question:", userMessage);
-      console.log("User ID:", userId);
-
-      const response = await api.post<UniversalQueryResponse>("/ask-anything", {
-        question: userMessage,
-        student_id: userId.toString(),
-        thread_id: `session_${userId}`,
-      });
-
-      console.log("Response received from server");
-      console.log("Full response data:", response.data);
-
-      const aiText = response.data.response ||
-        (response.data as any).ai_response ||
-        "No answer received. Please check the server logs.";
-
-      const category = response.data.category || "unknown";
-      const recommendations = response.data.recommendations || [];
-
-      setCurrentCategory(category);
-
-      setMessages((msgs) => [
-        ...msgs,
-        {
-          sender: "ai",
-          text: aiText,
-          category: category,
-          recommendations: recommendations,
-        },
-      ]);
-
-      speak(aiText, category);
-
-      if (recommendations.length > 0 && recommendations.length <= 3) {
-        setTimeout(() => {
-          const recsText = `Suggestions: ${recommendations.slice(0, 3).join(", ")}`;
-          speak(recsText, category);
-        }, 500);
-      }
-
-      try {
-        console.log("Saving memo for user ID:", userId);
-        await api.post("/save-memo", {
-          user_id: userId,
-          user_query: userMessage,
-          ai_query: aiText,
-        });
-        console.log("Memo saved successfully");
-      } catch (saveError: any) {
-        console.error("Memo save failed:", saveError.response?.data || saveError.message);
-      }
-
-      if (response.data.metadata) {
-        console.log("Metadata:", response.data.metadata);
-      }
-      if (response.data.observation) {
-        console.log("Observation:", response.data.observation);
-      }
-
-    } catch (error: any) {
-      console.error("Error object:", error);
-
-      let errorText = "Sorry, there was an error.";
-
-      if (error.response?.status === 404) {
-        errorText = "The /ask-anything endpoint was not found. Please check your Go server is running and has the route registered.";
-      } else if (error.response?.status === 500) {
-        errorText = `Server error: ${error.response?.data?.detail || error.response?.data || "Unknown error"}`;
-      } else if (error.response?.data?.detail) {
-        errorText = `Error: ${error.response.data.detail}`;
-      } else if (error.message) {
-        errorText = `Error: ${error.message}`;
-      }
-
-      console.log("Displaying error:", errorText);
-
-      setMessages((msgs) => [
-        ...msgs,
-        {
-          sender: "ai",
-          text: errorText,
-          category: "error",
-        },
-      ]);
-      speak(errorText, "error");
-    } finally {
-      setWaiting(false);
-      console.log("Request completed\n");
-    }
-  };
-
-  const handleGoBack = () => {
-    setPosition(0);
-    setIsSecondScreenActive(false);
+    sendMessage(input);
   };
 
   const getCategoryColor = (category?: string) => {
@@ -316,18 +63,13 @@ export default function VoiceraSwipeScreen() {
       >
         <div className={styles.screenFirstContent}>
           <div className={styles.logoContainer}>
-            <img
-              src="/image.png"
-              alt="Voicera logo"
-              className={styles.logoIcon}
-            />
+            <img src="/image.png" alt="Voicera logo" className={styles.logoIcon} />
           </div>
           <h1 className={styles.title}>ASK VOICERA</h1>
           <button
             className={styles.transcriptionButton}
             onClick={() => {
-              setPosition(-100);
-              setIsSecondScreenActive(true);
+              openSecondScreen();
               speak("Start Chat");
             }}
           >
@@ -350,11 +92,18 @@ export default function VoiceraSwipeScreen() {
         }}
       >
         <div className={styles.screenSecondContent}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem", justifyContent: "space-between" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              justifyContent: "space-between",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <button
                 onClick={() => {
-                  handleGoBack();
+                  closeSecondScreen();
                   speak("Go back");
                 }}
                 style={{
@@ -402,18 +151,12 @@ export default function VoiceraSwipeScreen() {
                     className={styles.chatBubble}
                     tabIndex={0}
                     onClick={() =>
-                      speak(
-                        msg.sender === "user"
-                          ? `You said: ${msg.text}`
-                          : `AI says: ${msg.text}`
-                      )
+                      speak(msg.sender === "user" ? `You said: ${msg.text}` : `AI says: ${msg.text}`)
                     }
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
+                      if (e.key === "Enter" || e.key === " ") {
                         speak(
-                          msg.sender === "user"
-                            ? `You said: ${msg.text}`
-                            : `AI says: ${msg.text}`
+                          msg.sender === "user" ? `You said: ${msg.text}` : `AI says: ${msg.text}`
                         );
                       }
                     }}
@@ -422,7 +165,6 @@ export default function VoiceraSwipeScreen() {
                     {msg.text}
                   </span>
                 </div>
-
               </div>
             ))}
             {waiting && (
@@ -432,7 +174,7 @@ export default function VoiceraSwipeScreen() {
                   tabIndex={0}
                   onClick={() => speak("AI is typing")}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === "Enter" || e.key === " ") {
                       speak("AI is typing");
                     }
                   }}

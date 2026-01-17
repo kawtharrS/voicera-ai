@@ -26,6 +26,11 @@ func SaveMemoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, _, err := GetUserInfo(r)
+	if err == nil {
+		req.UserID = int64(userID)
+	}
+
 	if req.UserQuery == "" || req.AIQuery == "" {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "user_query and ai_query are required"})
 		return
@@ -50,4 +55,3 @@ func SaveMemoHandler(w http.ResponseWriter, r *http.Request) {
 		"data":    memo,
 	})
 }
-

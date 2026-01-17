@@ -11,7 +11,6 @@ import (
 	"os"
 	"time"
 	"voicera-backend/types"
-
 )
 
 func GetFastAPIHealth() (*types.HealthResponse, error) {
@@ -70,7 +69,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() // prevents memory leaks 
+	defer resp.Body.Close() // prevents memory leaks
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
@@ -144,6 +143,13 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
+	}
+
+	// Extract UserID from JWT
+	userID, _, err := GetUserInfo(r)
+	if err == nil {
+		// Enforce or default to the logged-in user
+		query.StudentID = fmt.Sprintf("%d", userID)
 	}
 
 	response, err := AskAnything(query)

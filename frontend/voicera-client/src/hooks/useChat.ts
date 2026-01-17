@@ -1,0 +1,101 @@
+import { useState, useRef, useCallback } from "react";
+import api from "../api/axios";
+
+interface Message {
+    sender: "user" | "ai";
+    text: string;
+    category: string;
+    recommendations?: string[];
+}
+
+interface UniversalQueryResponse {
+    question: string;
+    category: string;
+    response: string;
+    recommendations?: string[];
+    observation?: string;
+    metadata?: any;
+}
+
+export const useChat = (onResponse: (text: string, category: string) => void) => {
+    const [input, setInput] = useState("");
+    const [waiting, setWaiting] = useState(false);
+    const [currentCategory, setCurrentCategory] = useState<string | null>(null);
+    const [messages, setMessages] = useState<Message[]>([
+        {
+            sender: "ai",
+            text: "Hi! Ask me anything about study, work, or personal topics.",
+            category: "greeting",
+        },
+    ]);
+
+    const sessionId = useRef(
+        crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7)
+    );
+
+    const sendMessage = useCallback(
+        async (text: string) => {
+            if (!text.trim() || waiting) return;
+
+            const userMessage = text.trim();
+            setMessages((prev) => [...prev, { sender: "user", text: userMessage, category: "user" }]);
+            setInput("");
+            setWaiting(true);
+
+            try {
+                const response = await api.post<UniversalQueryResponse>("/ask-anything", {
+                    question: userMessage,
+                    thread_id: `session_${sessionId.current}`,
+                });
+
+                const data = response.data;
+                const aiText = data.response || (data as any).ai_response || "No answer received.";
+                const category = data.category || "unknown";
+                const recommendations = data.recommendations || [];
+
+                setCurrentCategory(category);
+                setMessages((prev) => [
+                    ...prev,
+                    { sender: "ai", text: aiText, category, recommendations },
+                ]);
+
+                onResponse(aiText, category);
+
+                if (recommendations.length > 0 && recommendations.length <= 3) {
+                    setTimeout(() => {
+                        const recsText = `Suggestions: ${recommendations.slice(0, 3).join(", ")}`;
+                        onResponse(recsText, category);
+                    }, 500);
+                }
+
+                // Save memo
+                api.post("/save-memo", {
+                    user_query: userMessage,
+                    ai_query: aiText,
+                }).catch(err => console.error("Memo save failed:", err));
+
+            } catch (error: any) {
+                let errorText = "Sorry, there was an error.";
+                if (error.response?.status === 404) {
+                    errorText = "Endpoint /ask-anything not found.";
+                } else if (error.response?.status === 500) {
+                    errorText = `Server error: ${error.response?.data?.detail || "Unknown error"}`;
+                }
+                setMessages((prev) => [...prev, { sender: "ai", text: errorText, category: "error" }]);
+                onResponse(errorText, "error");
+            } finally {
+                setWaiting(false);
+            }
+        },
+        [waiting, onResponse]
+    );
+
+    return {
+        input,
+        setInput,
+        messages,
+        waiting,
+        currentCategory,
+        sendMessage,
+    };
+};
