@@ -54,7 +54,10 @@ const SignUp: React.FC<SignUpProps> = ({ onBack }) => {
       await api.post("/register", formData);
       setSuccess("Account created successfully.");
       setFormData({ name: "", email: "", password: "", confirmPassword: "" });
-      setTimeout(() => navigate("/login"), 1000);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("voicera_logged_in", "true");
+      }
+      setTimeout(() => navigate("/prefrences"), 500);
     } catch {
       setError("Could not connect to server.");
     } finally {

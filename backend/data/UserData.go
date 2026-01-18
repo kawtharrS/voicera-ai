@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -341,57 +342,57 @@ func GetUserMemos(userID int64, limit int) ([]UserMemo, error) {
 func GetUserByEmail(email string) (*User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	
-	if supabaseClient == nil {
-		userMu.RLock()
-		defer userMu.RUnlock()
-		for _, u := range users {
-			if strings.ToLower(u.Email) == email {
-				return &u, nil
-			}
-		}
-		return nil, errors.New("user not found")
+	if email == "" {
+		return nil, errors.New("email cannot be empty")
 	}
-
-	var result User
-	_, err := supabaseClient.
-		From("users").
-		Select("*", "", false).
-		Eq("email", email).
-		Single().
-		ExecuteTo(&result)
-
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
-
-	return &result, nil
-}
-
-func GetUserByName(name string) (*User, error) {
-	name = strings.TrimSpace(name)
 	
-	if supabaseClient == nil {
-		userMu.RLock()
-		defer userMu.RUnlock()
-		if u, ok := users[name]; ok {
+	// If Supabase is available, use it
+	if supabaseClient != nil {
+		fmt.Printf("Querying Supabase for email: %s\n", email)
+		
+		// Try to get as a slice first to handle the response properly
+		var results []User
+		data, statusCode, err := supabaseClient.
+			From("users").
+			Select("*", "", false).
+			Eq("email", email).
+			Execute()
+
+		if err != nil {
+			fmt.Printf("Supabase query error: %v (Status: %d)\n", err, statusCode)
+			fmt.Printf("Raw response: %s\n", string(data))
+			return nil, errors.New("user not found")
+		}
+
+		fmt.Printf("Supabase response status: %d\n", statusCode)
+		fmt.Printf("Raw response: %s\n", string(data))
+
+		// Parse the response
+		err = json.Unmarshal(data, &results)
+		if err != nil {
+			fmt.Printf("Failed to parse response: %v\n", err)
+			return nil, errors.New("failed to parse user data")
+		}
+
+		if len(results) == 0 {
+			fmt.Printf("No user found with email: %s\n", email)
+			return nil, errors.New("user not found")
+		}
+
+		fmt.Printf("User found in Supabase - ID: %d, Email: %s, Name: %s\n", 
+			results[0].ID, results[0].Email, results[0].Name)
+		return &results[0], nil
+	}
+	
+	// Fallback to in-memory storage
+	userMu.RLock()
+	defer userMu.RUnlock()
+	for _, u := range users {
+		if strings.ToLower(u.Email) == email {
 			return &u, nil
 		}
-		return nil, errors.New("user not found")
 	}
-
-	var result User
-	_, err := supabaseClient.
-		From("users").
-		Select("*", "", false).
-		Eq("name", name).
-		Single().
-		ExecuteTo(&result)
-
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
-
-	return &result, nil
+	return nil, errors.New("user not found")
 }
 type Preference struct {
 	ID         int64  `json:"id"`

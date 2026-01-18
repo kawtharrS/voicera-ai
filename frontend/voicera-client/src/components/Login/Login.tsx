@@ -39,7 +39,12 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
       await api.post("/login", formData);
       setSuccess("Account logged in successfully.");
       setFormData({ email: "", password: "", });
-      setTimeout(() => navigate("/prefrences"), 1000);
+      // Mark user as authenticated for route guards
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("voicera_logged_in", "true");
+      }
+      // After login, go straight to chat (preferences are already set or optional)
+      setTimeout(() => navigate("/chat"), 500);
     } catch {
       setError("Could not connect to server.");
     } finally {

@@ -1,9 +1,22 @@
-import { Routes, Route } from "react-router-dom";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/Login";     
 import LandingPage from "./pages/Landing";  
 import SignUpPage from "./pages/SignUp";
 import ChatPage from "./pages/Chat";
 import PrefrencesPage from "./pages/Prefrences";
+
+const isAuthenticated = () => {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem("voicera_logged_in") === "true";
+};
+
+function ProtectedRoute({ children }: { children: React.ReactElement }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 
 function App() {
   return (
@@ -11,8 +24,22 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />  
       <Route path="/signup" element={<SignUpPage />} />
-      <Route path="/chat" element={<ChatPage />} />
-      <Route path="/prefrences" element={<PrefrencesPage />} />
+      <Route
+        path="/prefrences"
+        element={
+          <ProtectedRoute>
+            <PrefrencesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }

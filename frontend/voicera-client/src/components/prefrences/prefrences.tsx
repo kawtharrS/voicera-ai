@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import styles from "./chat.module.css";
 import { useSwipeScreen } from "../../hooks/useSwipeScreen";
-import api from "../../api/axios";
-export default function VoiceraSwipeScreen() {
+import { useNavigate } from "react-router-dom";
+import { useSavePreference } from "../../hooks/useSavePreference";
+
+export default function Preferences() {
   const {
     position,
     isDragging,
@@ -17,24 +19,23 @@ export default function VoiceraSwipeScreen() {
     closeSecondScreen,
   } = useSwipeScreen();
 
+  const navigate = useNavigate();
+  const savePreference = useSavePreference();
+
   const [language, setLanguage] = useState("English");
   const [tone, setTone] = useState("Friendly");
   const [agentName, setAgentName] = useState("Voicera");
   const [memoryNotes, setMemoryNotes] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const tones = ["Friendly", "Formal", "Casual", "Professional", "Playful"];
 
-  const handleSavePreferences = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleSavePreferences = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
     try {
-      await api.post("/save-prefrence", {
+      await savePreference.mutateAsync({
         language,
         tone,
         name: agentName,
@@ -42,14 +43,13 @@ export default function VoiceraSwipeScreen() {
       });
 
       closeSecondScreen();
+      navigate("/login");
     } catch (err: any) {
       const message =
         err.response?.data?.message ||
         err.message ||
         "Failed to save preferences";
       setError(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -66,7 +66,7 @@ export default function VoiceraSwipeScreen() {
       role="application"
       aria-label="Voicera swipe screen"
     >
-      {/* FIRST SCREEN */}
+      {/* Screen 1 */}
       <div
         className={styles.screenFirst}
         style={{
@@ -80,9 +80,7 @@ export default function VoiceraSwipeScreen() {
             <h1 className={styles.title}>Voicera</h1>
           </div>
 
-          <p className={styles.subtitle}>
-            Voice-first assistance for everyone
-          </p>
+          <p className={styles.subtitle}>Voice-first assistance for everyone</p>
 
           <button
             type="button"
@@ -99,6 +97,7 @@ export default function VoiceraSwipeScreen() {
         </div>
       </div>
 
+      {/* Screen 2 */}
       <div
         className={styles.screenSecond}
         style={{
@@ -125,7 +124,6 @@ export default function VoiceraSwipeScreen() {
           </header>
 
           <form className={styles.prefForm} onSubmit={handleSavePreferences}>
-            {/* LANGUAGE */}
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel} htmlFor="language">
                 Preferred language
@@ -144,7 +142,6 @@ export default function VoiceraSwipeScreen() {
               </select>
             </div>
 
-            {/* TONE */}
             <div className={styles.fieldGroup}>
               <span className={styles.fieldLabel}>Tone of voice</span>
               <div className={styles.tonePills}>
@@ -163,7 +160,6 @@ export default function VoiceraSwipeScreen() {
               </div>
             </div>
 
-            {/* AGENT NAME */}
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel} htmlFor="agentName">
                 Agent name
@@ -177,7 +173,6 @@ export default function VoiceraSwipeScreen() {
               />
             </div>
 
-            {/* MEMORY */}
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel} htmlFor="memoryNotes">
                 Anything specific you want Voicera to remember?
@@ -203,7 +198,7 @@ export default function VoiceraSwipeScreen() {
                 type="button"
                 className={`${styles.primaryButton} ${styles.secondaryButton}`}
                 onClick={closeSecondScreen}
-                disabled={loading}
+                disabled={savePreference.isLoading}
               >
                 Skip for now
               </button>
@@ -211,9 +206,9 @@ export default function VoiceraSwipeScreen() {
               <button
                 type="submit"
                 className={styles.primaryButton}
-                disabled={loading}
+                disabled={savePreference.isLoading}
               >
-                {loading ? "Saving..." : "Save preferences"}
+                {savePreference.isLoading ? "Saving..." : "Save preferences"}
               </button>
             </div>
           </form>

@@ -1,7 +1,7 @@
-import VoiceraSwipeScreen from "../components/prefrences/prefrences";
+import Preferences from "../components/prefrences/prefrences";
 
 function PrefrencesPage() {
-  return <VoiceraSwipeScreen />;
+  return <Preferences />;
 }
 
 export default PrefrencesPage;

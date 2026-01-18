@@ -50,6 +50,8 @@
   font-weight: 600;
   border: none;
   cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
   transition: background-color 0.2s ease;
 }
 

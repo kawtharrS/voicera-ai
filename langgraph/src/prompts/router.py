@@ -27,6 +27,13 @@ Examples:
 - "What should I cook for dinner?"
 - "I'm feeling stressed, any advice?"
 
+**SETTINGS**: when the user query is categorized to settings it will be able to change his/her prefrences
+Examples:
+- "change the language"
+- "change the tone"
+- "change the prefrences"
+- "change the name of the agent"
+
 User preferences (may be empty):
 {preferences}
 

@@ -105,18 +105,44 @@ async def process_question(query: StudentQuestion):
             {"configurable": {"thread_id": str(query.student_id or "default")}}
         )
         
+        # DEBUG: Log what we got back
+        print(f"\n=== RESULT STATE ===")
+        print(f"Category: {result.get('category')}")
+        print(f"Direct ai_response: {result.get('ai_response')}")
+        print(f"Observation: {result.get('observation')}")
+        print(f"Current interaction type: {type(result.get('current_interaction'))}")
+        print(f"Current interaction: {result.get('current_interaction')}")
+        print(f"==================\n")
+        
         courses = result.get("courses", [])
         current_course = courses[0] if courses else None
         
-        interaction = result.get("current_interaction", {})
+        # IMPORTANT: Check for ai_response at the TOP LEVEL first
+        # (SelfWorkflow sets it directly in the state)
+        ai_response = result.get("ai_response", "")
         
-        if isinstance(interaction, dict):
-            if current_course and not interaction.get("current_course"):
-                interaction["current_course"] = current_course
+        # If not at top level, try current_interaction
+        if not ai_response:
+            interaction = result.get("current_interaction", {})
+            if isinstance(interaction, dict):
+                ai_response = interaction.get("ai_response", "")
+            else:
+                ai_response = getattr(interaction, "ai_response", "")
         
-        ai_response = interaction.get("ai_response", "") if isinstance(interaction, dict) else getattr(interaction, "ai_response", "")
-        recommendations = interaction.get("recommendations", []) if isinstance(interaction, dict) else getattr(interaction, "recommendations", [])
-        observation = interaction.get("observation", "") if isinstance(interaction, dict) else getattr(interaction, "observation", "")
+        # Fall back to observation
+        if not ai_response:
+            ai_response = result.get("observation", "")
+        
+        # Extract recommendations
+        recommendations = result.get("recommendations", [])
+        if not recommendations:
+            interaction = result.get("current_interaction", {})
+            if isinstance(interaction, dict):
+                recommendations = interaction.get("recommendations", [])
+            else:
+                recommendations = getattr(interaction, "recommendations", [])
+        
+        observation = result.get("observation", "")
         category = result.get("category")
         
         return AIResponse(
@@ -134,7 +160,6 @@ async def process_question(query: StudentQuestion):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/ask-anything", response_model=AIResponse)
 async def ask_anything(query: StudentQuestion):

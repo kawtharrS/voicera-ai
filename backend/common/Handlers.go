@@ -119,9 +119,12 @@ func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "email and password are required"})
 		return
 	}
-
 	user, err := data.GetUserByEmail(payload.Email)
-	if err == nil && user.Password == payload.Password {
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, apiResponse{Ok: false, Message: "invalid credentials"})
+		return
+	}
+	if user.Password == payload.Password {
 		token, err := GenerateJWT(user.ID, user.Email)
 		if err != nil {
 			writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "error generating token"})
@@ -134,7 +137,6 @@ func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusUnauthorized, apiResponse{Ok: false, Message: "invalid credentials"})
 }
-
 func LogoutHandler(response http.ResponseWriter, request *http.Request) {
 	ClearCookie(response)
 	http.Redirect(response, request, "/", 302)

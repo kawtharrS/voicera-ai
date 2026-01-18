@@ -5,7 +5,7 @@ from langgraph.graph.message import add_messages
 class GraphState(TypedDict):
     """
     State for the Router Agent.
-    Includes fields necessary for routing and for the sub-agents (Eureka/Classroom).
+    Includes fields necessary for routing and for the sub-agents).
     """
     query: str
     category: Optional[str]
