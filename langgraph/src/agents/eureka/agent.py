@@ -3,6 +3,7 @@ import sys
 import logging
 from pathlib import Path
 from typing import List, Optional  
+
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
@@ -15,30 +16,67 @@ from langchain_core.documents import Document
 from langgraph.store.memory import InMemoryStore
 from langmem import create_manage_memory_tool, create_search_memory_tool
 from langgraph.checkpoint.memory import InMemorySaver
+from supabase import create_client, Client
+
 from .structure_output import *
 from prompts.classroom import *
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 load_dotenv()
+
 checkpointer = InMemorySaver()
 store = InMemoryStore(
-    index = {
+    index={
         "dims": 1536,
-        "embed": "openai:text-embedding-3-small"
+        "embed": "openai:text-embedding-3-small",
     }
 )
-namespace = ("agent_memories")
+
+namespace = "agent_memories"
 memory_tools = [
     create_manage_memory_tool(namespace),
-    create_search_memory_tool(namespace)
+    create_search_memory_tool(namespace),
 ]
-logger = logging.getLogger(__name__)  
+
+logger = logging.getLogger(__name__)
+
 openai_model = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.1,
-    openai_api_key=os.getenv("OPENAI_API_KEY")
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
 )
+
+# --- Supabase client for long-term memory ---
+_supabase_client: Client | None = None
+
+def get_supabase_client() -> Optional[Client]:
+    """Lazily initialize and return a Supabase client.
+
+    Uses SUPABASE_URL and SUPABASE_KEY from the environment. If these are not
+    configured or the client cannot be created, returns None and logs a warning.
+    """
+    global _supabase_client
+
+    if _supabase_client is not None:
+        return _supabase_client
+
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+
+    if not url or not key:
+        logger.warning("Supabase credentials not configured; long-term memory disabled.")
+        return None
+
+    try:
+        _supabase_client = create_client(url, key)
+        logger.info("Supabase client initialized for agent long-term memory.")
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.warning("Failed to initialize Supabase client: %s", exc)
+        _supabase_client = None
+
+    return _supabase_client
 
 class Agent():
     def __init__(self, classroom_tool=None): 
@@ -106,58 +144,116 @@ class Agent():
         )
     
     def extract_and_save_to_langmem(self, query: str, student_id: str) -> None:
-        """Extract facts from query and save to langmem store.
+        """Extract facts from query and (optionally) save to the in-process store.
+
+        Long-term conversational memory is persisted in Supabase via the Go backend's
+        `/api/save-memo` endpoint. This method now keeps only lightweight, per-process
+        context in `self.store` so existing flows continue to work, while Supabase
+        is used as the source of truth for durable memory.
         """
         if not query or not student_id:
             return
-        
+
         fact_extraction_prompt = PromptTemplate(
             template=FACT_EXTRACTION_PROMPT,
-            input_variables=["query"]
+            input_variables=["query"],
         )
-                
+
         chain = fact_extraction_prompt | openai_model | StrOutputParser()
         facts = chain.invoke({"query": query}).strip()
-            
+
         if facts and facts != "NO FACTS":
             memory_id = f"{student_id}_memory_{int(__import__('time').time() * 1000)}"
-            self.store.put(namespace, memory_id, {"facts": facts, "query": query})
+            try:
+                self.store.put(namespace, memory_id, {"facts": facts, "query": query})
+            except Exception as exc: 
+                logger.warning("Failed to write to in-memory langmem store: %s", exc)
 
-    
     def retrieve_from_langmem(self, student_id: str) -> str:
-        """Retrieve all stored facts for a student from langmem.
+        """Retrieve stored context for a student.
+
+        Preference order:
+        1. Supabase `user_memo` table (durable, cross-session memory).
+        2. Fallback to the local in-memory `langmem` store if Supabase is
+           unavailable or the user has no memos yet.
         """
+        if not student_id:
+            return ""
+
+        client = get_supabase_client()
+        if client is not None:
+            try:
+                user_id = int(student_id)
+                response = (
+                    client
+                    .table("user_memo")
+                    .select("user_query, ai_query")
+                    .eq("user_id", user_id)
+                    .order("id", desc=True)
+                    .limit(20)
+                    .execute()
+                )
+
+                records = getattr(response, "data", None) or []
+                if records:
+                    snippets: List[str] = []
+                    for row in records:
+                        user_q = row.get("user_query") or ""
+                        ai_a = row.get("ai_query") or ""
+                        if not user_q and not ai_a:
+                            continue
+                        snippets.append(
+                            f"Previous conversation - Q: {user_q}\nA: {ai_a}"
+                        )
+
+                    if snippets:
+                        return "\n\n".join(reversed(snippets))  
+
+            except ValueError:
+                logger.warning(
+                    "student_id '%s' is not a valid integer; falling back to in-memory store.",
+                    student_id,
+                )
+            except Exception as exc:  
+                logger.warning("Failed to retrieve Supabase memories: %s", exc)
+
         try:
-            
-            memories = []
-            
+            memories: List[str] = []
+
             results = self.store.search(
                 namespace,
                 query=student_id,
-                limit=20
+                limit=20,
             )
-            
+
             if results:
                 for result in results:
                     try:
-                        if hasattr(result, 'value'):
+                        if hasattr(result, "value"):
                             value = result.value
-                            facts = value.get("facts", "") if isinstance(value, dict) else getattr(value, "facts", "")
+                            facts = (
+                                value.get("facts", "")
+                                if isinstance(value, dict)
+                                else getattr(value, "facts", "")
+                            )
                         else:
-                            facts = result.get("facts", "") if isinstance(result, dict) else getattr(result, "facts", "")
-                        
+                            facts = (
+                                result.get("facts", "")
+                                if isinstance(result, dict)
+                                else getattr(result, "facts", "")
+                            )
+
                         if facts and len(facts) > 2:
                             memories.append(facts)
-                    except Exception as e:
+                    except Exception:
                         continue
-            
+
             if memories:
-                context = "\n".join(memories)
-                return context
-            else:
-                return ""
-                
-        except Exception as e:
+                return "\n".join(memories)
+            return ""
+
+        except Exception as exc: 
+            logger.warning("Error while retrieving from in-memory langmem: %s", exc)
             return ""
         
     def add_to_history(self, role: str, content: str) -> None:

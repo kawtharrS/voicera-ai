@@ -119,23 +119,27 @@ func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "email and password are required"})
 		return
 	}
-	user, err := data.GetUserByEmail(payload.Email)
-	if err != nil {
+	// Validate credentials using hashed password comparison
+	if !data.UserIsValidByEmail(payload.Email, payload.Password) {
 		writeJSON(w, http.StatusUnauthorized, apiResponse{Ok: false, Message: "invalid credentials"})
 		return
 	}
-	if user.Password == payload.Password {
-		token, err := GenerateJWT(user.ID, user.Email)
-		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "error generating token"})
-			return
-		}
-		SetCookie(token, w)
-		writeJSON(w, http.StatusOK, apiResponse{Ok: true, Message: "logged in"})
+
+	// At this point, we know the email/password combo is valid; fetch the user to issue JWT
+	user, err := data.GetUserByEmail(payload.Email)
+	if err != nil {
+		// Should be rare since validation already passed, but handle gracefully
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "could not load user"})
 		return
 	}
 
-	writeJSON(w, http.StatusUnauthorized, apiResponse{Ok: false, Message: "invalid credentials"})
+	token, err := GenerateJWT(user.ID, user.Email)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "error generating token"})
+		return
+	}
+	SetCookie(token, w)
+	writeJSON(w, http.StatusOK, apiResponse{Ok: true, Message: "logged in"})
 }
 func LogoutHandler(response http.ResponseWriter, request *http.Request) {
 	ClearCookie(response)
