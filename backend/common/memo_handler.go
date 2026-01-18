@@ -41,7 +41,7 @@ func SaveMemoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memo, err := data.SaveUserMemo(req.UserID, req.UserQuery, req.AIQuery)
+	memo, err := data.SaveUserMemo(req.UserID, req.UserQuery, req.AIQuery, req.Category, req.Emotion)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "Failed to save memo: " + err.Error()})
 		return

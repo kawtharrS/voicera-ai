@@ -24,12 +24,16 @@ type UserMemo struct {
 	UserID    int64  `json:"user_id"`
 	UserQuery string `json:"user_query"`
 	AIQuery   string `json:"ai_query"`
+	Category  string `json:"category"`
+	Emotion   string `json:"emotion"`
 }
 
 type SaveMemoRequest struct {
 	UserID    int64  `json:"user_id"`
 	UserQuery string `json:"user_query"`
 	AIQuery   string `json:"ai_query"`
+	Category  string `json:"category"`
+	Emotion   string `json:"emotion"`
 }
 
 type Preference struct {
@@ -279,7 +283,7 @@ func userIsValidInMemoryByEmail(email, password string) bool {
 	return false
 }
 
-func SaveUserMemo(userID int64, userQuery, aiQuery string) (*UserMemo, error) {
+func SaveUserMemo(userID int64, userQuery, aiQuery string, category string, emotion string) (*UserMemo, error) {
 	if supabaseClient == nil {
 		return nil, errors.New("supabase client not initialized")
 	}
@@ -288,6 +292,8 @@ func SaveUserMemo(userID int64, userQuery, aiQuery string) (*UserMemo, error) {
 		"user_id":    userID,
 		"user_query": userQuery,
 		"ai_query":   aiQuery,
+		"category":   category,
+		"emotion":    emotion,
 	}
 
 	var result []UserMemo

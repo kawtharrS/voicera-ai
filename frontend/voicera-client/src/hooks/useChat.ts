@@ -92,10 +92,13 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                     }, 500);
                 }
 
-                // Save memo
+                // Save memo with category and (optional) emotion
                 api.post("/save-memo", {
                     user_query: userMessage,
                     ai_query: aiText,
+                    category,
+                    // Emotion detection can be wired in later; for now we store an empty string.
+                    emotion: "",
                 }).catch(err => console.error("Memo save failed:", err));
 
             } catch (error: any) {
