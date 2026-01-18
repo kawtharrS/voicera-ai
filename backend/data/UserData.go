@@ -393,3 +393,55 @@ func GetUserByName(name string) (*User, error) {
 
 	return &result, nil
 }
+type Preference struct {
+	ID         int64  `json:"id"`
+	UserID     int64  `json:"user_id"`
+	Language   string `json:"language"`
+	Tone       string `json:"tone"`
+	Name       string `json:"name"`
+	Preference string `json:"preference"`
+}
+
+
+func SaveUserPreference(
+	userID int64,
+	language string,
+	tone string,
+	name string,
+	preference string,
+) (*Preference, error) {
+
+	if preference == "" {
+		return nil, errors.New("preference is required")
+	}
+
+	if supabaseClient == nil {
+		return nil, errors.New("supabase client not initialized")
+	}
+
+	record := map[string]interface{}{
+		"user_id":    userID,
+		"language":   language,
+		"tone":       tone,
+		"name":       name,
+		"preference": preference,
+	}
+
+	fmt.Printf("Saving preference for user %d\n", userID)
+
+	var result []Preference
+	_, err := supabaseClient.
+		From("preferences"). 
+		Insert(record, false, "", "", "").
+		ExecuteTo(&result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result) == 0 {
+		return nil, errors.New("no preference returned after insert")
+	}
+
+	return &result[0], nil
+}

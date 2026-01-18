@@ -1,15 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styles from "./chat.module.css";
 import { useSwipeScreen } from "../../hooks/useSwipeScreen";
-
-interface Preferences {
-  language: string;
-  tone: string;
-  agentName: string;
-  memoryNotes: string;
-}
-
-
+import api from "../../api/axios";
 export default function VoiceraSwipeScreen() {
   const {
     position,
@@ -29,9 +21,37 @@ export default function VoiceraSwipeScreen() {
   const [tone, setTone] = useState("Friendly");
   const [agentName, setAgentName] = useState("Voicera");
   const [memoryNotes, setMemoryNotes] = useState("");
-
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const tones = ["Friendly", "Formal", "Casual", "Professional", "Playful"];
+
+  const handleSavePreferences = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await api.post("/save-prefrence", {
+        language,
+        tone,
+        name: agentName,
+        preference: memoryNotes,
+      });
+
+      closeSecondScreen();
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to save preferences";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -46,6 +66,7 @@ export default function VoiceraSwipeScreen() {
       role="application"
       aria-label="Voicera swipe screen"
     >
+      {/* FIRST SCREEN */}
       <div
         className={styles.screenFirst}
         style={{
@@ -56,10 +77,12 @@ export default function VoiceraSwipeScreen() {
       >
         <div className={styles.screenFirstContent}>
           <div className={styles.brandRow}>
-            <h1 className={styles.title}>Voicera </h1>
+            <h1 className={styles.title}>Voicera</h1>
           </div>
 
-          <p className={styles.subtitle}>Voice-first assistance for everyone</p>
+          <p className={styles.subtitle}>
+            Voice-first assistance for everyone
+          </p>
 
           <button
             type="button"
@@ -101,7 +124,8 @@ export default function VoiceraSwipeScreen() {
             </div>
           </header>
 
-          <form className={styles.prefForm}>
+          <form className={styles.prefForm} onSubmit={handleSavePreferences}>
+            {/* LANGUAGE */}
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel} htmlFor="language">
                 Preferred language
@@ -112,14 +136,15 @@ export default function VoiceraSwipeScreen() {
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
               >
-                <option value="English">English</option>
-                <option value="Spanish">Spanish</option>
-                <option value="French">French</option>
-                <option value="German">German</option>
-                <option value="Portuguese">Portuguese</option>
+                <option>English</option>
+                <option>Spanish</option>
+                <option>French</option>
+                <option>German</option>
+                <option>Portuguese</option>
               </select>
             </div>
 
+            {/* TONE */}
             <div className={styles.fieldGroup}>
               <span className={styles.fieldLabel}>Tone of voice</span>
               <div className={styles.tonePills}>
@@ -127,7 +152,9 @@ export default function VoiceraSwipeScreen() {
                   <button
                     key={t}
                     type="button"
-                    className={`${styles.tonePill} ${tone === t ? styles.tonePillActive : ""}`}
+                    className={`${styles.tonePill} ${
+                      tone === t ? styles.tonePillActive : ""
+                    }`}
                     onClick={() => setTone(t)}
                   >
                     {t}
@@ -136,6 +163,7 @@ export default function VoiceraSwipeScreen() {
               </div>
             </div>
 
+            {/* AGENT NAME */}
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel} htmlFor="agentName">
                 Agent name
@@ -145,10 +173,11 @@ export default function VoiceraSwipeScreen() {
                 className={styles.fieldInput}
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
-                placeholder="e.g. Nova, Orion, Study Coach"
+                placeholder="e.g. Nova, Orion"
               />
             </div>
 
+            {/* MEMORY */}
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel} htmlFor="memoryNotes">
                 Anything specific you want Voicera to remember?
@@ -159,20 +188,32 @@ export default function VoiceraSwipeScreen() {
                 rows={4}
                 value={memoryNotes}
                 onChange={(e) => setMemoryNotes(e.target.value)}
-                placeholder="e.g. I prefer concise answers, I’m a backend dev, I’m in PST…"
+                placeholder="I prefer concise answers, I'm a backend dev..."
               />
             </div>
+
+            {error && (
+              <p className={styles.errorText} role="alert">
+                {error}
+              </p>
+            )}
 
             <div className={styles.buttonRow}>
               <button
                 type="button"
                 className={`${styles.primaryButton} ${styles.secondaryButton}`}
                 onClick={closeSecondScreen}
+                disabled={loading}
               >
                 Skip for now
               </button>
-              <button type="submit" className={styles.primaryButton}>
-                Save preferences
+
+              <button
+                type="submit"
+                className={styles.primaryButton}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save preferences"}
               </button>
             </div>
           </form>

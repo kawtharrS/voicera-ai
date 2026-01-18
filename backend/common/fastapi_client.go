@@ -145,10 +145,8 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract UserID from JWT
 	userID, _, err := GetUserInfo(r)
 	if err == nil {
-		// Enforce or default to the logged-in user
 		query.StudentID = fmt.Sprintf("%d", userID)
 	}
 
@@ -160,4 +158,54 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func addPrefrences(query types.Preferences) (*types.AIResponse, error) {
+	fastAPIURL := os.Getenv("FASTAPI_URL")
+
+	body, err := json.Marshal(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fastAPIURL+"/ask-anything",
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := http.Client{Timeout: 120 * time.Second}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() // prevents memory leaks
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("FastAPI error: %s", string(b))
+	}
+
+	var aiResp types.AIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
+		return nil, err
+	}
+	converted := &types.AIResponse{
+		Question:        aiResp.Question,
+		Response:        aiResp.Response,
+		Recommendations: aiResp.Recommendations,
+		Feedback:        aiResp.Feedback,
+		Sendable:        aiResp.Sendable,
+		Trials:          aiResp.Trials,
+		Observation:     aiResp.Observation,
+		Category:        aiResp.Category,
+	}
+	return converted, nil
 }

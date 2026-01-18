@@ -32,6 +32,8 @@ func main() {
 	router.HandleFunc("/api/ask-anything", common.AskAnythingHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
 	router.HandleFunc("/api/save-memo", common.SaveMemoHandler).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/save-prefrence", common.SavePreferences).Methods("POST", "OPTIONS")
+
 
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
