@@ -3,6 +3,8 @@ import LoginPage from "./pages/Login";
 import LandingPage from "./pages/Landing";  
 import SignUpPage from "./pages/SignUp";
 import ChatPage from "./pages/Chat";
+import PrefrencesPage from "./pages/Prefrences";
+
 function App() {
   return (
     <Routes>
@@ -10,6 +12,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />  
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/chat" element={<ChatPage />} />
+      <Route path="/prefrences" element={<PrefrencesPage />} />
     </Routes>
   );
 }

@@ -43,3 +43,11 @@ type UniversalQueryResponse struct {
 	Observation     string                 `json:"observation,omitempty"`
 	Metadata        map[string]interface{} `json:"metadata,omitempty"`
 }
+
+type Preferences struct {
+	Language string  `json:"language"`
+	UserId string `json:"user_id"`
+	Tone string `json:"tone"`
+	Name string `json:"name"`
+	Prefrences string `json:"prefrences"`
+}

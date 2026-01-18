@@ -43,10 +43,34 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
             setWaiting(true);
 
             try {
-                const response = await api.post<UniversalQueryResponse>("/ask-anything", {
+                // Load any saved user preferences and send them along with the prompt
+                let preferences: any = null;
+                try {
+                    if (typeof window !== "undefined") {
+                        const raw = window.localStorage.getItem("voicera_prefs");
+                        if (raw) {
+                            preferences = JSON.parse(raw);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to read saved preferences", e);
+                }
+
+                const payload: any = {
                     question: userMessage,
                     thread_id: `session_${sessionId.current}`,
-                });
+                };
+
+                if (preferences) {
+                    payload.preferences = {
+                        language: preferences.language,
+                        tone: preferences.tone,
+                        agent_name: preferences.agentName,
+                        memory_notes: preferences.memoryNotes,
+                    };
+                }
+
+                const response = await api.post<UniversalQueryResponse>("/ask-anything", payload);
 
                 const data = response.data;
                 const aiText = data.response || (data as any).ai_response || "No answer received.";

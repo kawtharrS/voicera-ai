@@ -39,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
       await api.post("/login", formData);
       setSuccess("Account logged in successfully.");
       setFormData({ email: "", password: "", });
-      setTimeout(() => navigate("/chat"), 1000);
+      setTimeout(() => navigate("/prefrences"), 1000);
     } catch {
       setError("Could not connect to server.");
     } finally {
