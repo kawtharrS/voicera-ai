@@ -18,6 +18,25 @@ class GmailNodes:
         self.gmail_tool = GmailTool()
         self.agents = GmailAgent(self.gmail_tool)
 
+    def _build_email_writer_input(self, state: GraphState, current_email: Email, prefs: dict) -> str:
+        """Constructs the email writer input including user preferences."""
+        language = prefs.get("language") or "English"
+        tone = prefs.get("tone") or "professional"
+        agent_name = prefs.get("name") or "your assistant"
+        extra = prefs.get("preference") or ""
+
+        extra_line = f"\n- Additional notes: {extra}" if extra else ""
+        prefs_block = (
+            "\n\nUSER PREFERENCES:\n"
+            f"- Preferred language: {language}\n"
+            f"- Preferred tone: {tone}\n"
+            f"- Agent name: {agent_name}"
+            f"{extra_line}\n"
+        )
+
+        base = f"Category: {state.get('email_category')}\n\nEmail:\nSubject: {current_email.subject}\n\n{current_email.body}\n\nRetrieved Information:\n{state.get('retrieved_documents', '')}"
+        return base + prefs_block
+
     def load_emails(self, state: GraphState) -> GraphState:
         """Load unanswered emails from Gmail inbox."""
         print(Fore.YELLOW + "Loading emails from inbox..." + Style.RESET_ALL)
@@ -146,11 +165,13 @@ class GmailNodes:
         if not current_email:
             return {"generated_email": "", "trials": state.get("trials", 0) + 1}
 
+        prefs = state.get("user_preferences") or {}
+
         try:
             writer_messages = state.get("writer_messages", [])
             
             draft_result = self.agents.email_writer.invoke({
-                "email_content": f"Category: {state.get('email_category')}\n\nEmail:\nSubject: {current_email.subject}\n\n{current_email.body}\n\nRetrieved Information:\n{state.get('retrieved_documents', '')}",
+                "email_content": self._build_email_writer_input(state, current_email, prefs),
                 "history": writer_messages
             })
             

@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"voicera-backend/data"
 	"voicera-backend/types"
 )
 
@@ -148,6 +150,17 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _, err := GetUserInfo(r)
 	if err == nil {
 		query.StudentID = fmt.Sprintf("%d", userID)
+
+		// Try to load latest user preferences from DB and attach them to the query
+		if pref, pErr := data.GetLatestUserPreference(int64(userID)); pErr == nil && pref != nil {
+			query.Preferences = &types.Preferences{
+				Language:   pref.Language,
+				UserId:     fmt.Sprintf("%d", pref.UserID),
+				Tone:       pref.Tone,
+				Name:       pref.Name,
+				Prefrences: pref.Preference,
+			}
+		}
 	}
 
 	response, err := AskAnything(query)

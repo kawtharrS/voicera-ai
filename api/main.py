@@ -44,6 +44,10 @@ class StudentQuestion(BaseModel):
         default=None,
         description="Previous messages for context"
     )
+    preferences: Optional[dict] = Field(
+        default=None,
+        description="User preferences for language, tone, agent name, etc."
+    )
 
 
 DEFAULT_MAX_TRIALS = 3
@@ -79,6 +83,7 @@ async def process_question(query: StudentQuestion):
             "student_id": query.student_id or "default_student", 
             "student_context": "",
             "conversation_history": [],
+            "user_preferences": query.preferences or {},
             "current_interaction": {
                 "current_course": None,
                 "current_coursework": None,

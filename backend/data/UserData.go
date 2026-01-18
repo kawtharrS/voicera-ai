@@ -427,11 +427,11 @@ func SaveUserPreference(
 		"preference": preference,
 	}
 
-	fmt.Printf("Saving preference for user %d\n", userID)
+	fmt.Printf("Saving preference for user %d\\n", userID)
 
 	var result []Preference
 	_, err := supabaseClient.
-		From("preferences"). 
+		From("preferences").
 		Insert(record, false, "", "", "").
 		ExecuteTo(&result)
 
@@ -444,4 +444,36 @@ func SaveUserPreference(
 	}
 
 	return &result[0], nil
+}
+
+// GetLatestUserPreference returns the most recent preference row for a user.
+func GetLatestUserPreference(userID int64) (*Preference, error) {
+	if supabaseClient == nil {
+		return nil, errors.New("supabase client not initialized")
+	}
+
+	var prefs []Preference
+	_, err := supabaseClient.
+		From("preferences").
+		Select("*", "", false).
+		Eq("user_id", fmt.Sprintf("%d", userID)).
+		ExecuteTo(&prefs)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(prefs) == 0 {
+		return nil, errors.New("no preferences found for user")
+	}
+
+	// Pick the preference with the highest ID as the latest
+	latest := prefs[0]
+	for _, p := range prefs[1:] {
+		if p.ID > latest.ID {
+			latest = p
+		}
+	}
+
+	return &latest, nil
 }

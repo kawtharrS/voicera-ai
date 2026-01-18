@@ -22,6 +22,7 @@ type UniversalQueryRequest struct {
 	CourseID            string                   `json:"course_id,omitempty"`
 	ThreadID            string                   `json:"thread_id,omitempty"`
 	ConversationHistory []map[string]interface{} `json:"conversation_history,omitempty"`
+	Preferences         *Preferences             `json:"preferences,omitempty"`
 }
 
 type AIResponse struct {

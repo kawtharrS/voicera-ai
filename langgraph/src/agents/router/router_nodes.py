@@ -10,9 +10,10 @@ class RouterNodes:
         """Route the user query to the appropriate agent."""
         print(Fore.YELLOW + "Routing query..." + Style.RESET_ALL)
         query = state.get("query", "")
+        prefs = state.get("user_preferences") or {}
         
         try:
-            result = self.agent.route(query)
+            result = self.agent.route(query, prefs)
             category = result.category.value
             print(Fore.GREEN + f"Query routed to: {category}" + Style.RESET_ALL)
             

@@ -157,6 +157,7 @@ class ClassroomNodes:
         interaction = state["current_interaction"]
         history = state["agent_messages"]
         rewrite_feedback = (state["rewrite_feedback"] or "").strip()
+        prefs = state.get("user_preferences") or {}
         
         if isinstance(interaction, dict):
             previous_answer = (interaction.get("ai_response") or "").strip()
@@ -181,6 +182,21 @@ class ClassroomNodes:
         if isinstance(pdf_context, str) and len(pdf_context) > 12000:
             pdf_context = pdf_context[:12000] + "\n\n[PDF context truncated]"
 
+        # Build a preferences-aware wrapper for the AI response prompt
+        language = prefs.get("language") or "English"
+        tone = prefs.get("tone") or "helpful"
+        agent_name = prefs.get("name") or "your tutor"
+        extra = prefs.get("preference") or ""
+
+        extra_line = f"\n- Additional notes: {extra}" if extra else ""
+        prefs_header = (
+            "\n\nUSER PREFERENCES:\n"
+            f"- Preferred language: {language}\n"
+            f"- Preferred tone: {tone}\n"
+            f"- Agent name: {agent_name}" 
+            f"{extra_line}\n"
+        )
+
         if isinstance(interaction, dict):
             current_course = interaction.get("current_course")
             course_name = current_course.name if current_course else "N/A"
@@ -195,7 +211,7 @@ class ClassroomNodes:
             course_name=course_name,
             student_question=student_question,
             coursework_context=coursework_context,
-            pdf_context=pdf_context + student_context_str,
+            pdf_context=pdf_context + student_context_str + prefs_header,
             guidance=", ".join(recommendations)
         )
         

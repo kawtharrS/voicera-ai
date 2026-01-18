@@ -29,3 +29,4 @@ class GraphState(TypedDict):
     current_interaction: Optional[dict]
     agent_messages: Optional[List[dict]]
     rewrite_feedback: Optional[str]
+    user_preferences: Optional[dict]

@@ -27,6 +27,9 @@ Examples:
 - "What should I cook for dinner?"
 - "I'm feeling stressed, any advice?"
 
+User preferences (may be empty):
+{preferences}
+
 User Query: {query}
 
 Analyze the query carefully and return the most appropriate category.

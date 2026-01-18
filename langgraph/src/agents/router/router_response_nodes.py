@@ -19,11 +19,25 @@ class ResponseNodes:
         print(Fore.CYAN + "Generating personal response..." + Style.RESET_ALL)
         
         query = state.get("query", "")
-        
+        prefs = state.get("user_preferences") or {}
+
+        language = prefs.get("language") or "English"
+        tone = prefs.get("tone") or "friendly"
+        agent_name = prefs.get("name") or "your assistant"
+        extra = prefs.get("preference") or ""
+
+        extra_line = f"Additional user notes: {extra}\n" if extra else ""
+        system_msg = (
+            f"You are a personal assistant named {agent_name}.\n"
+            f"Always respond in {language}.\n"
+            f"Use a {tone.lower()} tone.\n"
+            f"{extra_line}"
+            "Help with everyday tasks, personal questions, lifestyle advice, and general conversation.\n"
+            "Be warm, supportive, and conversational while respecting these preferences."
+        ).strip()
+
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a friendly personal assistant. Help with everyday tasks, 
-            personal questions, lifestyle advice, and general conversation. 
-            Be warm, supportive, and conversational."""),
+            ("system", system_msg),
             ("human", "{query}")
         ])
         
