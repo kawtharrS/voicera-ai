@@ -82,6 +82,8 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
+	fmt.Printf("[DEBUG] FastAPI Response - Emotion: '%s', Category: '%s'\n", aiResp.Emotion, aiResp.Category)
+	
 	converted := &types.AIResponse{
 		Question:        aiResp.Question,
 		Response:        aiResp.Response,
@@ -91,7 +93,10 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 		Trials:          aiResp.Trials,
 		Observation:     aiResp.Observation,
 		Category:        aiResp.Category,
+		Emotion:         aiResp.Emotion,
 	}
+	
+	fmt.Printf("[DEBUG] Converted Response - Emotion: '%s'\n", converted.Emotion)
 	return converted, nil
 }
 
@@ -169,6 +174,24 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SAVE TO user_memo TABLE WITH EMOTION
+	if userID > 0 && response != nil {
+		go func() {
+			memo, err := data.SaveUserMemo(
+				int64(userID),
+				query.Question,        // user's question
+				response.Response,     // AI's response
+				response.Category,     // query category
+				response.Emotion,      // detected emotion
+			)
+			if err != nil {
+				fmt.Printf("❌ Error saving memo: %v\n", err)
+			} else {
+				fmt.Printf("✓ Memo saved (ID: %d) - Category: %s, Emotion: %s\n", memo.ID, memo.Category, memo.Emotion)
+			}
+		}()
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
@@ -219,6 +242,7 @@ func addPrefrences(query types.Preferences) (*types.AIResponse, error) {
 		Trials:          aiResp.Trials,
 		Observation:     aiResp.Observation,
 		Category:        aiResp.Category,
+		Emotion:         aiResp.Emotion,
 	}
 	return converted, nil
 }

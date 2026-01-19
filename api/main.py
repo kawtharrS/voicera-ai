@@ -61,6 +61,7 @@ class AIResponse(BaseModel):
     trials: int
     observation: Optional[str] = Field(default="", description="Agent observation")
     category: Optional[str] = Field(default=None, description="Query category")
+    emotion: Optional[str] = Field(default=None, description="Detected emotion (if available)")
 
 class HealthResponse(BaseModel):
     status: str
@@ -73,6 +74,8 @@ async def health_check():
         "status": "healthy",
         "message": "Voicera API is running"
     }
+
+
 
 async def process_question(query: StudentQuestion):
     try:
@@ -109,19 +112,15 @@ async def process_question(query: StudentQuestion):
         print(f"\n=== RESULT STATE ===")
         print(f"Category: {result.get('category')}")
         print(f"Direct ai_response: {result.get('ai_response')}")
-        print(f"Observation: {result.get('observation')}")
-        print(f"Current interaction type: {type(result.get('current_interaction'))}")
-        print(f"Current interaction: {result.get('current_interaction')}")
+        print(f"Detected emotion: {result.get('detected_emotion')}")
+        print(f"Emotion output: {result.get('emotion_output')}")
         print(f"==================\n")
         
         courses = result.get("courses", [])
         current_course = courses[0] if courses else None
         
-        # IMPORTANT: Check for ai_response at the TOP LEVEL first
-        # (SelfWorkflow sets it directly in the state)
+        # Get the AI response
         ai_response = result.get("ai_response", "")
-        
-        # If not at top level, try current_interaction
         if not ai_response:
             interaction = result.get("current_interaction", {})
             if isinstance(interaction, dict):
@@ -129,9 +128,15 @@ async def process_question(query: StudentQuestion):
             else:
                 ai_response = getattr(interaction, "ai_response", "")
         
-        # Fall back to observation
-        if not ai_response:
-            ai_response = result.get("observation", "")
+        # IMPORTANT: Remove emotion context from response for normal chat
+        # The emotion is detected but we only send it back in the JSON, not in the response text
+        if ai_response.startswith("I noticed you're feeling"):
+            # Extract just the meaningful part without emotion message
+            parts = ai_response.split(". ", 1)
+            if len(parts) > 1:
+                ai_response = parts[1]
+            else:
+                ai_response = "How can I help you today?"
         
         # Extract recommendations
         recommendations = result.get("recommendations", [])
@@ -144,6 +149,32 @@ async def process_question(query: StudentQuestion):
         
         observation = result.get("observation", "")
         category = result.get("category")
+
+        # CRITICAL: Extract emotion properly
+        # 1) First try the simple `emotion` field set by the personal assistant path
+        emotion: Optional[str] = result.get("emotion")
+        if emotion:
+            print(f"[DEBUG] Extracted emotion from result['emotion']: {emotion}")
+        
+        # 2) Fall back to detected_emotion (Enum or string) from Aria workflow
+        if not emotion:
+            detected_emotion = result.get("detected_emotion")
+            if detected_emotion is not None:
+                emotion = getattr(detected_emotion, "value", None) or str(detected_emotion)
+                print(f"[DEBUG] Extracted emotion from detected_emotion: {emotion}")
+        
+        # 3) Fall back to emotion_output dict from Aria workflow
+        if not emotion:
+            emotion_output = result.get("emotion_output") or {}
+            if isinstance(emotion_output, dict):
+                emotion = emotion_output.get("emotion")
+                print(f"[DEBUG] Extracted emotion from emotion_output: {emotion}")
+        
+        # Filter out 'unknown' emotions
+        if emotion == "unknown":
+            emotion = None
+        
+        print(f"[DEBUG] Final emotion: {emotion}")
         
         return AIResponse(
             question=query.question,
@@ -153,7 +184,8 @@ async def process_question(query: StudentQuestion):
             sendable=result.get("sendable", False),
             trials=result.get("trials", 0),
             observation=observation,
-            category=category
+            category=category,
+            emotion=emotion,  # Return only the emotion value, not in the response text
         )
         
     except Exception as e:

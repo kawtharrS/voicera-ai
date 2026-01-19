@@ -5,14 +5,18 @@ from .router_response_nodes import ResponseNodes
 from ..eureka.graph import ClassroomWorkflow
 from ..orion.orion_router.orion_graph import graph as orion_graph
 from ..self.graph import SelfWorkflow
+from ..aria.agents.agent import EmotionAgent
+
 class RouterWorkflow:
     def __init__(self):
         workflow = StateGraph(GraphState)
         router_nodes = RouterNodes()
-        response_nodes = ResponseNodes()
+        response_nodes = ResponseNodes(emotion_agent=EmotionAgent())
 
         workflow.add_node("router", router_nodes.route_query)
         workflow.add_node("study_agent", ClassroomWorkflow().app)
+        # Route personal queries to the full personal assistant, which will
+        # internally detect and attach emotion without changing the tone.
         workflow.add_node("personal_agent", response_nodes.generate_personal_response)
         workflow.add_node("work_agent", orion_graph)
         workflow.add_node('setting_agent', SelfWorkflow().app)

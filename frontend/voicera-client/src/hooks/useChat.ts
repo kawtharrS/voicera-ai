@@ -15,6 +15,7 @@ interface UniversalQueryResponse {
     recommendations?: string[];
     observation?: string;
     metadata?: any;
+    emotion?: string; // optional detected emotion from Aria/personal workflow
 }
 
 export const useChat = (onResponse: (text: string, category: string) => void) => {
@@ -76,6 +77,7 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                 const aiText = data.response || (data as any).ai_response || "No answer received.";
                 const category = data.category || "unknown";
                 const recommendations = data.recommendations || [];
+                const emotion = data.emotion || (data.metadata && (data.metadata as any).emotion) || "";
 
                 setCurrentCategory(category);
                 setMessages((prev) => [
@@ -86,20 +88,13 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                 onResponse(aiText, category);
 
                 if (recommendations.length > 0 && recommendations.length <= 3) {
-                    setTimeout(() => {
-                        const recsText = `Suggestions: ${recommendations.slice(0, 3).join(", ")}`;
-                        onResponse(recsText, category);
-                    }, 500);
+                    // Show suggestions as a follow-up message, but don't send them to TTS
+                    const recsText = `Suggestions: ${recommendations.slice(0, 3).join(", ")}`;
+                    setMessages(prev => [
+                        ...prev,
+                        { sender: "ai", text: recsText, category, recommendations },
+                    ]);
                 }
-
-                // Save memo with category and (optional) emotion
-                api.post("/save-memo", {
-                    user_query: userMessage,
-                    ai_query: aiText,
-                    category,
-                    // Emotion detection can be wired in later; for now we store an empty string.
-                    emotion: "",
-                }).catch(err => console.error("Memo save failed:", err));
 
             } catch (error: any) {
                 let errorText = "Sorry, there was an error.";

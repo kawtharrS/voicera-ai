@@ -1,7 +1,8 @@
-package types 
+package types
 
-import(
+import (
 	"encoding/json"
+	"time"
 )
 
 type HealthResponse struct {
@@ -34,6 +35,7 @@ type AIResponse struct {
 	Trials          int             `json:"trials"`
 	Observation     string          `json:"observation"`
 	Category        string          `json:"category,omitempty"`
+	Emotion         string          `json:"emotion,omitempty"`
 }
 
 type UniversalQueryResponse struct {
@@ -43,6 +45,7 @@ type UniversalQueryResponse struct {
 	Recommendations []string               `json:"recommendations,omitempty"`
 	Observation     string                 `json:"observation,omitempty"`
 	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	Emotion         string                 `json:"emotion,omitempty"`
 }
 
 type Preferences struct {
@@ -52,3 +55,12 @@ type Preferences struct {
 	Name string `json:"name"`
 	Prefrences string `json:"prefrences"`
 }
+
+type EmotionLog struct {
+	ID        int64     `gorm:"primaryKey"`
+	UserID    int64     `gorm:"index"`
+	Emotion   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+

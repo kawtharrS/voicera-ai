@@ -35,10 +35,3 @@ class MoodTool:
         except Exception as e:
             print(f"[MoodTool Error] {str(e)}")
             return "unknown"
-
-
-if __name__ == "__main__":
-    tool = MoodTool()
-
-    emotion = tool.detect_emotion("I'm so happy today!")
-    print(f"Detected emotion: {emotion}")

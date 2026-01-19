@@ -107,17 +107,28 @@ def _load_personal_memory(student_id: Optional[str]) -> str:
 
 
 class ResponseNodes:
-    """Simple response generation for work and personal categories."""
+    """Simple response generation for work and personal categories.
+
+    For PERSONAL queries we also perform emotion detection (via Aria's
+    EmotionAgent) as a side channel and attach it to the graph state so it
+    can be saved in the DB, without forcing the assistant to say it out loud.
+    """
     
-    def __init__(self):
+    def __init__(self, emotion_agent=None):
         self.llm = ChatOpenAI(
             model="gpt-4o-mini",
             temperature=0.7,
             openai_api_key=os.getenv("OPENAI_API_KEY")
         )
+        self.emotion_agent = emotion_agent
     
     def generate_personal_response(self, state: GraphState) -> GraphState:
-        """Generate response for personal queries, with Supabase-backed memory."""
+        """Generate response for personal queries, with Supabase-backed memory.
+
+        If an EmotionAgent is provided, we run it on the user's query and
+        attach the detected emotion to the state, but we do not echo it
+        explicitly in the reply.
+        """
         print(Fore.CYAN + "Generating personal response..." + Style.RESET_ALL)
         
         query = state.get("query", "")
@@ -153,6 +164,16 @@ class ResponseNodes:
         ])
         
         try:
+            # Optional: detect emotion as a side channel
+            detected_emotion_value = None
+            if self.emotion_agent is not None and query:
+                try:
+                    emo_result = self.emotion_agent.detect(query, prefs)
+                    detected_emotion_value = getattr(emo_result.emotion, "value", None) or str(emo_result.emotion)
+                    print(Fore.MAGENTA + f"[Personal] Detected emotion: {detected_emotion_value}" + Style.RESET_ALL)
+                except Exception as e:
+                    print(Fore.RED + f"[Personal] Emotion detection error: {e}" + Style.RESET_ALL)
+
             response = self.llm.invoke(prompt.format(query=query))
             ai_response = response.content
             
@@ -163,12 +184,17 @@ class ResponseNodes:
                 current_interaction["ai_response"] = ai_response
                 current_interaction["recommendations"] = []
             
-            return {
+            # Build the new state, including emotion if we have it
+            new_state: GraphState = {
                 "ai_response": ai_response,
                 "current_interaction": current_interaction,
                 "recommendations": [],
-                "sendable": True
+                "sendable": True,
             }
+            if detected_emotion_value:
+                new_state["emotion"] = detected_emotion_value
+            
+            return new_state
         except Exception as e:
             print(Fore.RED + f"Error generating personal response: {e}" + Style.RESET_ALL)
             return {
