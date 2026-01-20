@@ -68,6 +68,25 @@ class VoiceChatState extends State<VoiceChatPage> with TickerProviderStateMixin{
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation:pulseController,
+                      builder: (context, child){
+                        return Container(
+                          width:280,
+                          height:280,
+                          decoration: BoxDecoration(
+                            shape:BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFFF9500).withOpacity(0.3 * (1-pulseController.value),),
+                              width: 20,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    
+                  ]
                 )
               )
             )
