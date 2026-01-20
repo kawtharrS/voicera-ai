@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/constants/colors.dart';
+import 'package:mobile/constants/paddings.dart';
 
 class SignInPage extends StatefulWidget{
   @override
@@ -32,7 +34,7 @@ class _SignInPageState extends State<SignInPage> {
               fontFamily: 'Poppins',
               fontWeight: FontWeight.bold,
               fontSize:26,
-              color: Color(0xFF4DB6AC)
+              color: AppColors.teal,
             ),),
             const SizedBox(height:6),
             TextField(
@@ -42,7 +44,7 @@ class _SignInPageState extends State<SignInPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height:16),
+            const SizedBox(height:AppPadding.vP),
             TextField(
               controller: _emailController,
               decoration: InputDecoration(
@@ -50,7 +52,7 @@ class _SignInPageState extends State<SignInPage> {
                 border:OutlineInputBorder(),
               )
             ),
-            const SizedBox(height:16),
+            const SizedBox(height:AppPadding.vP),
             TextField(
               controller: _passwordController,
               decoration: InputDecoration(
@@ -59,7 +61,7 @@ class _SignInPageState extends State<SignInPage> {
               ),
               obscureText : true,
             ),
-            const SizedBox(height:16),
+            const SizedBox(height:AppPadding.vP),
             TextField(
               controller: _confirmPasswordController,
               decoration: InputDecoration(
@@ -68,14 +70,14 @@ class _SignInPageState extends State<SignInPage> {
               ),
               obscureText: true,
             ),
-            const SizedBox(height:16),
+            const SizedBox(height:AppPadding.vP),
             SizedBox(
               width:double.infinity,
               height:49,
               child: ElevatedButton(
                 onPressed: () {Navigator.pushNamed(context, '/login');},
                 style : ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFF9500),
+                  backgroundColor: AppColors.orange,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 child: Text(

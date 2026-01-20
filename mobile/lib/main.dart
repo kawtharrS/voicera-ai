@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'screens/home.dart';
+import 'screens/home/home.dart';
 import 'screens/signIn.dart';
 import 'screens/login.dart';
-import 'screens/chat.dart';
+import 'screens/chat/chat.dart';
+import 'constants/colors.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -17,7 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFF9500),
+          seedColor: AppColors.orange,
           brightness: Brightness.light,
         ),
       ),

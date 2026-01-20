@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'accessibility.dart';
+import 'services.dart';
+import 'package:mobile/constants/colors.dart';
+import 'package:mobile/constants/paddings.dart';
 
 class HomePage extends StatelessWidget{
   const HomePage({Key? key}):super(key:key);
@@ -27,7 +31,7 @@ class HomePage extends StatelessWidget{
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF9500),
+                backgroundColor: AppColors.orange,
                 shape: RoundedRectangleBorder(borderRadius:BorderRadius.circular(20), ),
               ),
             onPressed: () {
@@ -36,7 +40,7 @@ class HomePage extends StatelessWidget{
             child: const Text('Sign In')
             ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppPadding.vP),
         ],
       ),
       body: SingleChildScrollView(child: Column(children: [
@@ -57,7 +61,7 @@ class HomePage extends StatelessWidget{
               const SizedBox(height: 70),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9500), 
+                  backgroundColor: AppColors.orange, 
                   padding: const EdgeInsets.symmetric(
                     horizontal:40, 
                     vertical:16,
@@ -79,7 +83,7 @@ class HomePage extends StatelessWidget{
             children:[
               Column(children: [
                 ServiceCard(
-                  color: const Color(0xFF4DB6AC),
+                  color: AppColors.teal,
                   title: 'VOICE CONTROL',
                   description: 'Control your device with simple commands. Hands-Free operation for maximum productivity',
                   icon: Icons.mic,
@@ -113,7 +117,7 @@ class HomePage extends StatelessWidget{
                   fontWeight: FontWeight.bold
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppPadding.vP),
               const Text(
                 'AI that understands everyone, built with WCAG standards. Perfect for all users.',
                 textAlign: TextAlign.center,
@@ -148,7 +152,7 @@ class HomePage extends StatelessWidget{
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height:16),
+                const SizedBox(height:AppPadding.vP),
                 const Text(
                   '@ 2026 Voicera. All rights reserved.',
                   textAlign: TextAlign.center,
@@ -157,7 +161,7 @@ class HomePage extends StatelessWidget{
                     fontSize:12,
                   ),
                 ),
-                const SizedBox(height: 16,),
+                const SizedBox(height: AppPadding.vP),
                 Row (
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -179,87 +183,3 @@ class HomePage extends StatelessWidget{
   }
 }
 
-class ServiceCard extends StatelessWidget{
-  final Color color;
-  final String title;
-  final String description;
-  final IconData icon;
-
-  const ServiceCard({
-    Key? key, 
-    required this.color, 
-    required this.title, 
-    required this.description,
-    required this.icon,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context){
-    return Container(
-      decoration: BoxDecoration(
-        color: color, 
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(24),
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color:Colors.white, size:32),
-          const SizedBox(height:16),
-          Text(
-            title, 
-            style: const TextStyle(
-              color: Colors.white, 
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            description,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize:13,
-              height:1.5,
-            ),
-          ),
-        ],),
-    );
-  }
-}
-
-class AccessibilityIcon extends StatelessWidget{
-  final IconData icon;
-  final String label;
-  
-  const AccessibilityIcon({
-    Key? key, 
-    required this.icon,
-    required this.label,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context)
-  {
-    return Column(children: [
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, size:32, color: Colors.grey[700]),
-      ),
-      const SizedBox(height: 16),
-      Text(
-        label, 
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.grey,
-        ),
-      ),
-    ],);
-  }
-}

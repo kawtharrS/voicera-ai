@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/constants/colors.dart';
+import 'package:mobile/constants/paddings.dart';
 
 class LoginPage extends StatefulWidget{
   @override
@@ -31,9 +33,9 @@ class LoginPageState extends State<LoginPage> {
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.bold,
                   fontSize: 26,
-                  color: Color(0xFF4DB6AC)),
+                  color: AppColors.orange),
               ),
-              const SizedBox(height:16),
+              const SizedBox(height:AppPadding.vP),
               TextField(
                 controller: emailController,
                 decoration: InputDecoration(
@@ -56,7 +58,7 @@ class LoginPageState extends State<LoginPage> {
                 child: ElevatedButton(
                   onPressed: () {Navigator.pushNamed(context, '/chat');},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFF9500),
+                    backgroundColor: AppColors.orange,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 child: Text(
