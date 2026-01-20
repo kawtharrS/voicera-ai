@@ -18,7 +18,7 @@ export const useSwipeScreen = () => {
     const deltaY = e.touches[0].clientY - startY.current;
     const newPosition = Math.max(
       -100,
-      Math.min(0, currentY.current + (deltaY / window.innerHeight) * 100),
+      Math.min(50, currentY.current + (deltaY / window.innerHeight) * 100),
     );
     setPosition(newPosition);
   };
@@ -41,7 +41,7 @@ export const useSwipeScreen = () => {
     const deltaY = e.clientY - startY.current;
     const newPosition = Math.max(
       -100,
-      Math.min(0, currentY.current + (deltaY / window.innerHeight) * 100),
+      Math.min(50, currentY.current + (deltaY / window.innerHeight) * 100),
     );
     setPosition(newPosition);
   };

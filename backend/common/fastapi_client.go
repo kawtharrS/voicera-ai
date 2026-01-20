@@ -83,7 +83,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 		return nil, err
 	}
 	fmt.Printf("[DEBUG] FastAPI Response - Emotion: '%s', Category: '%s'\n", aiResp.Emotion, aiResp.Category)
-	
+
 	converted := &types.AIResponse{
 		Question:        aiResp.Question,
 		Response:        aiResp.Response,
@@ -95,7 +95,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 		Category:        aiResp.Category,
 		Emotion:         aiResp.Emotion,
 	}
-	
+
 	fmt.Printf("[DEBUG] Converted Response - Emotion: '%s'\n", converted.Emotion)
 	return converted, nil
 }
@@ -152,7 +152,7 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, _, err := GetUserInfo(r)
+	userID, _, _, err := GetUserInfo(r)
 	if err == nil {
 		query.StudentID = fmt.Sprintf("%d", userID)
 
@@ -179,10 +179,10 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			memo, err := data.SaveUserMemo(
 				int64(userID),
-				query.Question,        // user's question
-				response.Response,     // AI's response
-				response.Category,     // query category
-				response.Emotion,      // detected emotion
+				query.Question,    // user's question
+				response.Response, // AI's response
+				response.Category, // query category
+				response.Emotion,  // detected emotion
 			)
 			if err != nil {
 				fmt.Printf("❌ Error saving memo: %v\n", err)

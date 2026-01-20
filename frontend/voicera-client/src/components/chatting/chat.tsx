@@ -2,8 +2,39 @@ import styles from "./chat.module.css";
 import { useSwipeScreen } from "../../hooks/useSwipeScreen";
 import { useAudioTTS } from "../../hooks/useAudioTTS";
 import { useChat } from "../../hooks/useChat";
+import api from "../../api/axios";
+import { useState, useRef, useEffect, useCallback } from "react";
+
+// Modern Mic Icon SVG
+const MicIcon = ({ className }: { className?: string }) => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
 
 export default function VoiceraSwipeScreen() {
+  const [roleId, setRoleId] = useState<number | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [finalTranscript, setInterimTranscriptFinal] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [aiIsSpeaking, setAiIsSpeaking] = useState(false);
+  const recentlyDragged = useRef(false);
+  const recognitionRef = useRef<any>(null);
+
   const {
     position,
     isDragging,
@@ -21,149 +52,298 @@ export default function VoiceraSwipeScreen() {
   const { speak } = useAudioTTS(null);
 
   const { input, setInput, messages, waiting, currentCategory, sendMessage } = useChat(
-    (text, category) => speak(text, category)
+    (text, category) => {
+      setAiIsSpeaking(true);
+      speak(text, category);
+      setTimeout(() => setAiIsSpeaking(false), text.length * 100);
+    }
   );
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage(input);
-  };
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition || recognitionRef.current) return;
 
-  const getCategoryColor = (category?: string) => {
-    switch (category) {
-      case "study":
-        return "#4CAF50";
-      case "work":
-        return "#2196F3";
-      case "personal":
-        return "#FF9800";
-      default:
-        return "#999";
+    const rec = new SpeechRecognition();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+
+    rec.onstart = () => setIsRecording(true);
+    rec.onresult = (e: any) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const transcript = e.results[i][0].transcript;
+        if (e.results[i].isFinal) setInterimTranscriptFinal((prev) => prev + transcript + " ");
+        else interim += transcript;
+      }
+      setInterimTranscript(interim);
+    };
+    rec.onerror = () => setIsRecording(false);
+    rec.onend = () => setIsRecording(false);
+
+    recognitionRef.current = rec;
+  }, []);
+
+  const startRecording = useCallback(() => {
+    if (recognitionRef.current && !isRecording) {
+      setInterimTranscriptFinal("");
+      setInterimTranscript("");
+      recognitionRef.current.start();
+    }
+  }, [isRecording]);
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+    }
+  }, [isRecording]);
+
+  const handleSendVoice = async () => {
+    const fullText = (finalTranscript + interimTranscript).trim();
+    if (fullText) {
+      setIsSending(true);
+      try {
+        await sendMessage(fullText);
+        setInterimTranscriptFinal("");
+        setInterimTranscript("");
+      } finally {
+        setIsSending(false);
+      }
     }
   };
 
-  return (
-    <div
-      className={styles.voiceraContainer}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => isDragging && handleMouseUp()}
-    >
-      <div
-        className={styles.screenFirst}
-        style={{
-          transform: `translateY(${position}%)`,
-          opacity: position === -100 ? 0 : 1,
-          pointerEvents: isSecondScreenActive ? "none" : "auto",
-        }}
-      >
-        <div className={styles.screenFirstContent}>
-          <div className={styles.logoContainer}>
-            <img src="/image.png" alt="Voicera logo" className={styles.logoIcon} />
-          </div>
-          <h1 className={styles.title}>ASK VOICERA</h1>
-          <button
-            className={styles.transcriptionButton}
-            onClick={() => {
-              openSecondScreen();
-              speak("Start Chat");
-            }}
-          >
-            Start Chat
-          </button>
-          <p
-            style={{ color: "#999", fontSize: "0.875rem", marginTop: "1rem", cursor: "pointer" }}
-            onClick={() => speak("Swipe up or tap button to open chat")}
-          >
-            Swipe up or tap button to open chat
-          </p>
-        </div>
-      </div>
+  const handleToggleVoice = () => {
+    if (recentlyDragged.current) return;
+    if (isRecording) {
+      stopRecording();
+      setTimeout(handleSendVoice, 500);
+    } else {
+      startRecording();
+    }
+  };
 
+  const getCategoryColor = (cat?: string) => {
+    const colors: Record<string, string> = { study: "#4db6ac", work: "#FF9800", personal: "#8b7ab8" };
+    return colors[cat || ""] || "#999";
+  };
+
+  useEffect(() => {
+    api.get("/user").then(r => setRoleId(r.data.role_id || 1)).catch(() => setRoleId(1));
+  }, []);
+
+  if (roleId === null) return <div className={styles.loadingContainer}><div className={styles.loader}></div></div>;
+
+  // ==================== ROLE ID 2: INTRO -> CHAT (SNIPPET UX) ====================
+  if (roleId === 2) {
+    return (
       <div
-        className={styles.screenSecond}
-        style={{
-          transform: `translateY(${100 + position}%)`,
-          pointerEvents: isSecondScreenActive ? "auto" : "none",
-        }}
+        className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
+        onTouchStart={(e) => { recentlyDragged.current = false; handleTouchStart(e); }}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
+        onMouseDown={(e) => { recentlyDragged.current = false; handleMouseDown(e); }}
+        onMouseMove={(e) => { if (isDragging) recentlyDragged.current = true; handleMouseMove(e); }}
+        onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
+        onMouseLeave={() => isDragging && handleMouseUp()}
       >
-        <div className={styles.screenSecondContent}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        {/* Screen 1: Intro */}
+        <div
+          className={styles.screenFirst}
+          style={{
+            transform: `translateY(${position}%)`,
+            opacity: position === -100 ? 0 : 1,
+            pointerEvents: isSecondScreenActive ? "none" : "auto",
+          }}
+        >
+          <div className={styles.screenFirstContent}>
+            <div className={styles.logoContainer}>
+              <img src="/image.png" alt="Voicera logo" className={styles.logoIcon} />
+            </div>
+            <h1 className={styles.title} onClick={() => speak("Ask Voicera")}>ASK VOICERA</h1>
+            <button
+              className={styles.transcriptionButton}
+              onClick={() => {
+                openSecondScreen();
+                speak("Start Chat");
+              }}
+              onMouseEnter={() => { }}
+            >
+              Start Chat
+            </button>
+            <p className={styles.swipeHintText} onClick={() => speak("Swipe up or tap button to open chat")}>
+              Swipe up or tap button to open chat
+            </p>
+          </div>
+        </div>
+
+        {/* Screen 2: Chat */}
+        <div
+          className={styles.screenSecond}
+          style={{
+            transform: `translateY(${100 + position}%)`,
+            pointerEvents: isSecondScreenActive ? "auto" : "none",
+          }}
+        >
+          <div className={styles.screenSecondContent}>
+            <header className={styles.chatHeader}>
               <button
-                onClick={() => {
-                  closeSecondScreen();
-                  speak("Go back");
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "white",
-                  fontSize: "1.5rem",
-                  cursor: "pointer",
-                  padding: "0.5rem",
-                }}
-                aria-label="Go back"
-              >
-                ←
-              </button>
-              <h1 className={styles.titleLarge}>Chat with Voicera</h1>
+                onClick={closeSecondScreen}
+                className={styles.backButton}
+                onMouseEnter={() => { }}
+              >←</button>
+              <h1 className={styles.titleLarge} onClick={() => speak("Chat with Voicera")}>Chat with Voicera</h1>
+              {currentCategory && (
+                <div className={styles.categoryBadge} style={{ backgroundColor: getCategoryColor(currentCategory) }} onClick={() => speak(`Mode: ${currentCategory}`)}>
+                  {currentCategory}
+                </div>
+              )}
+            </header>
+
+            <div className={styles.chatArea}>
+              {messages.map((msg: any, i) => (
+                <div key={i} className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}>
+                  <div
+                    className={styles.chatBubble}
+                    onClick={() => speak(msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`)}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {waiting && (
+                <div className={`${styles.chatMessage} ${styles.ai}`}>
+                  <div className={styles.typingIndicator} onClick={() => speak("Voicera is typing")}>
+                    <div className={styles.typingDot}></div>
+                    <div className={styles.typingDot}></div>
+                    <div className={styles.typingDot}></div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {currentCategory && currentCategory !== "greeting" && (
-              <div
-                style={{
-                  padding: "0.25rem 0.75rem",
-                  borderRadius: "12px",
-                  backgroundColor: getCategoryColor(currentCategory),
-                  color: "white",
-                  fontSize: "0.75rem",
-                  fontWeight: "600",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                }}
-                onClick={() => speak(`Current mode: ${currentCategory}`)}
+            <form className={styles.chatForm} onSubmit={(e) => { e.preventDefault(); if (input.trim()) sendMessage(input); }}>
+              <input
+                className={styles.chatInput}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message..."
+                disabled={waiting}
+                onMouseEnter={() => { }}
+                onFocus={() => { }}
+              />
+              <button
+                type="button"
+                className={`${styles.micButton} ${isRecording ? styles.recording : ""}`}
+                onMouseDown={startRecording}
+                onMouseUp={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
+                onTouchStart={startRecording}
+                onTouchEnd={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
+                disabled={waiting || isSending}
+                onMouseEnter={() => { }}
               >
-                {currentCategory}
+                <MicIcon />
+              </button>
+              <button
+                type="submit"
+                className={styles.sendButton}
+                disabled={!input.trim() || waiting}
+                onMouseEnter={() => { }}
+              >Send</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==================== ROLE ID != 2: IMMERSIVE VOICE HUB (REFINED UX) ====================
+  return (
+    <div
+      className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
+      onTouchStart={(e) => { recentlyDragged.current = false; handleTouchStart(e); }}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
+      onMouseDown={(e) => { recentlyDragged.current = false; handleMouseDown(e); }}
+      onMouseMove={(e) => { if (isDragging) recentlyDragged.current = true; handleMouseMove(e); }}
+      onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
+      onMouseLeave={() => isDragging && handleMouseUp()}
+    >
+      {/* SCREEN 1: IMMERSIVE VOICE HUB */}
+      <div
+        className={styles.screenFirst}
+        style={{ transform: `translateY(${position}%)`, opacity: position === -100 ? 0 : 1 }}
+      >
+        <div className={styles.voiceModeContent} onClick={handleToggleVoice}>
+          <div
+            className={`${styles.orbContainer} ${isRecording ? styles.recording : ""} ${aiIsSpeaking ? styles.speaking : ""}`}
+            onMouseEnter={() => { }}
+          >
+            <div className={styles.orbInner}></div>
+            <div className={styles.orbGlow}></div>
+            <div className={styles.orbRing}></div>
+          </div>
+
+          <div className={styles.transcriptionDisplay}>
+            {isRecording ? (
+              <p className={styles.interimText}>{finalTranscript + interimTranscript || "Listening..."}</p>
+            ) : isSending ? (
+              <p className={styles.statusText} onClick={() => speak("Voicera is thinking")}>Thinking...</p>
+            ) : (
+              <div className={styles.introCenter}>
+                <h1 className={styles.title} onClick={() => speak("Voicera")}>VOICERA</h1>
+                <p className={styles.instructionText} onClick={() => speak("Tap orb to speak")}>Tap Orb to speak</p>
+                <div
+                  className={styles.swipeHint}
+                  onClick={(e) => { e.stopPropagation(); openSecondScreen(); }}
+                  onMouseEnter={() => { }}
+                >
+                  <p>History</p>
+                  <span>↑</span>
+                </div>
               </div>
             )}
           </div>
 
+          {!isRecording && messages.length > 0 && (
+            <div
+              className={styles.lastAiResponse}
+              onMouseEnter={() => { }}
+            >
+              <p>{messages[messages.length - 1].text}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SCREEN 2: CHAT HISTORY */}
+      <div
+        className={styles.screenSecond}
+        style={{ transform: `translateY(${100 + position}%)` }}
+      >
+        <div className={styles.screenSecondContent}>
+          <header className={styles.chatHeader}>
+            <button onClick={closeSecondScreen} className={styles.backButton} onMouseEnter={() => { }}>←</button>
+            <h1 className={styles.titleLarge} onClick={() => speak("Interaction History")}>History</h1>
+            {currentCategory && (
+              <div
+                className={styles.categoryBadge}
+                style={{ backgroundColor: getCategoryColor(currentCategory) }}
+                onMouseEnter={() => { }}
+              >
+                {currentCategory}
+              </div>
+            )}
+          </header>
+
           <div className={styles.chatArea}>
-            {messages.map((msg: any, i) => (
-              <div key={i}>
+            {messages.map((msg, i) => (
+              <div key={i} className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}>
                 <div
-                  className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai
-                    }`}
+                  className={styles.chatBubble}
+                  onClick={() => speak(msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`)}
                 >
-                  <span
-                    className={styles.chatBubble}
-                    tabIndex={0}
-                    onClick={() =>
-                      speak(msg.sender === "user" ? `You said: ${msg.text}` : `AI says: ${msg.text}`)
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        speak(
-                          msg.sender === "user" ? `You said: ${msg.text}` : `AI says: ${msg.text}`
-                        );
-                      }
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {msg.text}
-                  </span>
+                  {msg.text}
                 </div>
               </div>
             ))}
@@ -171,14 +351,7 @@ export default function VoiceraSwipeScreen() {
               <div className={`${styles.chatMessage} ${styles.ai}`}>
                 <div
                   className={styles.typingIndicator}
-                  tabIndex={0}
-                  onClick={() => speak("AI is typing")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      speak("AI is typing");
-                    }
-                  }}
-                  style={{ cursor: "pointer" }}
+                  onClick={() => speak("AI is thinking")}
                 >
                   <div className={styles.typingDot}></div>
                   <div className={styles.typingDot}></div>
@@ -188,30 +361,30 @@ export default function VoiceraSwipeScreen() {
             )}
           </div>
 
-          <form onSubmit={handleSend} className={styles.chatForm}>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about study, work, or anything..."
-              className={styles.chatInput}
-              disabled={waiting}
-              onClick={() => speak("Type your message")}
-            />
-            <button
-              type="submit"
-              className={styles.transcriptionButton}
-              disabled={waiting || !input.trim()}
-              style={{ flexShrink: 0 }}
-              onClick={(e) => {
-                if (!waiting && input.trim()) {
-                  speak("Send message");
-                }
-              }}
-            >
-              Send
-            </button>
-          </form>
+          <div className={styles.chatFooter} style={{ width: '100%' }}>
+            <form className={styles.chatForm} onSubmit={(e) => { e.preventDefault(); if (input.trim()) sendMessage(input); }}>
+              <input
+                className={styles.chatInput}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Message history..."
+                disabled={waiting}
+                onMouseEnter={() => { }}
+              />
+              <button
+                type="button"
+                className={`${styles.micButton} ${isRecording ? styles.recording : ""}`}
+                onMouseDown={startRecording}
+                onMouseUp={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
+                onTouchStart={startRecording}
+                onTouchEnd={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
+                disabled={waiting || isSending}
+                onMouseEnter={() => { }}
+              >
+                <MicIcon />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

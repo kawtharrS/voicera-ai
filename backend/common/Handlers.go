@@ -18,14 +18,16 @@ var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 type Claims struct {
 	UserID int    `json:"user_id"`
 	Email  string `json:"email"`
+	RoleID int    `json:"role_id"`
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(userID int, email string) (string, error) {
+func GenerateJWT(userID int, email string, roleID int) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
 		Email:  email,
+		RoleID: roleID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
@@ -89,7 +91,7 @@ func RegisterAPIHandler(w http.ResponseWriter, r *http.Request) {
 	// Login after register
 	user, err := data.GetUserByEmail(req.Email)
 	if err == nil {
-		token, err := GenerateJWT(user.ID, user.Email)
+		token, err := GenerateJWT(user.ID, user.Email, user.RoleID)
 		if err == nil {
 			SetCookie(token, w)
 		}
@@ -133,7 +135,7 @@ func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := GenerateJWT(user.ID, user.Email)
+	token, err := GenerateJWT(user.ID, user.Email, user.RoleID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "error generating token"})
 		return
@@ -170,10 +172,10 @@ func ClearCookie(response http.ResponseWriter) {
 	http.SetCookie(response, cookie)
 }
 
-func GetUserInfo(request *http.Request) (int, string, error) {
+func GetUserInfo(request *http.Request) (int, string, int, error) {
 	cookie, err := request.Cookie("access_token")
 	if err != nil {
-		return 0, "", err
+		return 0, "", 0, err
 	}
 
 	tokenStr := cookie.Value
@@ -190,14 +192,49 @@ func GetUserInfo(request *http.Request) (int, string, error) {
 
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
-			return 0, "", fmt.Errorf("invalid signature")
+			return 0, "", 0, fmt.Errorf("invalid signature")
 		}
-		return 0, "", err
+		return 0, "", 0, err
 	}
 
 	if !tkn.Valid {
-		return 0, "", fmt.Errorf("invalid token")
+		return 0, "", 0, fmt.Errorf("invalid token")
 	}
 
-	return claims.UserID, claims.Email, nil
+	return claims.UserID, claims.Email, claims.RoleID, nil
+}
+
+// UserInfoResponse is a simple JSON shape returned by /api/user
+type UserInfoResponse struct {
+	ID     int    `json:"id"`
+	Email  string `json:"email"`
+	RoleID int    `json:"role_id"`
+}
+
+// UserInfoHandler returns the current authenticated user's ID and email
+// based on the JWT stored in the access_token cookie.
+func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	helpers.SetHeaders(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, email, roleID, err := GetUserInfo(r)
+	if err != nil || userID == 0 {
+		// Not logged in or invalid token; return 401 with empty payload
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(UserInfoResponse{ID: 0, Email: "", RoleID: 0})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(UserInfoResponse{ID: userID, Email: email, RoleID: roleID})
 }

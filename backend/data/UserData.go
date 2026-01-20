@@ -16,7 +16,8 @@ type User struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
-	Password string `json:"password"` 
+	Password string `json:"password"`
+	RoleID   int    `json:"role_id"`
 }
 
 type UserMemo struct {
@@ -121,6 +122,7 @@ func registerUserInMemory(name, email, hashedPassword string) error {
 		Name:     name,
 		Email:    email,
 		Password: hashedPassword,
+		RoleID:   1, // Default RoleID for new users
 	}
 
 	return nil
@@ -139,6 +141,7 @@ func registerUserSupabase(name, email, hashedPassword string) error {
 		"name":     name,
 		"email":    email,
 		"password": hashedPassword,
+		"role_id":  1, // Default RoleID for new users
 	}
 
 	_, _, err = supabaseClient.
@@ -169,7 +172,7 @@ func userExistsSupabase(name, email string) (bool, error) {
 func UserIsValid(username, password string) bool {
 	username = strings.TrimSpace(username)
 	password = strings.TrimSpace(password)
-	
+
 	fmt.Printf("[DEBUG] UserIsValid called with username: %s, password length: %d\n", username, len(password))
 
 	if supabaseClient != nil {
@@ -181,7 +184,7 @@ func UserIsValid(username, password string) bool {
 func UserIsValidByEmail(email, password string) bool {
 	email = strings.ToLower(strings.TrimSpace(email))
 	password = strings.TrimSpace(password)
-		
+
 	if email == "" || password == "" {
 		return false
 	}
@@ -357,7 +360,6 @@ func GetUserByEmail(email string) (*User, error) {
 	return nil, errors.New("user not found")
 }
 
-
 func SaveUserPreference(userID int64, language, tone, name, preference string) (*Preference, error) {
 	if supabaseClient == nil {
 		return nil, errors.New("supabase client not initialized")
@@ -409,4 +411,3 @@ func GetLatestUserPreference(userID int64) (*Preference, error) {
 
 	return &latest, nil
 }
-

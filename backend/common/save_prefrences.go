@@ -37,7 +37,7 @@ func SavePreferences(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, _, err := GetUserInfo(r)
+	userID, _, _, err := GetUserInfo(r)
 	if err == nil {
 		req.UserID = int64(userID)
 	}

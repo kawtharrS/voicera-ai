@@ -1,104 +1,38 @@
 .services {
-  padding: 60px 40px;
-  background-color: #f8f8f8;
+  padding: 100px 5%;
+  background-color: #fafafa;
 }
-
-.columns {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-bottom: 60px;
-}
-
-.column {
-  flex: 1;
-  max-width: 280px;
-  text-align: center;
-}
-
-.columnHeader {
-  padding: 12px 24px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #ffffff;
-  margin-bottom: 20px;
-}
-
-.columnHeaderOrange {
-  background-color: #ff9800;
-}
-
-.columnHeaderPurple {
-  background-color: #7c5cfc;
-}
-
-.columnHeaderGreen {
-  background-color: #4db6ac;
-}
-
-.columnText {
-  font-size: 13px;
-  line-height: 1.8;
-  color: #666;
-  text-align: justify;
-}
-
-.features {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  padding: 20px 0;
-}
-
-.featureCard {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 30px 40px;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  min-width: 180px;
-}
-
-.featureIcon {
-  width: 50px;
-  height: 50px;
-  margin: 0 auto 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.featureTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  line-height: 1.4;
-}
-
-/* --- New card layout (used by Services.tsx) --- */
 
 .cards {
   display: flex;
   justify-content: center;
   align-items: stretch;
-  gap: 56px;
+  gap: 40px;
   flex-wrap: wrap;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .card {
-  width: 265px;
-  background: transparent;
-  border-radius: 3px;
+  width: 320px;
+  background: white;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.1);
 }
 
 .cardTop {
-  padding: 26px 22px 20px;
+  padding: 40px 30px;
   color: #ffffff;
-  min-height: 285px;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -106,70 +40,60 @@
 }
 
 .cardOrange {
-  background-color: #f28c3a;
+  background: linear-gradient(135deg, #FF9800 0%, #f57c00 100%);
 }
 
 .cardPurple {
-  background-color: #b57adf;
+  background: linear-gradient(135deg, #8b7ab8 0%, #7a69a7 100%);
 }
 
 .cardGreen {
-  background-color: #43b7a4;
+  background: linear-gradient(135deg, #4db6ac 0%, #009688 100%);
 }
 
 .cardTitle {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 3px;
-  margin-top: 8px;
-  margin-bottom: 18px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 20px 0 15px;
 }
 
 .cardText {
-  font-size: 11px;
-  line-height: 1.55;
-  max-width: 220px;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.9;
 }
 
 .cardBottom {
   background-color: #ffffff;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 18px 16px 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-height: 92px;
+  gap: 12px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .bottomIcon {
-  color: #9aa0a6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #8b7ab8;
 }
 
 .bottomLabel {
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: #2e2e2e;
-  text-align: center;
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #333;
+  text-transform: uppercase;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .services {
-    padding: 48px 20px;
-  }
-
-  .cards {
-    gap: 28px;
+    padding: 60px 24px;
   }
 
   .card {
-    width: min(320px, 92vw);
-  }
-
-  .cardTop {
-    min-height: 260px;
+    width: 100%;
+    max-width: 400px;
   }
 }

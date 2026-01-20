@@ -87,14 +87,7 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
 
                 onResponse(aiText, category);
 
-                if (recommendations.length > 0 && recommendations.length <= 3) {
-                    // Show suggestions as a follow-up message, but don't send them to TTS
-                    const recsText = `Suggestions: ${recommendations.slice(0, 3).join(", ")}`;
-                    setMessages(prev => [
-                        ...prev,
-                        { sender: "ai", text: recsText, category, recommendations },
-                    ]);
-                }
+                // Recommendations are now held in the state only, no automatic suggestions bubble is shown.
 
             } catch (error: any) {
                 let errorText = "Sorry, there was an error.";

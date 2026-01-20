@@ -33,6 +33,7 @@ func main() {
 	router.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
 	router.HandleFunc("/api/save-memo", common.SaveMemoHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/save-preference", common.SavePreferences).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/user", common.UserInfoHandler).Methods("GET", "OPTIONS")
 
 
 	corsHandler := handlers.CORS(

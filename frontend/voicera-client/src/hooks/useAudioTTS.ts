@@ -59,9 +59,15 @@ export const useAudioTTS = (initialCategory: string | null) => {
     );
 
     useEffect(() => {
-        const handleFirstClick = () => setUserInteracted(true);
-        document.addEventListener("click", handleFirstClick, { once: true });
-        return () => document.removeEventListener("click", handleFirstClick);
+        const handleInteraction = () => setUserInteracted(true);
+        document.addEventListener("click", handleInteraction, { once: true });
+        document.addEventListener("touchstart", handleInteraction, { once: true });
+        document.addEventListener("mousedown", handleInteraction, { once: true });
+        return () => {
+            document.removeEventListener("click", handleInteraction);
+            document.removeEventListener("touchstart", handleInteraction);
+            document.removeEventListener("mousedown", handleInteraction);
+        };
     }, []);
 
     useEffect(() => {
