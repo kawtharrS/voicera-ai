@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'screens/home.dart';
-
+import 'screens/signIn.dart';
+import 'screens/login.dart';
+import 'screens/chat.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -20,6 +22,11 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const HomePage(),
+      routes: {
+        '/signin': (context) => SignInPage(),
+        '/login': (context) => LoginPage(),
+        '/chat': (context) => VoiceChatPage(),
+      },
     );
   }
 }

@@ -30,8 +30,10 @@ class HomePage extends StatelessWidget{
                 backgroundColor: const Color(0xFFFF9500),
                 shape: RoundedRectangleBorder(borderRadius:BorderRadius.circular(20), ),
               ),
-            onPressed: () {},
-            child: const Text('Sign Up')
+            onPressed: () {
+              Navigator.pushNamed(context, '/signin');
+            },
+            child: const Text('Sign In')
             ),
             ),
             const SizedBox(width: 16),
@@ -75,7 +77,6 @@ class HomePage extends StatelessWidget{
           padding:const EdgeInsets.symmetric(vertical: 60, horizontal: 24), 
           child: Column(
             children:[
-              const SizedBox(height:20),
               Column(children: [
                 ServiceCard(
                   color: const Color(0xFF4DB6AC),
@@ -96,10 +97,83 @@ class HomePage extends StatelessWidget{
                   title:'TASK AUTOMATION',
                   description:'Automate repetitive tasks with voice commands. Save time and focus on what matters.',
                   icon: Icons.check_circle,
-                )
+                ),
               ],),
-            ]
-          ))
+            ],
+          )),
+          Container(
+            color: const Color(0xFFF5F5F5),
+            padding: const EdgeInsets.symmetric(vertical:60, horizontal:24),
+            child: Column(children: [
+              const Text(
+                'Designed for Accessibility', 
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 36, 
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'AI that understands everyone, built with WCAG standards. Perfect for all users.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16, 
+                  color: Colors.grey,
+                ),
+              ),
+            const SizedBox(height: 40),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AccessibilityIcon(icon: Icons.visibility, label: 'Vision'),
+                  const SizedBox(width: 10),
+                  AccessibilityIcon(icon: Icons.pan_tool, label: 'Motor'),
+                ],)
+            ),
+            ],)
+          ),
+          Container(
+            color : const Color(0xFF333333),
+            padding: const EdgeInsets.all(24),
+            child:Column(
+              children: [
+                const Text(
+                  'Voicera',
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 255, 255, 255),
+                    fontSize: 20, 
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height:16),
+                const Text(
+                  '@ 2026 Voicera. All rights reserved.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize:12,
+                  ),
+                ),
+                const SizedBox(height: 16,),
+                Row (
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.facebook, color:Colors.grey),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.share, color: Colors.grey),
+                    )
+                  ],)
+              ]
+            )
+
+          ),
       ],),),
     );
   }
@@ -129,7 +203,7 @@ class ServiceCard extends StatelessWidget{
       padding: const EdgeInsets.all(24),
       width: double.infinity,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color:Colors.white, size:32),
@@ -153,5 +227,39 @@ class ServiceCard extends StatelessWidget{
           ),
         ],),
     );
+  }
+}
+
+class AccessibilityIcon extends StatelessWidget{
+  final IconData icon;
+  final String label;
+  
+  const AccessibilityIcon({
+    Key? key, 
+    required this.icon,
+    required this.label,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context)
+  {
+    return Column(children: [
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size:32, color: Colors.grey[700]),
+      ),
+      const SizedBox(height: 16),
+      Text(
+        label, 
+        style: const TextStyle(
+          fontSize: 12,
+          color: Colors.grey,
+        ),
+      ),
+    ],);
   }
 }
