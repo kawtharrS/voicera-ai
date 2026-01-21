@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mobile/apis/auth_service.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-
+import 'package:speech_to_text/speech_recognition_result.dart';
 
 class VoiceChatPage extends StatefulWidget {
   const VoiceChatPage({Key? key}) : super(key: key);
@@ -22,17 +22,18 @@ class VoiceChatState extends State<VoiceChatPage>
   late AnimationController pulseController;
   late AnimationController waveController;
   late AudioPlayer audioPlayer;
+  late stt.SpeechToText _speechToText;
+  
   bool isRecording = false;
   bool isPlaying = false;
+  bool _speechEnabled = false;
   String? baseUrl;
   String selectedVoice = 'alloy';
   final TextEditingController _textController = TextEditingController();
   bool isLoadingVoice = false;
   bool isLoadingAgent = false; 
   String _transcription = '';
-  String? goBaseUrl; 
-
-
+  String? goBaseUrl;
 
   final List<String> voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 
@@ -51,7 +52,10 @@ class VoiceChatState extends State<VoiceChatPage>
     )..repeat();
 
     audioPlayer = AudioPlayer();
+    _speechToText = stt.SpeechToText();
+    
     _initAudioPlayer();
+    _initSpeech();
     _loadBaseUrl();
   }
 
@@ -63,7 +67,15 @@ class VoiceChatState extends State<VoiceChatPage>
         });
       }
     });
+  }
 
+  /// Initialize speech recognition - happens once per app
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    if (mounted) {
+      setState(() {});
+    }
+    debugPrint('Speech enabled: $_speechEnabled');
   }
 
   Future<void> _loadBaseUrl() async {
@@ -71,7 +83,6 @@ class VoiceChatState extends State<VoiceChatPage>
     goBaseUrl = AuthService.goBaseUrl; 
     _testConnection();
   }
-
 
   Future<void> _testConnection() async {
     if (baseUrl == null) return;
@@ -112,20 +123,53 @@ class VoiceChatState extends State<VoiceChatPage>
     super.dispose();
   }
 
+  /// Start listening for speech
+  void _startListening() async {
+    if (!_speechEnabled) return;
 
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      listenMode: stt.ListenMode.confirmation,
+    );
+    setState(() {
+      isRecording = true;
+    });
+    _speakWithCustomTTS('Listening');
+  }
+
+  /// Stop listening for speech
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {
+      isRecording = false;
+    });
+    _speakWithCustomTTS('Processing your question');
+  }
+
+  /// Callback when speech recognition results come in
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _transcription = result.recognizedWords;
+      _textController.text = result.recognizedWords;
+    });
+
+    // If final result, send to agent
+    if (result.finalResult) {
+      debugPrint('Final transcription: $_transcription');
+      _sendToAgent(_transcription);
+    }
+  }
+
+  /// Toggle recording on/off
   Future<void> _toggleRecording() async {
     if (isRecording) {
-      setState(() => isRecording = false);
-      _speakWithCustomTTS('Processing your question');
-      
-      final query = _textController.text.isNotEmpty 
-          ? _textController.text 
-          : 'Tell me something interesting';
-          
-      _sendToAgent(query);
+      _stopListening();
     } else {
-      setState(() => isRecording = true);
-      _speakWithCustomTTS('Listening');
+      if (_speechEnabled) {
+        _startListening();
+      } else {
+        _speakWithCustomTTS('Speech recognition is not available');
+      }
     }
   }
 
@@ -133,9 +177,18 @@ class VoiceChatState extends State<VoiceChatPage>
     if (goBaseUrl == null) return;
 
     try {
+      if (text.isEmpty) {
+        _speakWithCustomTTS('Please say something or type a message');
+        return;
+      }
+
       debugPrint('Sending to Agent: $text');
       debugPrint('Using Headers: ${AuthService.headers}');
       
+      if (mounted) {
+        setState(() => isLoadingAgent = true);
+      }
+
       final response = await http.post(
         Uri.parse('$goBaseUrl/api/ask-anything'),
         headers: AuthService.headers,
@@ -167,7 +220,6 @@ class VoiceChatState extends State<VoiceChatPage>
       }
       _speakWithCustomTTS('Sorry, I encountered an error connecting to the agent. $e');
     }
-
   }
 
   Future<void> _speakWithCustomTTS(String text) async {
@@ -216,9 +268,6 @@ class VoiceChatState extends State<VoiceChatPage>
     }
   }
 
-
-
-
   void _showVoiceSelector() {
     showDialog(
       context: context,
@@ -248,8 +297,6 @@ class VoiceChatState extends State<VoiceChatPage>
                     ),
                   ),
                 );
-
-
               }).toList(),
             ),
           ),
@@ -266,7 +313,6 @@ class VoiceChatState extends State<VoiceChatPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-
             Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -274,16 +320,11 @@ class VoiceChatState extends State<VoiceChatPage>
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      _speakWithCustomTTS('Go back');
-                      Future.delayed(const Duration(milliseconds: 1000), () {
-                        if (mounted) Navigator.pop(context);
-                      });
+                    onPressed: () async {
+                      Navigator.pop(context);
                     },
                     tooltip: 'Go back',
                   ),
-
-
                   GestureDetector(
                     onLongPress: () => _speakWithCustomTTS('Voicera Voice Chat Title'),
                     child: const Text(
@@ -297,28 +338,21 @@ class VoiceChatState extends State<VoiceChatPage>
                   IconButton(
                     icon: const Icon(Icons.more_vert),
                     onPressed: () {
-                      _speakWithCustomTTS('Settings');
                       _showVoiceSelector();
                     },
                     tooltip: 'Select voice',
                   ),
-
-
                 ],
               ),
             ),
-
-
             Expanded(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
                     Stack(
                       alignment: Alignment.center,
                       children: [
-
                         AnimatedBuilder(
                           animation: waveController,
                           builder: (context, child) {
@@ -339,11 +373,9 @@ class VoiceChatState extends State<VoiceChatPage>
                             );
                           },
                         ),
-
                         GestureDetector(
                           onTap: _toggleRecording,
                           onLongPress: () {
-
                             final String textToRead = _textController.text.isNotEmpty 
                                 ? _textController.text 
                                 : (isRecording
@@ -352,7 +384,6 @@ class VoiceChatState extends State<VoiceChatPage>
                             debugPrint('Long press detected for text: $textToRead');
                             _speakWithCustomTTS(textToRead);
                           },
-
                           child: Semantics(
                             button: true,
                             enabled: true,
@@ -400,7 +431,6 @@ class VoiceChatState extends State<VoiceChatPage>
                                             : (isRecording
                                                 ? 'Listening...'
                                                 : (isLoadingAgent ? 'Thinking...' : 'Tap to speak')),
-
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 14,
@@ -412,9 +442,7 @@ class VoiceChatState extends State<VoiceChatPage>
                               ),
                             ),
                           ),
-
                         ),
-
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -429,45 +457,43 @@ class VoiceChatState extends State<VoiceChatPage>
                           _speakWithCustomTTS(text);
                         },
                         child: TextField(
-                        controller: _textController,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                          controller: _textController,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Type your message...',
+                            hintStyle: const TextStyle(color: Colors.black26),
+                            suffixIcon: _textController.text.isNotEmpty 
+                              ? IconButton(
+                                  icon: Icon(
+                                    isLoadingAgent ? Icons.hourglass_bottom : Icons.send, 
+                                    color: AppColors.teal
+                                  ),
+                                  onPressed: () => _sendToAgent(_textController.text),
+                                )
+                              : null,
+                            border: UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppColors.purple.withOpacity(0.3)),
+                            ),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppColors.purple.withOpacity(0.3)),
+                            ),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: AppColors.purple),
+                            ),
+                          ),
+                          onChanged: (val) {
+                            setState(() {
+                              _transcription = val;
+                            });
+                          },
                         ),
-                        decoration: InputDecoration(
-                          hintText: 'Type your message...',
-                          hintStyle: const TextStyle(color: Colors.black26),
-                          suffixIcon: _textController.text.isNotEmpty 
-                            ? IconButton(
-                                icon: Icon(
-                                  isLoadingAgent ? Icons.hourglass_bottom : Icons.send, 
-                                  color: AppColors.teal
-                                ),
-                                onPressed: () => _sendToAgent(_textController.text),
-                              )
-                            : null,
-
-                          border: UnderlineInputBorder(
-
-                            borderSide: BorderSide(color: AppColors.purple.withOpacity(0.3)),
-                          ),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.purple.withOpacity(0.3)),
-                          ),
-                          focusedBorder: const UnderlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.purple),
-                          ),
-                        ),
-                        onChanged: (val) {
-                          setState(() {
-                            _transcription = val;
-                          });
-                        },
                       ),
                     ),
-                  ),
                     const SizedBox(height: 10),
                     GestureDetector(
                       onLongPress: () => _speakWithCustomTTS(
@@ -476,16 +502,14 @@ class VoiceChatState extends State<VoiceChatPage>
                       child: Text(
                         isRecording
                             ? 'Listening for your voice...'
-                            : 'Tap orb to speak or type above',
+                            : (_speechEnabled ? 'Tap orb to speak or type above' : 'Speech not available'),
                         style: const TextStyle(
                           color: Colors.black54,
                           fontSize: 13,
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-                    // Status indicator
                     if (isPlaying)
                       GestureDetector(
                         onLongPress: () => _speakWithCustomTTS('Status: Speaking with $selectedVoice voice'),
@@ -505,7 +529,6 @@ class VoiceChatState extends State<VoiceChatPage>
                           ),
                         ),
                       ),
-
                     if (!isPlaying && selectedVoice != 'alloy')
                       GestureDetector(
                         onLongPress: () => _speakWithCustomTTS('Status: Current voice is $selectedVoice'),
