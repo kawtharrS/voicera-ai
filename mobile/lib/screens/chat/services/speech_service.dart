@@ -10,6 +10,7 @@ class SpeechService {
       onResult: (result) {
         onResult(result.recognizedWords, result.finalResult);
       },
+      listenMode: stt.ListenMode.confirmation,
     );
   }
 
