@@ -135,12 +135,15 @@ async def process_question(query: StudentQuestion) -> AIResponse:
             "rewrite_feedback": "",
             "query": query.question,
             "category": None,
+            "messages": [], # Added to match GraphState
         }
 
+        print(f"DEBUG: Invoking graph with query: {query.question}")
         result = graph.invoke(
             initial_state,
             {"configurable": {"thread_id": str(initial_state["student_id"])}},
         )
+        print(f"DEBUG: Graph result: {result.get('category')}")
 
         return AIResponse(
             question=query.question,
@@ -155,19 +158,15 @@ async def process_question(query: StudentQuestion) -> AIResponse:
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        print(f"ERROR in process_question: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Graph Error: {str(e)}")
 
 
-@app.get("/health", response_model=HealthResponse)
-async def health_check():
-    return {"status": "healthy", "message": "Voicera API is running"}
+from fastapi import Response
 
-
-@app.post("/ask-anything", response_model=AIResponse)
-async def ask_anything(query: StudentQuestion):
-    return await process_question(query)
-
-
+@app.get("/api/tts")
 @app.get("/tts")
 async def text_to_speech(
     text: str,
@@ -175,6 +174,9 @@ async def text_to_speech(
     category: Optional[str] = None,
 ):
     api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        
     selected_voice = VOICE_MAPPING.get(category, voice)
 
     async with httpx.AsyncClient() as client:
@@ -199,12 +201,30 @@ async def text_to_speech(
                 detail=response.text,
             )
 
-        return StreamingResponse(
-            iter([response.content]),
+        # Using standard Response with Content-Length is more stable for mobile players
+        return Response(
+            content=response.content,
             media_type="audio/mpeg",
-            headers={"Content-Disposition": "inline; filename=speech.mp3"},
+            headers={
+                "Content-Disposition": "inline; filename=speech.mp3",
+                "Content-Length": str(len(response.content)),
+                "Accept-Ranges": "bytes"
+            },
         )
+
+
+
+@app.post("/api/ask-anything", response_model=AIResponse)
+async def ask_anything(query: StudentQuestion):
+    return await process_question(query)
+
+
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    return {"status": "healthy", "message": "Voicera API is running"}
+
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+ 

@@ -68,7 +68,7 @@ class HomePage extends StatelessWidget{
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                 ),
-                onPressed: () {},
+                onPressed: () => Navigator.pushNamed(context, '/signin'),
                 child: const Text(
                   'Get Started', 
                   style: TextStyle(fontSize: 16),
