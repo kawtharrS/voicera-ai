@@ -27,11 +27,6 @@ class LoginService {
           'email': emailText,
           'password': passwordText,
         }),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout. Please try again.');
-        },
       );
 
       final data = jsonDecode(response.body);
@@ -45,16 +40,11 @@ class LoginService {
         if (context.mounted) {
           Navigator.pushReplacementNamed(context, '/chat');
         }
-      } else if (response.statusCode == 401) {
-        _showSnackBar(context, 'Invalid email or password');
-      } else if (response.statusCode == 404) {
-        _showSnackBar(context, 'User not found');
-      } else {
+      } 
+      else {
         final errorMessage = data['message'] ?? 'Login failed. Please try again.';
         _showSnackBar(context, errorMessage);
       }
-    } on FormatException catch (_) {
-      _showSnackBar(context, 'Invalid server response. Please try again.');
     } on Exception catch (e) {
       _showSnackBar(context, 'Error: ${e.toString()}');
     }
