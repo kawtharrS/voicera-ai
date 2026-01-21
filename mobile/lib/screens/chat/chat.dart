@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mobile/apis/auth_service.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 
 class VoiceChatPage extends StatefulWidget {
@@ -524,7 +525,6 @@ class VoiceChatState extends State<VoiceChatPage>
                           ),
                         ),
                       ),
-
                   ],
                 ),
               ),
