@@ -114,7 +114,6 @@ class VoiceChatState extends State<VoiceChatPage>
 
   Future<void> _toggleRecording() async {
     if (isRecording) {
-      // Stopping recording - trigger agent if we have text
       setState(() => isRecording = false);
       _speakWithCustomTTS('Processing your question');
       
@@ -124,7 +123,6 @@ class VoiceChatState extends State<VoiceChatPage>
           
       _sendToAgent(query);
     } else {
-      // Starting recording
       setState(() => isRecording = true);
       _speakWithCustomTTS('Listening');
     }
@@ -157,7 +155,6 @@ class VoiceChatState extends State<VoiceChatPage>
           });
         }
 
-        // Automatically read the AI response aloud
         _speakWithCustomTTS(aiAnswer);
       } else {
         throw Exception('Agent error (${response.statusCode}): ${response.body}');
@@ -171,8 +168,6 @@ class VoiceChatState extends State<VoiceChatPage>
     }
 
   }
-
-
 
   Future<void> _speakWithCustomTTS(String text) async {
     if (baseUrl == null || baseUrl!.isEmpty) {
@@ -190,11 +185,9 @@ class VoiceChatState extends State<VoiceChatPage>
         await audioPlayer.stop();
       }
 
-      // Build TTS endpoint URL
       String ttsUrl = '$baseUrl/api/tts?text=${Uri.encodeComponent(text)}&voice=${Uri.encodeComponent(selectedVoice)}';
       debugPrint('Fetching TTS: $ttsUrl');
 
-      // Use a more robust AudioSource for streaming
       await audioPlayer.setAudioSource(
         AudioSource.uri(Uri.parse(ttsUrl)),
         preload: true,
@@ -203,7 +196,7 @@ class VoiceChatState extends State<VoiceChatPage>
       if (mounted) {
         setState(() {
           isLoadingVoice = false;
-          isPlaying = true; // Set explicitly as well
+          isPlaying = true; 
         });
       }
       await audioPlayer.play();
@@ -248,7 +241,6 @@ class VoiceChatState extends State<VoiceChatPage>
                             selectedVoice = newValue;
                           });
                           Navigator.pop(context);
-                          // Voice reader feedback for selection
                           _speakWithCustomTTS('Selected $voice voice');
                         }
                       },
