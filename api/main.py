@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from fastapi import Response
 
 
 langgraph_src = Path(__file__).parent.parent / "langgraph" / "src"
@@ -48,7 +49,6 @@ class StudentQuestion(BaseModel):
     conversation_history: Optional[List[Dict[str, Any]]] = None
     preferences: Optional[Dict[str, Any]] = None
 
-
 class AIResponse(BaseModel):
     question: str
     response: str
@@ -60,17 +60,14 @@ class AIResponse(BaseModel):
     category: Optional[str] = None
     emotion: Optional[str] = None
 
-
 class HealthResponse(BaseModel):
     status: str
     message: str
-
 
 def _get_val(obj: Any, key: str, default: Any = None) -> Any:
     if isinstance(obj, dict):
         return obj.get(key, default)
     return getattr(obj, key, default)
-
 
 def extract_ai_response(result: Dict[str, Any]) -> str:
     response = result.get("ai_response")
@@ -164,7 +161,6 @@ async def process_question(query: StudentQuestion) -> AIResponse:
         raise HTTPException(status_code=500, detail=f"Graph Error: {str(e)}")
 
 
-from fastapi import Response
 
 @app.get("/api/tts")
 @app.get("/tts")
@@ -201,7 +197,6 @@ async def text_to_speech(
                 detail=response.text,
             )
 
-        # Using standard Response with Content-Length is more stable for mobile players
         return Response(
             content=response.content,
             media_type="audio/mpeg",
