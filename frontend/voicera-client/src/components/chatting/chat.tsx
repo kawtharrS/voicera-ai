@@ -5,7 +5,6 @@ import { useChat } from "../../hooks/useChat";
 import api from "../../api/axios";
 import { useState, useRef, useEffect, useCallback } from "react";
 
-// Modern Mic Icon SVG
 const MicIcon = ({ className }: { className?: string }) => (
   <svg
     width="20"
@@ -59,7 +58,6 @@ export default function VoiceraSwipeScreen() {
     }
   );
 
-  // Initialize Speech Recognition
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition || recognitionRef.current) return;
@@ -134,7 +132,6 @@ export default function VoiceraSwipeScreen() {
 
   if (roleId === null) return <div className={styles.loadingContainer}><div className={styles.loader}></div></div>;
 
-  // ==================== ROLE ID 2: INTRO -> CHAT (SNIPPET UX) ====================
   if (roleId === 2) {
     return (
       <div
@@ -147,7 +144,6 @@ export default function VoiceraSwipeScreen() {
         onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
         onMouseLeave={() => isDragging && handleMouseUp()}
       >
-        {/* Screen 1: Intro */}
         <div
           className={styles.screenFirst}
           style={{
@@ -177,7 +173,6 @@ export default function VoiceraSwipeScreen() {
           </div>
         </div>
 
-        {/* Screen 2: Chat */}
         <div
           className={styles.screenSecond}
           style={{
@@ -257,7 +252,6 @@ export default function VoiceraSwipeScreen() {
     );
   }
 
-  // ==================== ROLE ID != 2: IMMERSIVE VOICE HUB (REFINED UX) ====================
   return (
     <div
       className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
@@ -269,7 +263,6 @@ export default function VoiceraSwipeScreen() {
       onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
       onMouseLeave={() => isDragging && handleMouseUp()}
     >
-      {/* SCREEN 1: IMMERSIVE VOICE HUB */}
       <div
         className={styles.screenFirst}
         style={{ transform: `translateY(${position}%)`, opacity: position === -100 ? 0 : 1 }}
@@ -316,7 +309,6 @@ export default function VoiceraSwipeScreen() {
         </div>
       </div>
 
-      {/* SCREEN 2: CHAT HISTORY */}
       <div
         className={styles.screenSecond}
         style={{ transform: `translateY(${100 + position}%)` }}

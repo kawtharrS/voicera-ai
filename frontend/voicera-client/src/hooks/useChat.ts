@@ -15,7 +15,7 @@ interface UniversalQueryResponse {
     recommendations?: string[];
     observation?: string;
     metadata?: any;
-    emotion?: string; // optional detected emotion from Aria/personal workflow
+    emotion?: string; 
 }
 
 export const useChat = (onResponse: (text: string, category: string) => void) => {
@@ -44,7 +44,6 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
             setWaiting(true);
 
             try {
-                // Load any saved user preferences and send them along with the prompt
                 let preferences: any = null;
                 try {
                     if (typeof window !== "undefined") {
@@ -86,8 +85,6 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                 ]);
 
                 onResponse(aiText, category);
-
-                // Recommendations are now held in the state only, no automatic suggestions bubble is shown.
 
             } catch (error: any) {
                 let errorText = "Sorry, there was an error.";

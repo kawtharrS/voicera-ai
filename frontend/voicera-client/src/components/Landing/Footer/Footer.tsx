@@ -77,9 +77,6 @@ const Footer: React.FC = () => {
             alt="Voicera logo"
         />
         Voicera
-    
-
-          Voicera
         </div>
         <span className={styles.copyright}>© copyright 2024</span>
       </div>
