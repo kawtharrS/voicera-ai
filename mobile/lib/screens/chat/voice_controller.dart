@@ -35,6 +35,11 @@ class VoiceChatController extends ChangeNotifier {
   Future<void> _init() async {
     await speech.init();
     await testConnection();
+    
+    // Pre-generate common phrases for screen reader
+    debugPrint('Pre-generating common TTS phrases...');
+    await tts.preGenerateCommonPhrases(voice: selectedVoice);
+    
     isInitialized = true;
     notifyListeners();
   }

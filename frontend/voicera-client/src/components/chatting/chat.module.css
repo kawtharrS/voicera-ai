@@ -54,8 +54,9 @@
   max-width: 480px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .logoIcon {
@@ -108,7 +109,6 @@
 }
 
 .chatArea {
-  flex: 1;
   min-height: 200px;
   max-height: calc(100vh - 300px);
   overflow-y: auto;
@@ -248,8 +248,8 @@
 
 .micButton {
   background: #2d2d2d;
-  color: #8b7ab8;
-  border: 2px solid #8b7ab8;
+  color: #FFB74D;
+  border: 2px solid #FFB74D;
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -266,8 +266,8 @@
 }
 
 .micButton.recording {
-  background: #ff5e5e;
-  border-color: #ff5e5e;
+  background: #FF9800;
+  border-color: #FF9800;
   color: white;
   animation: pulseMic 1.5s infinite;
 }
@@ -345,7 +345,6 @@
   z-index: 5;
   transition: all 0.4s;
   box-shadow: 0 8px 25px rgba(139, 122, 184, 0.5);
-  /* Idle / Ready state: keep the orb subtly moving using the same morph animation */
   animation: morph 2s infinite ease-in-out;
 }
 
@@ -437,14 +436,14 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  color: #8b7ab8;
+  color: #a0a0a0;
   font-weight: 600;
   margin-top: 1rem;
 }
 
 .swipeHint span {
   font-size: 1.1rem;
-  animation: bounce 2s infinite;
+  animation: bounce 5s infinite;
 }
 
 .swipeHintText {

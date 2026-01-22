@@ -256,7 +256,6 @@ export default function VoiceraSwipeScreen() {
     );
   }
 
-  // Non-roleId 2: Voice mode with always-visible orb that changes color
   return (
     <div
       className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
@@ -273,7 +272,6 @@ export default function VoiceraSwipeScreen() {
         style={{ transform: `translateY(${position}%)`, opacity: position === -100 ? 0 : 1 }}
       >
         <div className={styles.voiceModeContent} onClick={handleToggleVoice}>
-          {/* Center: when thinking show spinning logo, otherwise animated orb */}
           {isThinking ? (
             <div className={styles.logoContainer}>
               <img src="/image.png" alt="Voicera logo" className={styles.logoIcon} />
@@ -323,7 +321,6 @@ export default function VoiceraSwipeScreen() {
             </div>
           )}
 
-          {/* History button with arrow */}
           <div
             className={`${styles.swipeHint} ${isThinking ? styles.blurred : ""}`}
             onClick={(e) => {
@@ -380,31 +377,6 @@ export default function VoiceraSwipeScreen() {
                 </div>
               </div>
             )}
-          </div>
-
-          <div className={styles.chatFooter} style={{ width: '100%' }}>
-            <form className={styles.chatForm} onSubmit={(e) => { e.preventDefault(); if (input.trim()) sendMessage(input); }}>
-              <input
-                className={styles.chatInput}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Message history..."
-                disabled={waiting}
-                onMouseEnter={() => { }}
-              />
-              <button
-                type="button"
-                className={`${styles.micButton} ${isRecording ? styles.recording : ""}`}
-                onMouseDown={startRecording}
-                onMouseUp={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
-                onTouchStart={startRecording}
-                onTouchEnd={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
-                disabled={waiting || isSending}
-                onMouseEnter={() => { }}
-              >
-                <MicIcon />
-              </button>
-            </form>
           </div>
         </div>
       </div>
