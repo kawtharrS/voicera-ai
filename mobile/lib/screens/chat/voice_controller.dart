@@ -22,6 +22,7 @@ class VoiceChatController extends ChangeNotifier {
   String transcription = '';
   String selectedVoice = 'alloy';
   bool isInitialized = false;
+  String? focusedElementLabel;
 
   VoiceChatController({
     required this.tts,
@@ -140,4 +141,17 @@ class VoiceChatController extends ChangeNotifier {
         : (state == VoiceState.listening ? 'Currently listening, please speak' : 'Press the circle to speak or type a message');
     tts.speak(textToRead, selectedVoice);
   }
+
+  void setFocus(String? label) {
+    focusedElementLabel = label;
+    notifyListeners();
+  }
+
+  Future<void> speak(String text) async {
+    try {
+      await tts.speak(text, selectedVoice);
+    } catch (e) {
+      debugPrint('Error speaking: $e');
+    }
+}
 }
