@@ -6,7 +6,6 @@ import api from "../../api/axios";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MicIcon } from "./mic_icon";
 
-
 export default function VoiceraSwipeScreen() {
   const [roleId, setRoleId] = useState<number | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -14,6 +13,7 @@ export default function VoiceraSwipeScreen() {
   const [finalTranscript, setInterimTranscriptFinal] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [aiIsSpeaking, setAiIsSpeaking] = useState(false);
+
   const recentlyDragged = useRef(false);
   const recognitionRef = useRef<any>(null);
 
@@ -337,7 +337,7 @@ export default function VoiceraSwipeScreen() {
                     : isSending
                     ? '#FFB74D'
                     : isRecording
-                    ? '#ff5e5e'
+                    ? '#FFB74D'
                     : '#8b7ab8',
                 }}
               ></div>
