@@ -198,7 +198,7 @@ export default function Preferences() {
                 type="button"
                 className={`${styles.primaryButton} ${styles.secondaryButton}`}
                 onClick={closeSecondScreen}
-                disabled={savePreference.isLoading}
+                disabled={savePreference.isPending}
               >
                 Skip for now
               </button>
@@ -206,9 +206,9 @@ export default function Preferences() {
               <button
                 type="submit"
                 className={styles.primaryButton}
-                disabled={savePreference.isLoading}
+                disabled={savePreference.isPending}
               >
-                {savePreference.isLoading ? "Saving..." : "Save preferences"}
+                {savePreference.isPending ? "Saving..." : "Save preferences"}
               </button>
             </div>
           </form>

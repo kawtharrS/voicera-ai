@@ -83,6 +83,7 @@ export default function VoiceraSwipeScreen() {
     recognitionRef.current = rec;
   }, []);
 
+
   const startRecording = useCallback(() => {
     if (recognitionRef.current && !isRecording) {
       setInterimTranscriptFinal("");
@@ -126,11 +127,14 @@ export default function VoiceraSwipeScreen() {
     return colors[cat || ""] || "#999";
   };
 
+
   useEffect(() => {
     api.get("/user").then(r => setRoleId(r.data.role_id || 1)).catch(() => setRoleId(1));
   }, []);
 
   if (roleId === null) return <div className={styles.loadingContainer}><div className={styles.loader}></div></div>;
+
+  const isThinking = waiting || isSending;
 
   if (roleId === 2) {
     return (
@@ -252,6 +256,7 @@ export default function VoiceraSwipeScreen() {
     );
   }
 
+  // Non-roleId 2: Voice mode with always-visible orb that changes color
   return (
     <div
       className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
@@ -268,44 +273,68 @@ export default function VoiceraSwipeScreen() {
         style={{ transform: `translateY(${position}%)`, opacity: position === -100 ? 0 : 1 }}
       >
         <div className={styles.voiceModeContent} onClick={handleToggleVoice}>
-          <div
-            className={`${styles.orbContainer} ${isRecording ? styles.recording : ""} ${aiIsSpeaking ? styles.speaking : ""}`}
-            onMouseEnter={() => { }}
-          >
-            <div className={styles.orbInner}></div>
-            <div className={styles.orbGlow}></div>
-            <div className={styles.orbRing}></div>
-          </div>
-
-          <div className={styles.transcriptionDisplay}>
-            {isRecording ? (
-              <p className={styles.interimText}>{finalTranscript + interimTranscript || "Listening..."}</p>
-            ) : isSending ? (
-              <p className={styles.statusText} onClick={() => speak("Voicera is thinking")}>Thinking...</p>
-            ) : (
-              <div className={styles.introCenter}>
-                <h1 className={styles.title} onClick={() => speak("Voicera")}>VOICERA</h1>
-                <p className={styles.instructionText} onClick={() => speak("Tap orb to speak")}>Tap Orb to speak</p>
-                <div
-                  className={styles.swipeHint}
-                  onClick={(e) => { e.stopPropagation(); openSecondScreen(); }}
-                  onMouseEnter={() => { }}
-                >
-                  <p>History</p>
-                  <span>↑</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {!isRecording && messages.length > 0 && (
+          {/* Center: when thinking show spinning logo, otherwise animated orb */}
+          {isThinking ? (
+            <div className={styles.logoContainer}>
+              <img src="/image.png" alt="Voicera logo" className={styles.logoIcon} />
+            </div>
+          ) : (
             <div
-              className={styles.lastAiResponse}
+              className={`${styles.orbContainer} ${isRecording ? styles.recording : ""} ${aiIsSpeaking ? styles.speaking : ""} ${isSending ? styles.thinking : ""}`}
+              style={{
+                transition: 'all 0.3s ease',
+              }}
               onMouseEnter={() => { }}
             >
-              <p>{messages[messages.length - 1].text}</p>
+              <div
+                className={styles.orbInner}
+                style={{
+                  backgroundColor: aiIsSpeaking
+                    ? '#5eadad'
+                    : isSending
+                    ? '#FFB74D'
+                    : isRecording
+                    ? '#ff5e5e'
+                    : '#8b7ab8',
+                }}
+              ></div>
+              <div className={styles.orbGlow}></div>
             </div>
           )}
+
+          {/* Middle: Voicera title and instruction */}
+          {!isRecording && !aiIsSpeaking && (
+            <div
+              className={`${styles.transcriptionDisplay} ${
+                isThinking ? styles.blurred : ""
+              }`}
+            >
+              <div className={styles.introCenter}>
+                <h1 className={styles.title} onClick={() => speak('Voicera')}>
+                  VOICERA
+                </h1>
+                <p
+                  className={styles.instructionText}
+                  onClick={() => speak('Tap orb to speak')}
+                >
+                  Tap orb to speak
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* History button with arrow */}
+          <div
+            className={`${styles.swipeHint} ${isThinking ? styles.blurred : ""}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              openSecondScreen();
+            }}
+            onMouseEnter={() => { }}
+          >
+            <p>History</p>
+            <span>↑</span>
+          </div>
         </div>
       </div>
 

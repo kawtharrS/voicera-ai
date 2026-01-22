@@ -76,7 +76,8 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                 const aiText = data.response || (data as any).ai_response || "No answer received.";
                 const category = data.category || "unknown";
                 const recommendations = data.recommendations || [];
-                const emotion = data.emotion || (data.metadata && (data.metadata as any).emotion) || "";
+                // Emotion is still extracted by the backend and saved in memory,
+                // but it is not needed in the web UI state here.
 
                 setCurrentCategory(category);
                 setMessages((prev) => [
