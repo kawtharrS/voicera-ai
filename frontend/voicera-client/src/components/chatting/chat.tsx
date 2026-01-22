@@ -4,25 +4,8 @@ import { useAudioTTS } from "../../hooks/useAudioTTS";
 import { useChat } from "../../hooks/useChat";
 import api from "../../api/axios";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { MicIcon } from "./mic_icon";
 
-const MicIcon = ({ className }: { className?: string }) => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z" />
-    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-    <line x1="12" y1="19" x2="12" y2="23" />
-    <line x1="8" y1="23" x2="16" y2="23" />
-  </svg>
-);
 
 export default function VoiceraSwipeScreen() {
   const [roleId, setRoleId] = useState<number | null>(null);
@@ -160,7 +143,14 @@ export default function VoiceraSwipeScreen() {
             <div className={styles.logoContainer}>
               <img src="/image.png" alt="Voicera logo" className={styles.logoIcon} />
             </div>
-            <h1 className={styles.title} onClick={() => speak("Ask Voicera")}>ASK VOICERA</h1>
+            <h1
+              className={styles.title}
+              onClick={() => speak("Ask Voicera")}
+              data-sr="true"
+              data-sr-label="Ask Voicera. Tap Start Chat to begin a conversation."
+            >
+              ASK VOICERA
+            </h1>
             <button
               className={styles.transcriptionButton}
               onClick={() => {
@@ -168,10 +158,17 @@ export default function VoiceraSwipeScreen() {
                 speak("Start Chat");
               }}
               onMouseEnter={() => { }}
+              data-sr="true"
+              data-sr-label="Start Chat button. Opens the chat screen."
             >
               Start Chat
             </button>
-            <p className={styles.swipeHintText} onClick={() => speak("Swipe up or tap button to open chat")}>
+            <p
+              className={styles.swipeHintText}
+              onClick={() => speak("Swipe up or tap button to open chat")}
+              data-sr="true"
+              data-sr-label="Swipe up or tap Start Chat to open the chat."
+            >
               Swipe up or tap button to open chat
             </p>
           </div>
@@ -190,10 +187,27 @@ export default function VoiceraSwipeScreen() {
                 onClick={closeSecondScreen}
                 className={styles.backButton}
                 onMouseEnter={() => { }}
-              >←</button>
-              <h1 className={styles.titleLarge} onClick={() => speak("Chat with Voicera")}>Chat with Voicera</h1>
+                data-sr="true"
+                data-sr-label="Back button. Returns to Ask Voicera screen."
+              >
+                ←
+              </button>
+              <h1
+                className={styles.titleLarge}
+                onClick={() => speak("Chat with Voicera")}
+                data-sr="true"
+                data-sr-label="Chat with Voicera. Conversation view."
+              >
+                Chat with Voicera
+              </h1>
               {currentCategory && (
-                <div className={styles.categoryBadge} style={{ backgroundColor: getCategoryColor(currentCategory) }} onClick={() => speak(`Mode: ${currentCategory}`)}>
+                <div
+                  className={styles.categoryBadge}
+                  style={{ backgroundColor: getCategoryColor(currentCategory) }}
+                  onClick={() => speak(`Mode: ${currentCategory}`)}
+                  data-sr="true"
+                  data-sr-label={`Current mode: ${currentCategory}`}
+                >
                   {currentCategory}
                 </div>
               )}
@@ -201,10 +215,15 @@ export default function VoiceraSwipeScreen() {
 
             <div className={styles.chatArea}>
               {messages.map((msg: any, i) => (
-                <div key={i} className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}>
+                <div
+                  key={i}
+                  className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}
+                >
                   <div
                     className={styles.chatBubble}
                     onClick={() => speak(msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`)}
+                    data-sr="true"
+                    data-sr-label={msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`}
                   >
                     {msg.text}
                   </div>
@@ -212,7 +231,12 @@ export default function VoiceraSwipeScreen() {
               ))}
               {waiting && (
                 <div className={`${styles.chatMessage} ${styles.ai}`}>
-                  <div className={styles.typingIndicator} onClick={() => speak("Voicera is typing")}>
+                  <div
+                    className={styles.typingIndicator}
+                    onClick={() => speak("Voicera is typing")}
+                    data-sr="true"
+                    data-sr-label="Voicera is typing."
+                  >
                     <div className={styles.typingDot}></div>
                     <div className={styles.typingDot}></div>
                     <div className={styles.typingDot}></div>
@@ -221,7 +245,10 @@ export default function VoiceraSwipeScreen() {
               )}
             </div>
 
-            <form className={styles.chatForm} onSubmit={(e) => { e.preventDefault(); if (input.trim()) sendMessage(input); }}>
+            <form
+              className={styles.chatForm}
+              onSubmit={(e) => { e.preventDefault(); if (input.trim()) sendMessage(input); }}
+            >
               <input
                 className={styles.chatInput}
                 value={input}
@@ -230,6 +257,8 @@ export default function VoiceraSwipeScreen() {
                 disabled={waiting}
                 onMouseEnter={() => { }}
                 onFocus={() => { }}
+                data-sr="true"
+                data-sr-label="Message input. Type your message here."
               />
               <button
                 type="button"
@@ -240,15 +269,21 @@ export default function VoiceraSwipeScreen() {
                 onTouchEnd={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
                 disabled={waiting || isSending}
                 onMouseEnter={() => { }}
+                data-sr="true"
+                data-sr-label={isRecording ? "Recording voice. Release to send." : "Hold to record voice message."}
               >
-                <MicIcon />
+              <MicIcon />
               </button>
               <button
                 type="submit"
                 className={styles.sendButton}
                 disabled={!input.trim() || waiting}
                 onMouseEnter={() => { }}
-              >Send</button>
+                data-sr="true"
+                data-sr-label="Send button. Sends the typed message."
+              >
+                Send
+              </button>
             </form>
           </div>
         </div>
@@ -283,6 +318,16 @@ export default function VoiceraSwipeScreen() {
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={() => { }}
+              data-sr="true"
+              data-sr-label={
+                aiIsSpeaking
+                  ? "Voicera is speaking."
+                  : isSending
+                  ? "Voicera is thinking."
+                  : isRecording
+                  ? "Recording. Tap again to stop and send your message."
+                  : "Voicera orb. Tap to start speaking."
+              }
             >
               <div
                 className={styles.orbInner}
@@ -308,12 +353,19 @@ export default function VoiceraSwipeScreen() {
               }`}
             >
               <div className={styles.introCenter}>
-                <h1 className={styles.title} onClick={() => speak('Voicera')}>
+                <h1
+                  className={styles.title}
+                  onClick={() => speak('Voicera')}
+                  data-sr="true"
+                  data-sr-label="Voicera. Tap orb to speak."
+                >
                   VOICERA
                 </h1>
                 <p
                   className={styles.instructionText}
                   onClick={() => speak('Tap orb to speak')}
+                  data-sr="true"
+                  data-sr-label="Tap the orb to start speaking."
                 >
                   Tap orb to speak
                 </p>
@@ -328,6 +380,8 @@ export default function VoiceraSwipeScreen() {
               openSecondScreen();
             }}
             onMouseEnter={() => { }}
+            data-sr="true"
+            data-sr-label="History. Swipe up or tap to see previous interactions."
           >
             <p>History</p>
             <span>↑</span>
@@ -341,13 +395,30 @@ export default function VoiceraSwipeScreen() {
       >
         <div className={styles.screenSecondContent}>
           <header className={styles.chatHeader}>
-            <button onClick={closeSecondScreen} className={styles.backButton} onMouseEnter={() => { }}>←</button>
-            <h1 className={styles.titleLarge} onClick={() => speak("Interaction History")}>History</h1>
+            <button
+              onClick={closeSecondScreen}
+              className={styles.backButton}
+              onMouseEnter={() => { }}
+              data-sr="true"
+              data-sr-label="Back button. Returns to the main Voicera screen."
+            >
+              ←
+            </button>
+            <h1
+              className={styles.titleLarge}
+              onClick={() => speak("Interaction History")}
+              data-sr="true"
+              data-sr-label="Interaction history. List of previous conversations."
+            >
+              History
+            </h1>
             {currentCategory && (
               <div
                 className={styles.categoryBadge}
                 style={{ backgroundColor: getCategoryColor(currentCategory) }}
                 onMouseEnter={() => { }}
+                data-sr="true"
+                data-sr-label={`Current mode: ${currentCategory}`}
               >
                 {currentCategory}
               </div>
@@ -356,10 +427,15 @@ export default function VoiceraSwipeScreen() {
 
           <div className={styles.chatArea}>
             {messages.map((msg, i) => (
-              <div key={i} className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}>
+              <div
+                key={i}
+                className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}
+              >
                 <div
                   className={styles.chatBubble}
                   onClick={() => speak(msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`)}
+                  data-sr="true"
+                  data-sr-label={msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`}
                 >
                   {msg.text}
                 </div>
@@ -370,6 +446,8 @@ export default function VoiceraSwipeScreen() {
                 <div
                   className={styles.typingIndicator}
                   onClick={() => speak("AI is thinking")}
+                  data-sr="true"
+                  data-sr-label="AI is thinking."
                 >
                   <div className={styles.typingDot}></div>
                   <div className={styles.typingDot}></div>

@@ -42,8 +42,8 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         
-        // When finger enters widget area → Focus and speak
-        onPanDown: (_) => _handleEnter(),
+        // Only activate screen reader when the user DRAGS their finger,
+        // not on a simple tap. So we remove onPanDown and rely on onPanUpdate.
         
         // When dragging across widgets → Focus and speak each one
         onPanUpdate: (details) {
