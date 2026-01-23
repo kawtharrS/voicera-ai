@@ -10,7 +10,7 @@ load_dotenv()
 class EmotionAgent:
     def __init__(self):
         self.model = ChatOpenAI(
-            model="gpt-4o-mini",
+            model=os.getenv("OPENAI_MODEL"),
             temperature=0,
             openai_api_key=os.getenv("OPENAI_API_KEY")
         )
@@ -27,9 +27,6 @@ class EmotionAgent:
     
     def detect(self, text: str, preferences: dict | None = None) -> EmotionDetectionOutput:
         """Detect emotion from text.
-
-        Preferences are optional and used only to give the model extra
-        context (e.g., language or tone), they do not change the schema.
         """
         pref_text = ""
         if preferences:
@@ -43,7 +40,6 @@ class EmotionAgent:
                 f"Agent name: {name}\n"
                 f"Additional notes: {extra}"
             )
-
         result: EmotionDetectionOutput = self.emotion_runnable.invoke({
             "text": text,
             "preferences": pref_text,

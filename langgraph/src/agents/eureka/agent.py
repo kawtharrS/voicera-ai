@@ -37,11 +37,10 @@ memory_tools = [
     create_search_memory_tool(namespace),
 ]
 openai_model = ChatOpenAI(
-    model="gpt-4o-mini",
+    model=os.getenv("OPENAI_MODEL"),
     temperature=0.1,
     openai_api_key=os.getenv("OPENAI_API_KEY"),
 )
-
 
 class Agent():
     def __init__(self, classroom_tool=None): 

@@ -12,7 +12,6 @@ class GraphState(TypedDict):
     category: Optional[str]
     messages: Annotated[List[BaseMessage], add_messages]
     
-    # Standard fields for compatibility with main router
     student_id: Optional[str]
     current_interaction: Optional[dict]
     agent_messages: Optional[List[dict]]

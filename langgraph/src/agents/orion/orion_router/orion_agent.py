@@ -10,7 +10,7 @@ load_dotenv()
 class OrionRouterAgent():
     def __init__(self):
         self.model = ChatOpenAI(
-            model = "gpt-4o-mini", 
+            model = os.getenv("OPENAI_MODEL"), 
             temperature=0,
             openai_api_key= os.getenv("OPENAI_API_KEY")
         )
