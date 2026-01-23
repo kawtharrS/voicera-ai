@@ -2,18 +2,15 @@ import os
 from colorama import Fore, Style
 from typing import Optional
 from langchain_openai import ChatOpenAI
-
+from langgraph.src.agents.model import Model 
 from .agent import Agent
 from .state import GraphState, Course, Coursework, CourseWorkMaterial, StudentInteraction
 from tools.classroomTools import ClassroomTool
 from tools.pdf_processor import PDFProcessor
 from prompts.classroom import RELEVANT_COURSEWORK_PROMPT, AI_RESPONSE_PROMPT
 
-openai_model = ChatOpenAI(
-    model=os.getenv("OPENAI_MODEL"),
-    temperature=0.1,
-    openai_api_key=os.getenv("OPENAI_API_KEY")
-)
+model = Model()
+
 class ClassroomNodes:
     def __init__(self):
         self.agents = Agent()
@@ -100,7 +97,7 @@ class ClassroomNodes:
 
         courses = state.get("courses", [])
         current_course = courses[0] if courses else None
-        selected_coursework = self._select_relevant_coursework(question, state.get("courseworks", []), openai_model)
+        selected_coursework = self._select_relevant_coursework(question, state.get("courseworks", []), model.openai_model)
             
         return {"current_interaction": StudentInteraction(
             current_course=current_course,

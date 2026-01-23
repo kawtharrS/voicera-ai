@@ -11,6 +11,8 @@ from langmem import create_manage_memory_tool, create_search_memory_tool
 from langgraph.checkpoint.memory import InMemorySaver
 from ..structure_outputs.gmail_structure_output import *
 from prompts.gmail import *
+from langgraph.src.agents.model import Model
+from ...shared_memory import shared_memory
 
 load_dotenv()
 
@@ -27,20 +29,13 @@ memory_tools = [
     create_search_memory_tool(namespace)
 ]
 
-openai_model = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0.1,
-    openai_api_key=os.getenv("OPENAI_API_KEY")
-)
+model = Model()
 
-
-from ...shared_memory import shared_memory
 
 class GmailAgent():
     def __init__(self, gmail_tool=None):
         self.gmail_tool = gmail_tool
         embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
-        # Use shared memory vectorstore
         self.vectorstore = shared_memory.vectorstore
         self.conversation_history: List[BaseMessage] = []
         self.memory_tools = memory_tools
@@ -53,7 +48,7 @@ class GmailAgent():
         )
         self.categorize_email = (
             categorize_email_prompt
-            | openai_model.with_structured_output(CategorizeEmailOutput)
+            | model.openai_model.with_structured_output(CategorizeEmailOutput)
         )
 
         rag_query_prompt = PromptTemplate(
@@ -62,7 +57,7 @@ class GmailAgent():
         )
         self.design_rag_queries = (
             rag_query_prompt
-            | openai_model.with_structured_output(GenerateRAGQueriesOutput)
+            | model.openai_model.with_structured_output(GenerateRAGQueriesOutput)
         )
 
         rag_answer_prompt = PromptTemplate(
@@ -71,7 +66,7 @@ class GmailAgent():
         )
         self.generate_rag_answer = (
             rag_answer_prompt
-            | openai_model.with_structured_output(GenerateRAGAnswerOutput)
+            | model.openai_model.with_structured_output(GenerateRAGAnswerOutput)
         )
 
         writer_prompt = ChatPromptTemplate.from_messages(
@@ -83,7 +78,7 @@ class GmailAgent():
         )
         self.email_writer = (
             writer_prompt
-            | openai_model.with_structured_output(EmailWriterOutput)
+            | model.openai_model.with_structured_output(EmailWriterOutput)
         )
 
         proofreader_prompt = PromptTemplate(
@@ -92,5 +87,5 @@ class GmailAgent():
         )
         self.email_proofreader = (
             proofreader_prompt
-            | openai_model.with_structured_output(EmailProofreaderOutput)
+            | model.openai_model.with_structured_output(EmailProofreaderOutput)
         )

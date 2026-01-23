@@ -1,9 +1,7 @@
 import os
 import sys
-import logging
 from pathlib import Path
 from typing import List, Optional  
-
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
@@ -16,7 +14,7 @@ from langchain_core.documents import Document
 from langgraph.store.memory import InMemoryStore
 from langmem import create_manage_memory_tool, create_search_memory_tool
 from langgraph.checkpoint.memory import InMemorySaver
-
+from langgraph.src.agents.model import Model
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from .structure_output import *
 from ..shared_memory import shared_memory
@@ -24,6 +22,7 @@ from prompts.classroom import *
 
 load_dotenv()
 
+model = Model()
 checkpointer = InMemorySaver()
 store = InMemoryStore(
     index={
@@ -36,11 +35,6 @@ memory_tools = [
     create_manage_memory_tool(namespace),
     create_search_memory_tool(namespace),
 ]
-openai_model = ChatOpenAI(
-    model=os.getenv("OPENAI_MODEL"),
-    temperature=0.1,
-    openai_api_key=os.getenv("OPENAI_API_KEY"),
-)
 
 class Agent():
     def __init__(self, classroom_tool=None): 
@@ -66,7 +60,7 @@ class Agent():
 
         self.categorize_query = (
             query_category_prompt | 
-            openai_model.with_structured_output(CategorizeQueryOutput)
+            model.openai_model.with_structured_output(CategorizeQueryOutput)
         )
 
         generate_rag_prompt = PromptTemplate(
@@ -76,7 +70,7 @@ class Agent():
 
         self.design_rag_queries = (
             generate_rag_prompt | 
-            openai_model.with_structured_output(RAGQueriesOutput)
+            model.openai_model.with_structured_output(RAGQueriesOutput)
         )
 
         qa_prompt = ChatPromptTemplate.from_template(GENERATE_RAG_ANSWER_PROMPT)
@@ -84,7 +78,7 @@ class Agent():
         self.generate_rag_answer = (
             {"context": retriever, "question": RunnablePassthrough()} 
             | qa_prompt
-            | openai_model
+            | model.openai_model
             | StrOutputParser()  
 
         )
@@ -99,7 +93,7 @@ class Agent():
 
         self.ai_response_generator = (
             writer_prompt | 
-            openai_model.with_structured_output(AIResponseOutput)
+            model.openai_model.with_structured_output(AIResponseOutput)
         )
 
         proofreader_prompt = PromptTemplate(
@@ -108,7 +102,7 @@ class Agent():
         )
         self.response_proofreader = (
             proofreader_prompt | 
-            openai_model.with_structured_output(ProofReaderOutput)
+            model.openai_model.with_structured_output(ProofReaderOutput)
         )
     
     def extract_and_save_to_langmem(self, query: str, student_id: str) -> None:

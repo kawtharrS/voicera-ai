@@ -15,7 +15,6 @@ class ClassroomWorkflow():
         checkpointer = InMemorySaver()  
         store = InMemoryStore()  
         memory = MemoryHandlers(agent, store)
-
         workflow.add_node("load_courses", nodes.load_courses)
         workflow.add_node("load_coursework", nodes.load_coursework)
         workflow.add_node("load_and_index_materials", nodes.load_and_index_materials)

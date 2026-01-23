@@ -1,10 +1,7 @@
-import logging
 from typing import Dict, Any
 from .state import GraphState
 from .agent import Agent
 from .nodes import ClassroomNodes
-
-logger = logging.getLogger(__name__)
 
 class MemoryHandlers:    
     def __init__(self, agent: Agent, store=None):
@@ -22,7 +19,6 @@ class MemoryHandlers:
             query = state["current_interaction"].get("student_question")
         
         if not query:
-            logger.warning("No query found in state")
             return state
 
         history = self.agent.get_history(k=1)
@@ -130,7 +126,6 @@ class MemoryHandlers:
         """Decide whether to finalize or rewrite response
         """
         if state.get("sendable", False):
-            logger.info("Response quality check PASSED - finalizing")
             return "end"
         
         trials = int(state.get("trials", 0))
