@@ -99,8 +99,8 @@ class _VoiceChatViewState extends State<_VoiceChatView> {
                 children: [
                   AccessibleWidget(
                     label: controller.state == VoiceState.listening
-                        ? 'Stop recording button'
-                        : 'Voice orb. Tap to start speaking.',
+                        ? 'Stop recording'
+                        : 'Tap to start speaking.',
                     borderRadius: 110,
                     onTap: controller.toggleListening,
                     onLongPress: controller.readCurrentText,

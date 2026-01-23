@@ -4,8 +4,8 @@ import 'package:mobile/apis/auth_service.dart';
 
 class AgentService {
   final String baseUrl;
-  AgentService(this.baseUrl);
 
+  AgentService(this.baseUrl);
   Future<String> ask(String question) async {
     final response = await http
         .post(

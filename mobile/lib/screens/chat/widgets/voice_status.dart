@@ -18,8 +18,8 @@ class VoiceStatus extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           isRecording
-              ? 'Listening for your voice...'
-              : (state != VoiceState.error ? 'Tap orb to speak or type above' : 'Speech not available'),
+              ? 'Listening to you...'
+              : (state != VoiceState.error ? 'Tap to speak or type a message.' : 'Speech is not available right now.'),
           style: const TextStyle(
             color: Colors.black54,
             fontSize: 13,

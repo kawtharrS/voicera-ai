@@ -28,11 +28,18 @@ class UserInfo {
   }
 }
 
+/// Simple helper for authentication-related API calls.
 class AuthService {
+  /// Bearer token for authenticated requests.
   static String? token;
+
+  /// Base URL for the main backend.
   static String baseUrl = 'http://192.168.0.107:8000';
+
+  /// Base URL for the Go agent backend.
   static String goBaseUrl = 'http://192.168.0.107:8080';
 
+  /// Default headers used for all HTTP requests.
   static Map<String, String> get headers {
     return {
       'Content-Type': 'application/json',
@@ -40,6 +47,9 @@ class AuthService {
     };
   }
 
+  /// Fetches the currently logged-in user.
+  ///
+  /// Returns null if the request fails or the user is not logged in.
   static Future<UserInfo?> fetchCurrentUser() async {
     try {
       final uri = Uri.parse('$goBaseUrl/api/user');
