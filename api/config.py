@@ -10,4 +10,23 @@ class Settings:
     LANGCHAIN_PROJECT = os.getenv("LANGCHAIN_PROJECT", "voicera-langgraph")
     LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "true")
 
+DEFAULT_MAX_TRIALS = 3
+DEFAULT_STUDENT_ID = "default_student"
+
+TTS_MODEL = "tts-1"
+SPEED = 1.0
+TIMEOUT = 30.0
+
+VOICE_MAPPING = {
+    "study": "alloy",
+    "work": "onyx",
+    "personal": "shimmer",
+    "gmail": "onyx",
+    "calendar": "onyx",
+}
+HEADERS= {
+    "Authorization": f"Bearer {Settings.OPENAI_API_KEY}",
+    "Content-Type": "application/json",
+}
+
 settings = Settings()

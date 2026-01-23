@@ -20,12 +20,11 @@ from langmem import create_manage_memory_tool, create_search_memory_tool
 from langgraph.checkpoint.memory import InMemorySaver
 from supabase import create_client, Client
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from .structure_output import *
 from ..shared_memory import shared_memory
 from prompts.classroom import *
-
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 load_dotenv()
 
