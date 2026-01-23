@@ -123,7 +123,7 @@ class SharedMemoryManager:
             
             return ""
         except Exception as e:
-            print(f"[MemoryRetrieve] Failed: {e}")
+            print(f"Failed: {e}")
             return ""
 
     def is_ready(self) -> bool:
