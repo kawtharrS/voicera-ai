@@ -15,8 +15,6 @@ class RouterWorkflow:
 
         workflow.add_node("router", router_nodes.route_query)
         workflow.add_node("study_agent", ClassroomWorkflow().app)
-        # Route personal queries to the full personal assistant, which will
-        # internally detect and attach emotion without changing the tone.
         workflow.add_node("personal_agent", response_nodes.generate_personal_response)
         workflow.add_node("work_agent", orion_graph)
         workflow.add_node('setting_agent', SelfWorkflow().app)

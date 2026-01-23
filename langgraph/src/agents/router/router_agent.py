@@ -10,7 +10,7 @@ load_dotenv()
 class RouterAgent:
     def __init__(self):
         self.model = ChatOpenAI(
-            model="gpt-4o-mini",
+            model=os.getenv("OPENAI_MODEL"),
             temperature=0,
             openai_api_key=os.getenv("OPENAI_API_KEY")
         )
@@ -26,7 +26,6 @@ class RouterAgent:
         )
 
     def route(self, query: str, preferences: dict | None = None) -> RouterOutput:
-        """Routes the user query to the appropriate category, taking into account user preferences."""
         pref_text = ""
         if preferences:
             lang = preferences.get("language") or "unspecified"
