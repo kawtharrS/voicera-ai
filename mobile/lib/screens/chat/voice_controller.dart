@@ -35,11 +35,10 @@ class VoiceChatController extends ChangeNotifier {
   Future<void> _init() async {
     await speech.init();
     await testConnection();
-    
-    // Pre-generate common phrases for screen reader
+
     debugPrint('Pre-generating common TTS phrases...');
     await tts.preGenerateCommonPhrases(voice: selectedVoice);
-    
+
     isInitialized = true;
     notifyListeners();
   }
@@ -114,6 +113,7 @@ class VoiceChatController extends ChangeNotifier {
     }
   }
 
+  /// Sends [text] (or the current transcription) to the agent.
   Future<void> sendText([String? text]) async {
     final message = text ?? transcription;
     if (message.isEmpty) {
@@ -141,9 +141,16 @@ class VoiceChatController extends ChangeNotifier {
   }
 
   void readCurrentText() {
-    final textToRead = transcription.isNotEmpty 
-        ? transcription 
-        : (state == VoiceState.listening ? 'Currently listening, please speak' : 'Press the circle to speak or type a message');
+    String textToRead;
+
+    if (transcription.isNotEmpty) {
+      textToRead = transcription;
+    } else if (state == VoiceState.listening) {
+      textToRead = 'Currently listening, please speak';
+    } else {
+      textToRead = 'Press the circle to speak or type a message';
+    }
+
     tts.speak(textToRead, selectedVoice);
   }
 

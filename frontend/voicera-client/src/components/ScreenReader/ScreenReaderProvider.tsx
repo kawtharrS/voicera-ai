@@ -14,11 +14,13 @@ export const useScreenReader = () => {
   return ctx;
 };
 
+// Provides a very lightweight, keyboard-driven screen reader for the app.
 export const ScreenReaderProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { speak } = useAudioTTS("screenreader");
   const [enabled, setEnabled] = useState(false);
   const currentElementRef = useRef<HTMLElement | null>(null);
   const currentIndexRef = useRef<number>(-1);
+  // Removes highlight from any currently-focused element.
   const clearHighlight = () => {
     if (currentElementRef.current) {
       currentElementRef.current.classList.remove(HIGHLIGHT_CLASS);
@@ -26,6 +28,7 @@ export const ScreenReaderProvider: React.FC<React.PropsWithChildren> = ({ childr
     }
     currentIndexRef.current = -1;
   };
+  // Turns the screen reader on or off and announces the new state.
   const toggle = () => {
     setEnabled((prev) => {
       const next = !prev;
@@ -41,6 +44,7 @@ export const ScreenReaderProvider: React.FC<React.PropsWithChildren> = ({ childr
       return next;
     });
   };
+  // Highlights the given element and speaks a human-friendly label for it.
   const focusElement = (el: HTMLElement | null) => {
     if (currentElementRef.current) {
       currentElementRef.current.classList.remove(HIGHLIGHT_CLASS);
@@ -62,6 +66,7 @@ export const ScreenReaderProvider: React.FC<React.PropsWithChildren> = ({ childr
     }
   };
 
+  // Moves focus to the next or previous `[data-sr]` element in the DOM.
   const moveFocus = (direction: 1 | -1) => {
     const selector = "[data-sr]";
     const elements = Array.from(
@@ -77,6 +82,7 @@ export const ScreenReaderProvider: React.FC<React.PropsWithChildren> = ({ childr
     focusElement(elements[nextIndex]);
   };
 
+  // Global keyboard shortcuts for toggling and navigating with the screen reader.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && e.shiftKey && (e.key === "S" || e.key === "s")) {

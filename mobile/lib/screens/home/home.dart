@@ -85,21 +85,21 @@ class HomePage extends StatelessWidget{
                 ServiceCard(
                   color: AppColors.teal,
                   title: 'VOICE CONTROL',
-                  description: 'Control your device with simple commands. Hands-Free operation for maximum productivity',
+                  description: 'Control your device with simple voice commands. Use it hands-free and stay focused.',
                   icon: Icons.mic,
                 ),
                 const SizedBox(height:20),
                 ServiceCard(
                   color: const Color(0xFF9B59B6),
                   title: 'AI GENERATED TEXT',
-                  description: 'Get intelligent responses powered by advanced AI. Natural language understanding at its best.',
+                  description: 'Get clear answers and helpful text from AI in everyday language.',
                   icon: Icons.text_fields,
                 ),
                 const SizedBox(height:20),
                 ServiceCard(
                   color: const Color(0xFFFF9500),
                   title:'TASK AUTOMATION',
-                  description:'Automate repetitive tasks with voice commands. Save time and focus on what matters.',
+                  description:'Let Voicera handle routine tasks so you can focus on what matters most.',
                   icon: Icons.check_circle,
                 ),
               ],),
@@ -119,7 +119,7 @@ class HomePage extends StatelessWidget{
               ),
               const SizedBox(height: AppPadding.vP),
               const Text(
-                'AI that understands everyone, built with WCAG standards. Perfect for all users.',
+                'Made to be easy for everyone to use, with strong accessibility support.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16, 

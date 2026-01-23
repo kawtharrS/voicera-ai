@@ -38,7 +38,7 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
       onExit: (_) => _handleExit(),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-                
+
         onPanUpdate: (details) {
           final RenderBox? box = context.findRenderObject() as RenderBox?;
           if (box != null) {
@@ -53,7 +53,7 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
         
         onPanEnd: (_) => _handleExit(),
         onPanCancel: () => _handleExit(),
-        
+
         onTap: () {
           if (isHighlighted) {
             final controller = context.read<VoiceChatController>();
@@ -63,7 +63,7 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
         },
         
         onLongPress: widget.onLongPress,
-        
+
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(

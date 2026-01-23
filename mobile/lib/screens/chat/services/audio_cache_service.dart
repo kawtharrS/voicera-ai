@@ -6,7 +6,9 @@ import 'package:mobile/apis/auth_service.dart';
 
 class AudioCacheService {
   static final AudioCacheService _instance = AudioCacheService._internal();
+
   factory AudioCacheService() => _instance;
+
   AudioCacheService._internal();
 
   Directory? _cacheDir;
@@ -60,7 +62,6 @@ class AudioCacheService {
         _cachedFiles[_getCacheKey(key, 'alloy')] = file.path;
       }
     }
-  
   }
 
   String _getCacheKey(String text, String voice) {
@@ -77,7 +78,7 @@ class AudioCacheService {
 
   bool isCached(String text, String voice) {
     final key = _getCacheKey(text, voice);
-    return _cachedFiles.containsKey(key) && 
+    return _cachedFiles.containsKey(key) &&
            File(_cachedFiles[key]!).existsSync();
   }
 
@@ -96,7 +97,7 @@ class AudioCacheService {
       }
 
       final key = _getCacheKey(text, voice);
-      
+
       if (isCached(text, voice)) {
         return _cachedFiles[key];
       }
@@ -130,13 +131,12 @@ class AudioCacheService {
     if (!_isInitialized) {
       await initialize();
     }
-    
+
     for (final phrase in commonPhrases) {
       if (!isCached(phrase, voice)) {
         await cacheAudio(phrase, voice);
         await Future.delayed(const Duration(milliseconds: 100));
       }
-      
     }
   }
 
@@ -147,7 +147,6 @@ class AudioCacheService {
       _cachedFiles.clear();
       debugPrint('Cache cleared');
     }
-    
   }
 
   Map<String, dynamic> getCacheStats() {
