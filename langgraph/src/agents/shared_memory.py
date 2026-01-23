@@ -1,7 +1,6 @@
 import os
 import time
 import uuid
-import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
@@ -11,6 +10,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from prompts.memory import FACT_EXTRACTION_PROMPT
 from langgraph.src.agents.model import Model
+
 load_dotenv()
 model = Model()
 MEMORY_DB_NAME = "user_memory_store"
