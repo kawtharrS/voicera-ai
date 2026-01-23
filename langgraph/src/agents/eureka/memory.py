@@ -24,27 +24,27 @@ class MemoryHandlers:
         if not query:
             logger.warning("No query found in state")
             return state
+
+        history = self.agent.get_history(k=1)
+        state["is_first_message"] = (len(history) == 0)
                 
         self.agent.add_to_history("user", query)
         
-        # Set the current course from loaded courses
         courses = state.get("courses", [])
         current_course = courses[0] if courses else None
         
-        # Update interaction with current course
         if "current_interaction" in state and isinstance(state["current_interaction"], dict):
             state["current_interaction"]["current_course"] = current_course
         
         student_id = state.get("student_id")
         if student_id:
-            # Save to LangGraph store for long-term memory
             if self.store:
                 namespace = ("student", student_id)
                 self.store.put(namespace, "last_query", query)
             
             self.agent.extract_and_save_to_langmem(query, student_id)
             
-            student_context = self.agent.retrieve_from_langmem(student_id)
+            student_context = self.agent.retrieve_from_langmem(student_id, query)
             state["student_context"] = student_context
     
         state["conversation_history"] = self.agent.get_history(k=1000)
@@ -106,7 +106,6 @@ class MemoryHandlers:
         
         student_id = state.get("student_id")
         if student_id:
-            # Save interaction to store for long-term memory
             if self.store:
                 namespace = ("student", student_id)
                 interaction_data = {
@@ -126,7 +125,6 @@ class MemoryHandlers:
         state["memory_updated"] = True
         return state
         
-        return state
     
     def should_finalize(self, state: GraphState) -> str:
         """Decide whether to finalize or rewrite response
@@ -141,5 +139,4 @@ class MemoryHandlers:
         if trials >= max_trials:
             return "end"
         
-        logger.warning("Response quality check FAILED - rewriting...")
         return "rewrite"

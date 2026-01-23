@@ -46,5 +46,10 @@ Classification Rules:
 2. If the query mentions calendar, scheduling, emails, meetings, tasks, or work coordination → WORK
 3. If the query is conversational, seeks personal advice, or doesn't fit study/work → PERSONAL
 
+Special Routing Rules:
+- If the user explicitly asks for "Eureka" or mentions "Eureka", route to STUDY.
+- If the user explicitly asks for "Orion" or mentions "Orion", route to WORK.
+- If the user explicitly asks for "Aria" or mentions "Aria", route to PERSONAL.
+
 Return your classification.
 """

@@ -19,8 +19,8 @@ class ClassroomWorkflow():
         workflow.add_node("load_courses", nodes.load_courses)
         workflow.add_node("load_coursework", nodes.load_coursework)
         workflow.add_node("load_and_index_materials", nodes.load_and_index_materials)
-        workflow.add_node("receive_student_query", memory.receive_query_with_memory)  # Use memory handler
-        workflow.add_node("categorize_query", memory.categorize_with_memory)  # Use memory handler
+        workflow.add_node("receive_student_query", memory.receive_query_with_memory)  
+        workflow.add_node("categorize_query", memory.categorize_with_memory)  
         workflow.add_node("construct_rag_queries", nodes.construct_rag_queries)
         workflow.add_node("generate_ai_response", nodes.generate_ai_response)
         workflow.add_node("verify_ai_response", nodes.verify_ai_response)

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'screens/home.dart';
+import 'screens/home/home.dart';
+import 'screens/sign_in/sign_in.dart';
+import 'screens/login/login.dart';
+import 'screens/chat/voice_chat.dart';
+import 'constants/colors.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,11 +19,16 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFF9500),
+          seedColor: AppColors.orange,
           brightness: Brightness.light,
         ),
       ),
       home: const HomePage(),
+      routes: {
+        '/signin': (context) => SignInPage(),
+        '/login': (context) => LoginPage(),
+        '/chat': (context) => VoiceChatPage(),
+      },
     );
   }
 }

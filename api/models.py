@@ -10,6 +10,7 @@ class AIResponse(BaseModel):
     trials: int
     observation: Optional[str] = Field(default="", description="Agent observation")
     category: Optional[str] = Field(default=None, description="Query category")
+    emotion: Optional[str] = Field(default=None, description="Agent emotion")
 
 class HealthResponse(BaseModel):
     status: str
@@ -23,3 +24,4 @@ class StudentQuestion(BaseModel):
         default=None,
         description="Previous messages for context"
     )
+    preferences: Optional[dict] = Field(None, description="User preferences")

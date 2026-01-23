@@ -36,3 +36,4 @@ class GraphState(TypedDict):
     query_category: Optional[str]
     route: Optional[str]
     calendar_result: Optional[Any]
+    is_first_message: Optional[bool]

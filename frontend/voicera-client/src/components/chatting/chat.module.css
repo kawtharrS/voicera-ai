@@ -1,37 +1,49 @@
-/* Reset and base styles */
+:root {
+  --bg-dark: #4a4a4a;
+  --bg-light: #ffffff;
+  --text-dark: #4a4a4a;
+  --text-light: #ffffff;
+
+  --primary: #8b7ab8;
+  --primary-hover: #7a69a7;
+  --secondary: #5eadad;
+  --gray-bg: #f2f2f2;
+  --dark-gray: #7c7c7c;
+
+  --mic-orange: #FF9800;
+  --mic-yellow: #FFB74D;
+}
+
 .voiceraContainer {
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background-color: #4a4a4a;
-  /* Dark Slate requested in snippet */
+  background-color: var(--bg-dark);
   touch-action: none;
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: white;
+  color: var(--text-light);
 }
 
-/* Screens */
-.screenFirst {
+.screenFirst,
+.screenSecond {
   position: absolute;
   inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--bg-light);
+}
+
+.screenFirst {
   z-index: 10;
-  background-color: #ffffff;
 }
 
 .screenSecond {
-  position: absolute;
-  inset: 0;
-  display: flex;
   flex-direction: column;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 5;
-  background-color: #4a4a4a;
 }
 
 .dragging {
@@ -57,8 +69,9 @@
   max-width: 480px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .logoIcon {
@@ -69,7 +82,7 @@
 }
 
 .title {
-  color: rgb(97, 96, 96);
+  color: var(--text-dark);
   font-size: 1.3rem;
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -77,7 +90,7 @@
 }
 
 .titleLarge {
-  color: rgb(255, 255, 255);
+  color: var(--text-dark);
   font-size: 1.3rem;
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -96,7 +109,7 @@
 .backButton {
   background: none;
   border: none;
-  color: white;
+  color: rgb(122, 122, 122);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -110,22 +123,20 @@
   transform: translateX(-3px);
 }
 
-/* Chat area */
 .chatArea {
-  flex: 1;
   min-height: 200px;
   max-height: calc(100vh - 300px);
   overflow-y: auto;
-  background: #232323;
+  background: var(--gray-bg);
   border-radius: 20px;
   padding: 1.25rem;
   margin-bottom: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  color: var(--text-dark);
 }
 
-/* Chat messages */
 .chatMessage {
   display: flex;
   margin: 0.25rem 0;
@@ -158,20 +169,17 @@
 }
 
 .chatMessage.ai .chatBubble {
-  background: #5eadad;
-  /* Snippet Teal */
-  color: white;
+  background: var(--secondary);
+  color: var(--text-light);
   border-bottom-left-radius: 4px;
 }
 
 .chatMessage.user .chatBubble {
-  background: #8b7ab8;
-  /* Snippet Purple */
-  color: white;
+  background: var(--primary);
+  color: var(--text-light);
   border-bottom-right-radius: 4px;
 }
 
-/* Chat form */
 .chatForm {
   display: flex;
   gap: 0.75rem;
@@ -183,22 +191,22 @@
   flex: 1;
   padding: 0.7rem 1rem;
   border-radius: 12px;
-  border: 2px solid #8b7ab8;
-  background: #2d2d2d;
-  color: white;
+  border: 2px solid #d8d8d8;
+  background: var(--gray-bg);
+  color: #6b6b6b ;
   font-size: 0.95rem;
   outline: none;
   transition: all 0.2s ease;
 }
 
 .chatInput:focus {
-  border-color: #9b8ac8;
-  background: #333333;
+  border-color: #b4b4b4;
+  background: #e4e4e4;
   box-shadow: 0 0 0 4px rgba(139, 122, 184, 0.1);
 }
 
 .chatInput::placeholder {
-  color: #888;
+  color: #c7c6c6;
 }
 
 .chatInput:disabled {
@@ -206,11 +214,36 @@
   cursor: not-allowed;
 }
 
-/* Buttons */
+.micButton {
+  background: var(--gray-bg);
+  color: var(--text-dark);
+  border: 2px solid var(--gray-bg);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.micButton:hover {
+  background: #e6e6e6;
+}
+
+.micButton.recording {
+  background: var(--mic-orange);
+  border-color: var(--mic-orange);
+  color: var(--text-light);
+  animation: pulseMic 1.5s infinite;
+}
+
 .transcriptionButton,
 .mainButton {
-  background-color: #8b7ab8;
-  color: white;
+  background-color: var(--primary);
+  color: var(--text-light);
   padding: 0.8rem 2rem;
   border-radius: 12px;
   border: none;
@@ -225,7 +258,7 @@
 
 .transcriptionButton:hover:not(:disabled),
 .mainButton:hover:not(:disabled) {
-  background-color: #7a69a7;
+  background-color: var(--primary-hover);
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
@@ -240,9 +273,10 @@
   cursor: not-allowed;
 }
 
+/* Send button (orange) */
 .sendButton {
-  background: #8b7ab8;
-  color: white;
+  background: var(--mic-orange);
+  color: var(--text-light);
   border: none;
   padding: 0.7rem 1.25rem;
   border-radius: 12px;
@@ -252,57 +286,16 @@
 }
 
 .sendButton:hover:not(:disabled) {
-  background: #7a69a7;
+  background: #ff9a00;
 }
 
-.micButton {
-  background: #2d2d2d;
-  color: #8b7ab8;
-  border: 2px solid #8b7ab8;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.micButton:hover {
-  background: #333333;
-}
-
-.micButton.recording {
-  background: #ff5e5e;
-  border-color: #ff5e5e;
-  color: white;
-  animation: pulseMic 1.5s infinite;
-}
-
-@keyframes pulseMic {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 94, 94, 0.4);
-  }
-
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 94, 94, 0);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 94, 94, 0);
-  }
-}
-
-/* Typing indicator */
 .typingIndicator {
   display: flex;
   align-items: center;
   gap: 0.3rem;
   padding: 0.7rem 1rem;
-  background: #5eadad;
-  color: white;
+  background: var(--secondary);
+  color: var(--text-light);
   border-radius: 16px;
   border-bottom-left-radius: 4px;
   max-width: fit-content;
@@ -311,7 +304,7 @@
 .typingDot {
   width: 7px;
   height: 7px;
-  background: white;
+  background: var(--text-light);
   border-radius: 50%;
   animation: typing 1.4s infinite;
 }
@@ -324,15 +317,15 @@
   animation-delay: 0.4s;
 }
 
-/* Voice Interface (Role 1) */
 .voiceModeContent {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
-  background: #ffffff;
+  gap: 1.75rem;
+  background: var(--bg-light);
   z-index: 10;
   padding: 2rem;
   cursor: pointer;
@@ -350,11 +343,12 @@
 .orbInner {
   width: 75px;
   height: 75px;
-  background: linear-gradient(135deg, #8b7ab8 0%, #7a69a7 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
   border-radius: 50%;
   z-index: 5;
   transition: all 0.4s;
   box-shadow: 0 8px 25px rgba(139, 122, 184, 0.5);
+  animation: morph 2s infinite ease-in-out;
 }
 
 .orbGlow {
@@ -366,15 +360,21 @@
 }
 
 .recording .orbInner {
-  background: #ff5e5e;
+  background: var(--mic-yellow);
   transform: scale(1.1);
-  box-shadow: 0 10px 40px rgba(255, 94, 94, 0.6);
+  box-shadow: 0 10px 40px rgba(255, 183, 77, 0.55);
 }
 
 .speaking .orbInner {
-  background: #5eadad;
+  background: var(--secondary);
   animation: morph 2s infinite ease-in-out;
   box-shadow: 0 10px 40px rgba(94, 173, 173, 0.6);
+}
+
+.thinking .orbInner {
+  background: var(--mic-yellow);
+  animation: breathe 1.8s infinite ease-in-out;
+  box-shadow: 0 10px 35px rgba(255, 183, 77, 0.55);
 }
 
 .transcriptionDisplay {
@@ -388,7 +388,7 @@
 }
 
 .interimText {
-  color: #1a1a1a;
+  color: var(--dark-gray);
   font-size: 1.25rem;
   line-height: 1.4;
   font-weight: 500;
@@ -399,8 +399,15 @@
   font-size: 0.9rem;
 }
 
+.blurred {
+  filter: blur(4px);
+  opacity: 0.6;
+  pointer-events: none;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
 .statusText {
-  color: #4db6ac;
+  color: var(--secondary);
   font-size: 1.5rem;
   font-weight: 700;
 }
@@ -409,7 +416,7 @@
   margin-top: 2rem;
   padding: 1rem 1.5rem;
   text-align: center;
-  color: #4a4a4a;
+  color: var(--text-dark);
   background: #f8f8fa;
   border-radius: 20px;
   max-width: 90%;
@@ -420,7 +427,6 @@
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Intro Center */
 .introCenter {
   display: flex;
   flex-direction: column;
@@ -433,14 +439,14 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  color: #8b7ab8;
+  color: #a0a0a0;
   font-weight: 600;
   margin-top: 1rem;
 }
 
 .swipeHint span {
   font-size: 1.1rem;
-  animation: bounce 2s infinite;
+  animation: bounce 5s infinite;
 }
 
 .swipeHintText {
@@ -451,135 +457,71 @@
   letter-spacing: 0.02em;
 }
 
-/* Animations */
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-
-  50% {
-    transform: scale(1.15);
-    opacity: 0.8;
-  }
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 0.8; }
 }
 
 @keyframes typing {
-
-  0%,
-  60%,
-  100% {
-    transform: translateY(0);
-  }
-
-  30% {
-    transform: translateY(-4px);
-  }
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes bounce {
-
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-
-  40% {
-    transform: translateY(-8px);
-  }
-
-  60% {
-    transform: translateY(-4px);
-  }
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-8px); }
+  60% { transform: translateY(-4px); }
 }
 
 @keyframes morph {
-
-  0%,
-  100% {
-    border-radius: 50%;
-  }
-
-  25% {
-    border-radius: 40% 60% 50% 50%;
-  }
-
-  50% {
-    border-radius: 60% 40% 40% 60%;
-  }
-
-  75% {
-    border-radius: 40% 60% 60% 40%;
-  }
+  0%, 100% { border-radius: 50%; }
+  25% { border-radius: 40% 60% 50% 50%; }
+  50% { border-radius: 60% 40% 40% 60%; }
+  75% { border-radius: 40% 60% 60% 40%; }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Scrollbar */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
 .chatArea::-webkit-scrollbar {
   width: 6px;
 }
-
 .chatArea::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--gray-bg);
   border-radius: 3px;
 }
-
 .chatArea::-webkit-scrollbar-thumb {
-  background: #8b7ab8;
+  background: var(--primary);
   border-radius: 3px;
 }
 
-/* Category Badge */
 .categoryBadge {
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
-  color: white;
+  color: var(--text-light);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
 }
 
-/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
-
   .logoIcon,
   .typingDot,
   .orbGlow,
@@ -590,17 +532,7 @@
 }
 
 @media (max-width: 480px) {
-  .logoIcon {
-    width: 100px;
-    height: 100px;
-  }
-
-  .title,
-  .titleLarge {
-    font-size: 1.25rem;
-  }
-
-  .screenSecondContent {
-    padding: 1rem;
-  }
+  .logoIcon { width: 100px; height: 100px; }
+  .title, .titleLarge { font-size: 1.25rem; }
+  .screenSecondContent { padding: 1rem; }
 }

@@ -11,18 +11,17 @@ class RouterNodes:
         print(Fore.YELLOW + "Routing query..." + Style.RESET_ALL)
         query = state.get("query", "")
         prefs = state.get("user_preferences") or {}
-        
-        try:
-            result = self.agent.route(query, prefs)
-            category = result.category.value
-            print(Fore.GREEN + f"Query routed to: {category}" + Style.RESET_ALL)
+        messages = state.get("messages", [])
+        is_first = False
+        if not messages or len(messages) <= 1:
+            is_first = True
+        print(Fore.CYAN + f"Is first message: {is_first}" + Style.RESET_ALL)
+        result = self.agent.route(query, prefs)
+        category = result.category.value
+        print(Fore.GREEN + f"Query routed to: {category}" + Style.RESET_ALL)
+        return {
+            "category": category,
+            "is_first_message": is_first
+        }
             
-            return {
-                "category": category
-            }
-            
-        except Exception as e:
-            print(Fore.RED + f"Error routing query: {e}" + Style.RESET_ALL)
-            return {
-                "category": "personal"
-            }
+

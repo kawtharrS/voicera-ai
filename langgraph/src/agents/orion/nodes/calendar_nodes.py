@@ -1,27 +1,23 @@
 import os
-import json
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+
 from colorama import Fore, Style
-from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+
 from ..states.calendar_state import GraphState, UserInteraction
-from ..structure_outputs.calendar_structure_output import CategorizeQueryOutput, CreateEventArgs
-from prompts.calendar import CATEGORIZE_QUERY_PROMPT
 from tools.calendarTools import CalendarTool
 from ..agents.calendar_agent import CalendarAgent
 
-openai_model = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0.1,
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-)
 default_tz = "Asia/Beirut"
 
 
-def _get_reference_dt():
-    """Return current datetime in default timezone (computed fresh each call)."""
+def _get_reference_dt() -> datetime:
     return datetime.now(ZoneInfo(default_tz))
+
+
+def _greet_if_first(state: GraphState, text: str) -> str:
+    return f"Hi, I'm Orion! {text}" if state.get("is_first_message") else text
 
 
 class CalendarNodes:
@@ -29,82 +25,78 @@ class CalendarNodes:
         self.calendar_tool = CalendarTool()
         self.agents = CalendarAgent(self.calendar_tool)
 
-
     @staticmethod
     def _get_current_interaction(state: GraphState):
         interaction = state.get("current_interaction")
-        if isinstance(interaction, dict):
-            query = interaction.get("user_request")
-            interaction_model = UserInteraction(**interaction)
-        else:
-            interaction_model = interaction
-            query = getattr(interaction_model, "user_request")
 
-        return interaction_model, query
+        if isinstance(interaction, dict):
+            return UserInteraction(**interaction), interaction.get("user_request")
+
+        return interaction, getattr(interaction, "user_request")
+
+    def _search_candidates(self, payload: dict):
+        calendars_info = self.calendar_tool.getCalendarsInfo().invoke({})
+        search_args = {
+            "calendars_info": calendars_info,
+            "min_datetime": payload.get("target_min_datetime"),
+            "max_datetime": payload.get("target_max_datetime"),
+            "query": payload.get("target_query"),
+            "max_results": payload.get("max_results", 10),
+        }
+        return self.calendar_tool.searchEvents().invoke(search_args)
 
     def receive_user_query(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Receiving user query ..." + Style.RESET_ALL)
 
         incoming = state.get("current_interaction")
-        request = ""
-        if isinstance(incoming, dict):
-            request = incoming.get("user_request") or incoming.get("student_question", "")
-        elif incoming is not None:
-            request = getattr(incoming, "user_request", getattr(incoming, "student_question", ""))
-        
-        if not request:
-            request = state.get("query", "")
+        request = (
+            incoming.get("user_request")
+            if isinstance(incoming, dict)
+            else getattr(incoming, "user_request", "")
+        )
+
+        request = request or state.get("query", "")
 
         return {
             "current_interaction": UserInteraction(
                 user_request=request,
                 ai_response="",
                 recommendations=[],
-            )
+            ),
+            "is_first_message": state.get("is_first_message", False),
         }
-    
+
     def categorize_user_query(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Categorizing user query ..." + Style.RESET_ALL)
 
-        interaction_model, query = self._get_current_interaction(state)
-
+        interaction, query = self._get_current_interaction(state)
         result = self.agents.categorize_query.invoke({"query": query})
         category = result.category.value
-        observation = f"Query classified as: {category}"
 
         return {
-            "current_interaction": interaction_model.model_copy(
+            "current_interaction": interaction.model_copy(
                 update={
                     "ai_response": f"Category: {category}",
-                    "observation": observation,
+                    "observation": f"Query classified as: {category}",
                 }
             ),
             "query_category": category,
         }
-    
-    def route_after_categorize(self, state:GraphState) -> GraphState:
-        category = state.get("query_category")
-        if hasattr(category, "value"):
-            category = category.value
-        if category == "create":
-            route = "create_event"
-        elif category == "search":
-            route = "search_event"
-        elif category == "update":
-            route = "update_event"
-        elif category == "delete":
-            route = "delete_event"
-        else:
-            route = "end"
-        return {"route":route}
 
-    
+    def route_after_categorize(self, state: GraphState) -> GraphState:
+        routes = {
+            "create": "create_event",
+            "search": "search_event",
+            "update": "update_event",
+            "delete": "delete_event",
+        }
+        category = state.get("query_category")
+        return {"route": routes.get(category, "end")}
+
     def create_event(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Creating an event ..." + Style.RESET_ALL)
-        tool =self.calendar_tool.createEvent()
 
-        interaction_model, query = self._get_current_interaction(state)
-
+        interaction, query = self._get_current_interaction(state)
         extractor = self.agents.create_event_extractor.invoke(
             {
                 "query": query,
@@ -116,73 +108,68 @@ class CalendarNodes:
         payload = extractor.model_dump(exclude_none=True)
         payload.setdefault("timezone", default_tz)
 
-        if not payload.get("end_datetime") and payload.get("start_datetime"):
-            start_dt = datetime.strptime(payload["start_datetime"], "%Y-%m-%d %H:%M:%S")
-            payload["end_datetime"] = (start_dt + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-      
+        if payload.get("start_datetime") and not payload.get("end_datetime"):
+            start = datetime.strptime(payload["start_datetime"], "%Y-%m-%d %H:%M:%S")
+            payload["end_datetime"] = (start + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+
         try:
-            result = tool.invoke(payload)
-            return {
-                "current_interaction":interaction_model.model_copy(
-                    update={
-                        "ai_response":f"created event: {extractor.summary}",
-                        "observation":"Calendar event created successfully"
-                    }
-                ),
-                "calendar_result":result,
-            }
-        except Exception as e:
-            return {
-                "current_interaction": interaction_model.model_copy(
-                    update={
-                        "ai_response": f"Failed to create event: {e}",
-                        "observation": "Calendar event creation failed.",
-                    }
-                )
-            }
-    def search_event(self, state: GraphState) -> GraphState:
-        print(Fore.YELLOW + "Searching for events ..." + Style.RESET_ALL)
+            result = self.calendar_tool.createEvent().invoke(payload)
+            response = _greet_if_first(state, f"Created event: {extractor.summary}")
 
-        interaction_model, query = self._get_current_interaction(state)
-        try:
-            calendars_info = self.calendar_tool.getCalendarsInfo().invoke({})
-        except Exception as e:
             return {
-                "current_interaction": interaction_model.model_copy(
+                "current_interaction": interaction.model_copy(
                     update={
-                        "ai_response": f"Failed to read calendars: {e}",
-                        "observation": "Calendar calendars_info fetch failed.",
-                    }
-                )
-            }
-
-        extractor = self.agents.search_event_extractor.invoke(
-            {
-                "query": query,
-                "reference_datetime": _get_reference_dt().strftime("%Y-%m-%d %H:%M:%S"),
-                "timezone": default_tz,
-            }
-        )
-
-        payload = extractor.model_dump(exclude_none=True)
-        payload["calendars_info"] = calendars_info
-
-        tool = self.calendar_tool.searchEvents()
-        try:
-            result = tool.invoke(payload)
-            count = len(result) if isinstance(result, list) else 0
-            return {
-                "current_interaction": interaction_model.model_copy(
-                    update={
-                        "ai_response": f"Found {count} event(s).",
-                        "observation": "Calendar events searched successfully",
+                        "ai_response": response,
+                        "observation": "Calendar event created successfully",
                     }
                 ),
                 "calendar_result": result,
             }
         except Exception as e:
             return {
-                "current_interaction": interaction_model.model_copy(
+                "current_interaction": interaction.model_copy(
+                    update={
+                        "ai_response": f"Failed to create event: {e}",
+                        "observation": "Calendar event creation failed.",
+                    }
+                )
+            }
+
+    def search_event(self, state: GraphState) -> GraphState:
+        print(Fore.YELLOW + "Searching for events ..." + Style.RESET_ALL)
+
+        interaction, query = self._get_current_interaction(state)
+
+        try:
+            calendars_info = self.calendar_tool.getCalendarsInfo().invoke({})
+            extractor = self.agents.search_event_extractor.invoke(
+                {
+                    "query": query,
+                    "reference_datetime": _get_reference_dt().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timezone": default_tz,
+                }
+            )
+
+            payload = extractor.model_dump(exclude_none=True)
+            payload["calendars_info"] = calendars_info
+
+            result = self.calendar_tool.searchEvents().invoke(payload)
+            count = len(result) if isinstance(result, list) else 0
+            response = _greet_if_first(state, f"Found {count} event(s).")
+
+            return {
+                "current_interaction": interaction.model_copy(
+                    update={
+                        "ai_response": response,
+                        "observation": "Calendar events searched successfully",
+                    }
+                ),
+                "calendar_result": result,
+            }
+
+        except Exception as e:
+            return {
+                "current_interaction": interaction.model_copy(
                     update={
                         "ai_response": f"Failed to search events: {e}",
                         "observation": "Calendar event search failed.",
@@ -193,8 +180,7 @@ class CalendarNodes:
     def update_event(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Updating an event ..." + Style.RESET_ALL)
 
-        interaction_model, query = self._get_current_interaction(state)
-
+        interaction, query = self._get_current_interaction(state)
         extractor = self.agents.update_event_extractor.invoke(
             {
                 "query": query,
@@ -206,44 +192,26 @@ class CalendarNodes:
         payload = extractor.model_dump(exclude_none=True)
         event_id = payload.get("event_id")
 
-        if not event_id or (isinstance(event_id, str) and "placeholder" in event_id.lower()):
-            try:
-                calendars_info = self.calendar_tool.getCalendarsInfo().invoke({})
-                search_args = {
-                    "calendars_info": calendars_info,
-                    "min_datetime": payload.get("target_min_datetime"),
-                    "max_datetime": payload.get("target_max_datetime"),
-                    "query": payload.get("target_query"),
-                    "max_results": payload.get("max_results", 10),
-                }
+        if not event_id or "placeholder" in str(event_id).lower():
+            candidates = self._search_candidates(payload)
 
-                candidates = self.calendar_tool.searchEvents().invoke(search_args)
-            except Exception as e:
+            if not candidates:
                 return {
-                    "current_interaction": interaction_model.model_copy(
-                        update={
-                            "ai_response": f"Search for target event failed: {e}",
-                            "observation": "Update failed: search error.",
-                        }
-                    )
-                }
-
-            if not isinstance(candidates, list) or len(candidates) == 0:
-                return {
-                    "current_interaction": interaction_model.model_copy(
+                    "current_interaction": interaction.model_copy(
                         update={
                             "ai_response": "No matching events found to update.",
                             "observation": "Update failed: no matching events.",
                         }
-                    ),
-                    "calendar_result": {"candidates": []},
+                    )
                 }
 
             if len(candidates) > 1:
-                shown = candidates[:5]
-                options = "\n".join([f"- id={c.get('id')} | {c.get('summary')} | start={c.get('start')}" for c in shown])
+                options = "\n".join(
+                    f"- id={c['id']} | {c.get('summary')} | start={c.get('start')}"
+                    for c in candidates[:5]
+                )
                 return {
-                    "current_interaction": interaction_model.model_copy(
+                    "current_interaction": interaction.model_copy(
                         update={
                             "ai_response": "Multiple events match. Reply with the event_id:\n" + options,
                             "observation": "Update requires disambiguation.",
@@ -252,38 +220,32 @@ class CalendarNodes:
                     "calendar_result": {"candidates": candidates},
                 }
 
-            event_id = candidates[0].get("id")
+            event_id = candidates[0]["id"]
 
         update_payload = {
-            "event_id": event_id,
-            "calendar_id": payload.get("calendar_id", "primary"),
-            "summary": payload.get("new_summary"),
-            "start_datetime": payload.get("new_start_datetime"),
-            "end_datetime": payload.get("new_end_datetime"),
-            "timezone": payload.get("timezone"),
-            "location": payload.get("new_location"),
-            "description": payload.get("new_description"),
-            "send_updates": payload.get("send_updates"),
+            k: v
+            for k, v in {
+                "event_id": event_id,
+                "calendar_id": payload.get("calendar_id", "primary"),
+                "summary": payload.get("new_summary"),
+                "start_datetime": payload.get("new_start_datetime"),
+                "end_datetime": payload.get("new_end_datetime"),
+                "timezone": payload.get("timezone") or default_tz,
+                "location": payload.get("new_location"),
+                "description": payload.get("new_description"),
+                "send_updates": payload.get("send_updates"),
+            }.items()
+            if v is not None
         }
-        update_payload = {k: v for k, v in update_payload.items() if v is not None}
-
-        if update_payload.get("start_datetime") and not update_payload.get("end_datetime"):
-            try:
-                start_dt = datetime.strptime(update_payload["start_datetime"], "%Y-%m-%d %H:%M:%S")
-                update_payload["end_datetime"] = (start_dt + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-            except Exception:
-                pass
-
-        if (update_payload.get("start_datetime") or update_payload.get("end_datetime")) and not update_payload.get("timezone"):
-            update_payload["timezone"] = default_tz
 
         try:
-            tool = self.calendar_tool.updateEvent()
-            result = tool.invoke(update_payload)
+            result = self.calendar_tool.updateEvent().invoke(update_payload)
+            response = _greet_if_first(state, f"Updated event: {event_id}")
+
             return {
-                "current_interaction": interaction_model.model_copy(
+                "current_interaction": interaction.model_copy(
                     update={
-                        "ai_response": f"Updated event: {event_id}",
+                        "ai_response": response,
                         "observation": "Calendar event updated successfully",
                     }
                 ),
@@ -291,7 +253,7 @@ class CalendarNodes:
             }
         except Exception as e:
             return {
-                "current_interaction": interaction_model.model_copy(
+                "current_interaction": interaction.model_copy(
                     update={
                         "ai_response": f"Failed to update event: {e}",
                         "observation": "Calendar event update failed.",
@@ -299,12 +261,10 @@ class CalendarNodes:
                 )
             }
 
-
     def delete_event(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Deleting an event ..." + Style.RESET_ALL)
 
-        interaction_model, query = self._get_current_interaction(state)
-
+        interaction, query = self._get_current_interaction(state)
         extractor = self.agents.delete_event_extractor.invoke(
             {
                 "query": query,
@@ -312,47 +272,30 @@ class CalendarNodes:
                 "timezone": default_tz,
             }
         )
+
         payload = extractor.model_dump(exclude_none=True)
-
         event_id = payload.get("event_id")
-        if not event_id or (isinstance(event_id, str) and "placeholder" in event_id.lower()):
-            try:
-                calendars_info = self.calendar_tool.getCalendarsInfo().invoke({})
-                search_args = {
-                    "calendars_info": calendars_info,
-                    "min_datetime": payload.get("target_min_datetime"),
-                    "max_datetime": payload.get("target_max_datetime"),
-                    "query": payload.get("target_query"),
-                    "max_results": payload.get("max_results", 10),
-                }
 
-                candidates = self.calendar_tool.searchEvents().invoke(search_args)
-            except Exception as e:
-                return {
-                    "current_interaction": interaction_model.model_copy(
-                        update={
-                            "ai_response": f"Search for target event failed: {e}",
-                            "observation": "Delete failed: search error.",
-                        }
-                    )
-                }
+        if not event_id or "placeholder" in str(event_id).lower():
+            candidates = self._search_candidates(payload)
 
-            if not isinstance(candidates, list) or len(candidates) == 0:
+            if not candidates:
                 return {
-                    "current_interaction": interaction_model.model_copy(
+                    "current_interaction": interaction.model_copy(
                         update={
                             "ai_response": "No matching events found to delete.",
                             "observation": "Delete failed: no matching events.",
                         }
-                    ),
-                    "calendar_result": {"candidates": []},
+                    )
                 }
 
             if len(candidates) > 1:
-                shown = candidates[:5]
-                options = "\n".join([f"- id={c.get('id')} | {c.get('summary')} | start={c.get('start')}" for c in shown])
+                options = "\n".join(
+                    f"- id={c['id']} | {c.get('summary')} | start={c.get('start')}"
+                    for c in candidates[:5]
+                )
                 return {
-                    "current_interaction": interaction_model.model_copy(
+                    "current_interaction": interaction.model_copy(
                         update={
                             "ai_response": "Multiple events match. Reply with the event_id:\n" + options,
                             "observation": "Delete requires disambiguation.",
@@ -361,30 +304,32 @@ class CalendarNodes:
                     "calendar_result": {"candidates": candidates},
                 }
 
-            event_id = candidates[0].get("id")
-
-        delete_payload = {
-            "event_id": event_id,
-            "calendar_id": payload.get("calendar_id", "primary"),
-            "send_updates": payload.get("send_updates"),
-        }
-        delete_payload = {k: v for k, v in delete_payload.items() if v is not None}
+            event_id = candidates[0]["id"]
 
         try:
-            tool = self.calendar_tool.deleteEvent()
-            result = tool.invoke(delete_payload)
+            result = self.calendar_tool.deleteEvent().invoke(
+                {
+                    "event_id": event_id,
+                    "calendar_id": payload.get("calendar_id", "primary"),
+                    "send_updates": payload.get("send_updates"),
+                }
+            )
+
+            response = _greet_if_first(state, f"Deleted event: {event_id}")
+
             return {
-                "current_interaction": interaction_model.model_copy(
+                "current_interaction": interaction.model_copy(
                     update={
-                        "ai_response": f"Deleted event: {event_id}",
+                        "ai_response": response,
                         "observation": "Calendar event deleted successfully",
                     }
                 ),
                 "calendar_result": result,
             }
+
         except Exception as e:
             return {
-                "current_interaction": interaction_model.model_copy(
+                "current_interaction": interaction.model_copy(
                     update={
                         "ai_response": f"Failed to delete event: {e}",
                         "observation": "Calendar event deletion failed.",

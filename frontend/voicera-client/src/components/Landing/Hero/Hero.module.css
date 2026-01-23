@@ -3,12 +3,12 @@
   justify-content: space-between;
   align-items: center;
   gap: clamp(40px, 6vw, 100px);
-  padding: clamp(60px, 10vh, 120px) 5%;
+  padding: clamp(60px, 10vh, 120px) 10%;
   background-color: #ffffff;
-  min-height: calc(100vh - 70px);
-  margin: 0 auto;
+  margin: auto;
   max-width: 1600px;
   overflow: hidden;
+  margin-top: -80px; 
 }
 
 .content {
@@ -18,16 +18,16 @@
 }
 
 .title {
-  font-size: clamp(40px, 5vw, 76px);
+  font-size: clamp(20px, 5vw, 76px);
   font-weight: 800;
-  color: #1a1a1a;
+  color: #414040;
   line-height: 1.1;
   margin-bottom: 24px;
   letter-spacing: -0.02em;
 }
 
 .subtitle {
-  font-size: clamp(18px, 1.8vw, 26px);
+  font-size: clamp(14px, 1.6vw, 26px);
   color: #555;
   margin-bottom: 40px;
   font-weight: 500;
@@ -35,7 +35,7 @@
 }
 
 .getStartedBtn {
-  background-color: #8b7ab8;
+  background-color: #FF9800;
   color: #ffffff;
   padding: 16px 44px;
   border-radius: 32px;
@@ -49,9 +49,9 @@
 }
 
 .getStartedBtn:hover {
-  background-color: #7a69a7;
+  background-color: #f19203;
   transform: translateY(-3px);
-  box-shadow: 0 15px 35px rgba(139, 122, 184, 0.4);
+  box-shadow: 0 15px 35px rgba(179, 179, 179, 0.4);
 }
 
 .tagline {
@@ -70,50 +70,20 @@
 }
 
 .heroImage {
-  width: 100%;
+  width: 120%;
   display: flex;
   justify-content: center;
 }
 
 .heroImg {
-  width: 110%;
-  /* Slightly larger to fill space but not extreme */
+  width: 200%;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.1));
   transition: transform 0.5s ease;
 }
 
-/* Animations / Decorative */
-.dot {
-  position: absolute;
-  width: clamp(8px, 1vw, 16px);
-  height: clamp(8px, 1vw, 16px);
-  border-radius: 50%;
-  opacity: 0.5;
-  z-index: -1;
-}
 
-.dot1 {
-  top: 15%;
-  left: 5%;
-  background-color: #ff9800;
-  animation: float 6s infinite;
-}
-
-.dot2 {
-  top: 25%;
-  right: 10%;
-  background-color: #4db6ac;
-  animation: float 8s infinite 1s;
-}
-
-.dot3 {
-  bottom: 20%;
-  left: 15%;
-  background-color: #8b7ab8;
-  animation: float 7s infinite 0.5s;
-}
 
 @keyframes float {
 

@@ -56,7 +56,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fastAPIURL+"/ask-anything",
+		fastAPIURL+"/api/ask-anything",
 		bytes.NewBuffer(body),
 	)
 
@@ -115,10 +115,11 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestURL := fmt.Sprintf("%s/tts?text=%s", fastAPIURL, url.QueryEscape(text))
+	requestURL := fmt.Sprintf("%s/api/tts?text=%s", fastAPIURL, url.QueryEscape(text))
 	if category != "" {
 		requestURL = fmt.Sprintf("%s&category=%s", requestURL, url.QueryEscape(category))
 	}
+
 	fmt.Printf("TTS Request: %s\n", requestURL)
 
 	resp, err := http.Get(requestURL)
@@ -156,7 +157,6 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		query.StudentID = fmt.Sprintf("%d", userID)
 
-		// Try to load latest user preferences from DB and attach them to the query
 		if pref, pErr := data.GetLatestUserPreference(int64(userID)); pErr == nil && pref != nil {
 			query.Preferences = &types.Preferences{
 				Language:   pref.Language,
@@ -174,20 +174,19 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// SAVE TO user_memo TABLE WITH EMOTION
 	if userID > 0 && response != nil {
 		go func() {
 			memo, err := data.SaveUserMemo(
 				int64(userID),
-				query.Question,    // user's question
-				response.Response, // AI's response
-				response.Category, // query category
-				response.Emotion,  // detected emotion
+				query.Question,
+				response.Response,
+				response.Category,
+				response.Emotion,
 			)
 			if err != nil {
-				fmt.Printf("❌ Error saving memo: %v\n", err)
+				fmt.Printf("Error saving memo: %v\n", err)
 			} else {
-				fmt.Printf("✓ Memo saved (ID: %d) - Category: %s, Emotion: %s\n", memo.ID, memo.Category, memo.Emotion)
+				fmt.Printf("Memo saved (ID: %d) - Category: %s, Emotion: %s\n", memo.ID, memo.Category, memo.Emotion)
 			}
 		}()
 	}
@@ -207,7 +206,7 @@ func addPrefrences(query types.Preferences) (*types.AIResponse, error) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fastAPIURL+"/ask-anything",
+		fastAPIURL+"/api/ask-anything",
 		bytes.NewBuffer(body),
 	)
 

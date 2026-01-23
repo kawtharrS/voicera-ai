@@ -12,7 +12,6 @@ class GraphState(TypedDict):
     category: Optional[str]
     messages: Annotated[List[BaseMessage], add_messages]
     
-    # Standard fields for compatibility with main router
     student_id: Optional[str]
     current_interaction: Optional[dict]
     agent_messages: Optional[List[dict]]
@@ -22,4 +21,5 @@ class GraphState(TypedDict):
     rewrite_feedback: Optional[str]
     user_context: Optional[str]
     conversation_history: Optional[List[dict]]
+    is_first_message: Optional[bool]
     

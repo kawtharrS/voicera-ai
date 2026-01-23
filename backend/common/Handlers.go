@@ -51,6 +51,7 @@ type registerRequest struct {
 type apiResponse struct {
 	Ok      bool   `json:"ok"`
 	Message string `json:"message"`
+	Token   string `json:"token,omitempty"`
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload apiResponse) {
@@ -89,15 +90,16 @@ func RegisterAPIHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Login after register
+	var token string
 	user, err := data.GetUserByEmail(req.Email)
 	if err == nil {
-		token, err := GenerateJWT(user.ID, user.Email, user.RoleID)
-		if err == nil {
+		token, _ = GenerateJWT(user.ID, user.Email, user.RoleID)
+		if token != "" {
 			SetCookie(token, w)
 		}
 	}
 
-	writeJSON(w, http.StatusCreated, apiResponse{Ok: true, Message: "registered"})
+	writeJSON(w, http.StatusCreated, apiResponse{Ok: true, Message: "registered", Token: token})
 }
 
 func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
@@ -141,8 +143,9 @@ func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	SetCookie(token, w)
-	writeJSON(w, http.StatusOK, apiResponse{Ok: true, Message: "logged in"})
+	writeJSON(w, http.StatusOK, apiResponse{Ok: true, Message: "logged in", Token: token})
 }
+
 func LogoutHandler(response http.ResponseWriter, request *http.Request) {
 	ClearCookie(response)
 	http.Redirect(response, request, "/", 302)
@@ -173,12 +176,21 @@ func ClearCookie(response http.ResponseWriter) {
 }
 
 func GetUserInfo(request *http.Request) (int, string, int, error) {
-	cookie, err := request.Cookie("access_token")
-	if err != nil {
-		return 0, "", 0, err
+	var tokenStr string
+
+	// Check Authorization header first
+	authHeader := request.Header.Get("Authorization")
+	if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		tokenStr = authHeader[7:]
+	} else {
+		// Fallback to cookie
+		cookie, err := request.Cookie("access_token")
+		if err != nil {
+			return 0, "", 0, err
+		}
+		tokenStr = cookie.Value
 	}
 
-	tokenStr := cookie.Value
 	claims := &Claims{}
 
 	key := jwtKey

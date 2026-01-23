@@ -15,7 +15,7 @@ interface UniversalQueryResponse {
     recommendations?: string[];
     observation?: string;
     metadata?: any;
-    emotion?: string; // optional detected emotion from Aria/personal workflow
+    emotion?: string; 
 }
 
 export const useChat = (onResponse: (text: string, category: string) => void) => {
@@ -44,7 +44,6 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
             setWaiting(true);
 
             try {
-                // Load any saved user preferences and send them along with the prompt
                 let preferences: any = null;
                 try {
                     if (typeof window !== "undefined") {
@@ -77,7 +76,8 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                 const aiText = data.response || (data as any).ai_response || "No answer received.";
                 const category = data.category || "unknown";
                 const recommendations = data.recommendations || [];
-                const emotion = data.emotion || (data.metadata && (data.metadata as any).emotion) || "";
+                // Emotion is still extracted by the backend and saved in memory,
+                // but it is not needed in the web UI state here.
 
                 setCurrentCategory(category);
                 setMessages((prev) => [
@@ -86,8 +86,6 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                 ]);
 
                 onResponse(aiText, category);
-
-                // Recommendations are now held in the state only, no automatic suggestions bubble is shown.
 
             } catch (error: any) {
                 let errorText = "Sorry, there was an error.";
