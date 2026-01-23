@@ -40,8 +40,6 @@ class AuthService {
     };
   }
 
-  /// Fetch the current authenticated user (id, email, role_id) using the JWT.
-  /// Returns null if the user is not authenticated or the request fails.
   static Future<UserInfo?> fetchCurrentUser() async {
     try {
       final uri = Uri.parse('$goBaseUrl/api/user');

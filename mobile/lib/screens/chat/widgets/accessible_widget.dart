@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import '../voice_controller.dart';
 import 'package:mobile/constants/colors.dart';
 
-/// Accessible widget that supports touch-based screen reader interaction
-/// - Drag finger over widget → Speaks the label
-/// - Tap when focused → Activates the widget
 class AccessibleWidget extends StatefulWidget {
   final Widget child;
   final String label;
@@ -41,13 +38,8 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
       onExit: (_) => _handleExit(),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        
-        // Only activate screen reader when the user DRAGS their finger,
-        // not on a simple tap. So we remove onPanDown and rely on onPanUpdate.
-        
-        // When dragging across widgets → Focus and speak each one
+                
         onPanUpdate: (details) {
-          // Check if still within this widget's bounds
           final RenderBox? box = context.findRenderObject() as RenderBox?;
           if (box != null) {
             final local = box.globalToLocal(details.globalPosition);
@@ -59,11 +51,9 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
           }
         },
         
-        // When finger leaves → Clear focus
         onPanEnd: (_) => _handleExit(),
         onPanCancel: () => _handleExit(),
         
-        // Tap → Activate the focused element
         onTap: () {
           if (isHighlighted) {
             final controller = context.read<VoiceChatController>();
@@ -72,7 +62,6 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
           }
         },
         
-        // Long press for additional info
         onLongPress: widget.onLongPress,
         
         child: AnimatedContainer(
@@ -114,7 +103,6 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
   void _handleExit() {
     if (_isHovering) {
       _isHovering = false;
-      // Don't clear focus immediately - let tap handler do it
     }
   }
 }

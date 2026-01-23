@@ -9,12 +9,10 @@ class TtsService {
 
   TtsService(this._player, this.baseUrl);
 
-  /// Speak text using cached audio if available, otherwise stream from API
   Future<void> speak(String text, String voice) async {
     try {
       await _player.stop();
 
-      // Check if audio is cached
       if (_cache.isCached(text, voice)) {
         final cachedPath = _cache.getCachedFilePath(text, voice);
         if (cachedPath != null) {
@@ -25,12 +23,10 @@ class TtsService {
         }
       }
 
-      // Not cached - try to cache it for future use (async, don't wait)
       _cache.cacheAudio(text, voice).catchError((e) {
         debugPrint('Background caching failed: $e');
       });
 
-      // Stream from API as before
       final url =
           '$baseUrl/api/tts?text=${Uri.encodeComponent(text)}&voice=${Uri.encodeComponent(voice)}';
       await _player.setAudioSource(
@@ -44,18 +40,15 @@ class TtsService {
     }
   }
 
-  /// Pre-generate common phrases (call this on app startup)
   Future<void> preGenerateCommonPhrases({String voice = 'alloy'}) async {
     await _cache.initialize();
     await _cache.preGenerateCommonPhrases(voice: voice);
   }
 
-  /// Clear all cached audio
   Future<void> clearCache() async {
     await _cache.clearCache();
   }
 
-  /// Get cache statistics
   Map<String, dynamic> getCacheStats() {
     return _cache.getCacheStats();
   }
