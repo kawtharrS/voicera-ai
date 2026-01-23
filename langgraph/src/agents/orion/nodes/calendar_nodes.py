@@ -60,7 +60,9 @@ class CalendarNodes:
                 user_request=request,
                 ai_response="",
                 recommendations=[],
-            )
+            ),
+            # Preserve is_first_message if routed from parent
+            "is_first_message": state.get("is_first_message", False) 
         }
     
     def categorize_user_query(self, state: GraphState) -> GraphState:
@@ -101,7 +103,7 @@ class CalendarNodes:
     
     def create_event(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Creating an event ..." + Style.RESET_ALL)
-        tool =self.calendar_tool.createEvent()
+        tool = self.calendar_tool.createEvent()
 
         interaction_model, query = self._get_current_interaction(state)
 
@@ -119,18 +121,25 @@ class CalendarNodes:
         if not payload.get("end_datetime") and payload.get("start_datetime"):
             start_dt = datetime.strptime(payload["start_datetime"], "%Y-%m-%d %H:%M:%S")
             payload["end_datetime"] = (start_dt + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-      
+
         try:
             result = tool.invoke(payload)
+
+            # ❗ Correct: assign response_text BEFORE returning dict
+            response_text = f"created event: {extractor.summary}"
+            if state.get("is_first_message"):
+                response_text = f"Hi, I'm Orion! {response_text}"
+
             return {
-                "current_interaction":interaction_model.model_copy(
+                "current_interaction": interaction_model.model_copy(
                     update={
-                        "ai_response":f"created event: {extractor.summary}",
-                        "observation":"Calendar event created successfully"
+                        "ai_response": response_text,
+                        "observation": "Calendar event created successfully"
                     }
                 ),
-                "calendar_result":result,
+                "calendar_result": result,
             }
+
         except Exception as e:
             return {
                 "current_interaction": interaction_model.model_copy(
@@ -140,6 +149,7 @@ class CalendarNodes:
                     }
                 )
             }
+
     def search_event(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Searching for events ..." + Style.RESET_ALL)
 
@@ -170,16 +180,23 @@ class CalendarNodes:
         tool = self.calendar_tool.searchEvents()
         try:
             result = tool.invoke(payload)
+
+            # ✅ Assign before return
             count = len(result) if isinstance(result, list) else 0
+            response_text = f"Found {count} event(s)."
+            if state.get("is_first_message"):
+                response_text = f"Hi, I'm Orion! {response_text}"
+
             return {
                 "current_interaction": interaction_model.model_copy(
                     update={
-                        "ai_response": f"Found {count} event(s).",
+                        "ai_response": response_text,
                         "observation": "Calendar events searched successfully",
                     }
                 ),
                 "calendar_result": result,
             }
+
         except Exception as e:
             return {
                 "current_interaction": interaction_model.model_copy(
@@ -241,7 +258,9 @@ class CalendarNodes:
 
             if len(candidates) > 1:
                 shown = candidates[:5]
-                options = "\n".join([f"- id={c.get('id')} | {c.get('summary')} | start={c.get('start')}" for c in shown])
+                options = "\n".join(
+                    [f"- id={c.get('id')} | {c.get('summary')} | start={c.get('start')}" for c in shown]
+                )
                 return {
                     "current_interaction": interaction_model.model_copy(
                         update={
@@ -280,15 +299,22 @@ class CalendarNodes:
         try:
             tool = self.calendar_tool.updateEvent()
             result = tool.invoke(update_payload)
+
+            # ✅ Correct: compute response_text BEFORE returning
+            response_text = f"Updated event: {event_id}"
+            if state.get("is_first_message"):
+                response_text = f"Hi, I'm Orion! {response_text}"
+
             return {
                 "current_interaction": interaction_model.model_copy(
                     update={
-                        "ai_response": f"Updated event: {event_id}",
+                        "ai_response": response_text,
                         "observation": "Calendar event updated successfully",
                     }
                 ),
                 "calendar_result": result,
             }
+
         except Exception as e:
             return {
                 "current_interaction": interaction_model.model_copy(
@@ -298,6 +324,7 @@ class CalendarNodes:
                     }
                 )
             }
+
 
 
     def delete_event(self, state: GraphState) -> GraphState:
@@ -350,7 +377,9 @@ class CalendarNodes:
 
             if len(candidates) > 1:
                 shown = candidates[:5]
-                options = "\n".join([f"- id={c.get('id')} | {c.get('summary')} | start={c.get('start')}" for c in shown])
+                options = "\n".join(
+                    [f"- id={c.get('id')} | {c.get('summary')} | start={c.get('start')}" for c in shown]
+                )
                 return {
                     "current_interaction": interaction_model.model_copy(
                         update={
@@ -373,15 +402,22 @@ class CalendarNodes:
         try:
             tool = self.calendar_tool.deleteEvent()
             result = tool.invoke(delete_payload)
+
+            # ✅ Compute response_text before return
+            response_text = f"Deleted event: {event_id}"
+            if state.get("is_first_message"):
+                response_text = f"Hi, I'm Orion! {response_text}"
+
             return {
                 "current_interaction": interaction_model.model_copy(
                     update={
-                        "ai_response": f"Deleted event: {event_id}",
+                        "ai_response": response_text,
                         "observation": "Calendar event deleted successfully",
                     }
                 ),
                 "calendar_result": result,
             }
+
         except Exception as e:
             return {
                 "current_interaction": interaction_model.model_copy(

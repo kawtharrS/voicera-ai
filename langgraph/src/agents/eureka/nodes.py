@@ -220,6 +220,10 @@ class ClassroomNodes:
         
         ai_result = self.agents.ai_response_generator.invoke({"query_information": inputs, "history": history})
         response_text = ai_result.response if hasattr(ai_result, 'response') else ai_result.get('response', '')
+        
+        # Prepend greeting if this is the first message in the thread
+        if state.get("is_first_message"):
+            response_text = f"Hi, I'm Eureka! {response_text}"
         observation = f"Generated {len(response_text)} char response covering the student's question."
         print(Fore.GREEN + f"OBSERVATION: {observation}\n" + Style.RESET_ALL)
         

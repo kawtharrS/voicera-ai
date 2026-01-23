@@ -39,3 +39,4 @@ class GraphState(TypedDict):
     agent_messages: Optional[List[dict]]
     rewrite_feedback: Optional[str]
     user_preferences: Optional[dict]
+    is_first_message: Optional[bool]

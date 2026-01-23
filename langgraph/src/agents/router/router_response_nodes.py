@@ -4,106 +4,18 @@ from langchain_core.prompts import ChatPromptTemplate
 import logging
 import os
 from typing import Optional, List
-
-from supabase import create_client, Client
-
+from ..shared_memory import shared_memory
 from .router_state import GraphState
+from supabase import Client
 
 logger = logging.getLogger(__name__)
 
 _supabase_client: Client | None = None
 
 
-def get_supabase_client() -> Optional[Client]:
-    """Lazily initialize a Supabase client for personal-agent memory.
-
-    Reads SUPABASE_URL and SUPABASE_KEY from the environment. If they are not
-    configured or the client cannot be created, returns None and logs a warning.
-    """
-    global _supabase_client
-
-    if _supabase_client is not None:
-        return _supabase_client
-
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
-
-    if not url or not key:
-        logger.warning("Supabase credentials not configured; personal long-term memory disabled.")
-        return None
-
-    try:
-        _supabase_client = create_client(url, key)
-        logger.info("Supabase client initialized for personal-agent memory.")
-    except Exception as exc:
-        logger.warning("Failed to initialize Supabase client for personal agent: %s", exc)
-        _supabase_client = None
-
-    return _supabase_client
-
-
 def _load_personal_memory(student_id: Optional[str]) -> str:
-    """Load recent personal conversation snippets from Supabase for this user.
-
-    Uses the `user_memo` table populated by the Go backend. Returns a short,
-    human-readable summary that the LLM can use to recall facts like the
-    user's name, preferences, and past questions/answers.
-    """
-    if not student_id:
-        return ""
-
-    client = get_supabase_client()
-    if client is None:
-        return ""
-
-    try:
-        user_id = int(student_id)
-    except ValueError:
-        logger.warning("student_id '%s' is not a valid integer; skipping Supabase memory.", student_id)
-        return ""
-
-    try:
-        response = (
-            client
-            .table("user_memo")
-            .select("user_query, ai_query")
-            .eq("user_id", user_id)
-            .order("id", desc=True)
-            .limit(15)
-            .execute()
-        )
-
-        records: List[dict] = getattr(response, "data", None) or []
-        if not records:
-            return ""
-
-        snippets: List[str] = []
-        for row in records:
-            user_q = (row.get("user_query") or "").strip()
-            ai_a = (row.get("ai_query") or "").strip()
-            if not user_q and not ai_a:
-                continue
-
-            if len(user_q) > 200:
-                user_q = user_q[:200] + "..."
-            if len(ai_a) > 300:
-                ai_a = ai_a[:300] + "..."
-
-            snippets.append(f"Q: {user_q}\nA: {ai_a}")
-
-        if not snippets:
-            return ""
-
-        joined = "\n\n".join(reversed(snippets))
-        return (
-            "Here is a summary of this user's previous conversations with you. "
-            "Use it to remember their name, preferences, and important details, "
-            "and to answer questions about themselves when appropriate.\n\n" + joined
-        )
-
-    except Exception as exc:  
-        logger.warning("Failed to load personal Supabase memory: %s", exc)
-        return ""
+    """Load recent personal conversation snippets from SharedMemory for this user."""
+    return shared_memory.retrieve(student_id)
 
 
 class ResponseNodes:
@@ -176,6 +88,15 @@ class ResponseNodes:
 
             response = self.llm.invoke(prompt.format(query=query))
             ai_response = response.content
+            
+            # Prepend greeting for Aria if first message
+            if state.get("is_first_message"):
+                ai_response = f"Hi, I'm Aria! {ai_response}"
+            
+            # Save new interaction to shared memory
+            if student_id:
+                # We save the interaction to memory so it can be recalled later
+                shared_memory.extract_and_save(query, student_id)
             
             print(Fore.GREEN + f"Personal response generated" + Style.RESET_ALL)
             

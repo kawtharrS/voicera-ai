@@ -3,6 +3,8 @@ import sys
 import logging
 from pathlib import Path
 from typing import List, Optional  
+import uuid
+import time
 
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -19,6 +21,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from supabase import create_client, Client
 
 from .structure_output import *
+from ..shared_memory import shared_memory
 from prompts.classroom import *
 
 
@@ -89,6 +92,14 @@ class Agent():
         )
         retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
+        # User Memory Vector Store - Delegated to SharedMemory
+        # memory_db_path = str(Path(__file__).parent.parent.parent / "user_memory_store")
+        # self.memory_vectorstore = Chroma(
+        #     collection_name="user_memories",
+        #     persist_directory=memory_db_path,
+        #     embedding_function=embeddings
+        # )
+
         self.conversation_history: List[BaseMessage] = []
         
         self.memory_tools = memory_tools
@@ -144,117 +155,12 @@ class Agent():
         )
     
     def extract_and_save_to_langmem(self, query: str, student_id: str) -> None:
-        """Extract facts from query and (optionally) save to the in-process store.
+        """Extract facts from query and save to the RAG memory store."""
+        shared_memory.extract_and_save(query, student_id)
 
-        Long-term conversational memory is persisted in Supabase via the Go backend's
-        `/api/save-memo` endpoint. This method now keeps only lightweight, per-process
-        context in `self.store` so existing flows continue to work, while Supabase
-        is used as the source of truth for durable memory.
-        """
-        if not query or not student_id:
-            return
-
-        fact_extraction_prompt = PromptTemplate(
-            template=FACT_EXTRACTION_PROMPT,
-            input_variables=["query"],
-        )
-
-        chain = fact_extraction_prompt | openai_model | StrOutputParser()
-        facts = chain.invoke({"query": query}).strip()
-
-        if facts and facts != "NO FACTS":
-            memory_id = f"{student_id}_memory_{int(__import__('time').time() * 1000)}"
-            try:
-                self.store.put(namespace, memory_id, {"facts": facts, "query": query})
-            except Exception as exc: 
-                logger.warning("Failed to write to in-memory langmem store: %s", exc)
-
-    def retrieve_from_langmem(self, student_id: str) -> str:
-        """Retrieve stored context for a student.
-
-        Preference order:
-        1. Supabase `user_memo` table (durable, cross-session memory).
-        2. Fallback to the local in-memory `langmem` store if Supabase is
-           unavailable or the user has no memos yet.
-        """
-        if not student_id:
-            return ""
-
-        client = get_supabase_client()
-        if client is not None:
-            try:
-                user_id = int(student_id)
-                response = (
-                    client
-                    .table("user_memo")
-                    .select("user_query, ai_query")
-                    .eq("user_id", user_id)
-                    .order("id", desc=True)
-                    .limit(20)
-                    .execute()
-                )
-
-                records = getattr(response, "data", None) or []
-                if records:
-                    snippets: List[str] = []
-                    for row in records:
-                        user_q = row.get("user_query") or ""
-                        ai_a = row.get("ai_query") or ""
-                        if not user_q and not ai_a:
-                            continue
-                        snippets.append(
-                            f"Previous conversation - Q: {user_q}\nA: {ai_a}"
-                        )
-
-                    if snippets:
-                        return "\n\n".join(reversed(snippets))  
-
-            except ValueError:
-                logger.warning(
-                    "student_id '%s' is not a valid integer; falling back to in-memory store.",
-                    student_id,
-                )
-            except Exception as exc:  
-                logger.warning("Failed to retrieve Supabase memories: %s", exc)
-
-        try:
-            memories: List[str] = []
-
-            results = self.store.search(
-                namespace,
-                query=student_id,
-                limit=20,
-            )
-
-            if results:
-                for result in results:
-                    try:
-                        if hasattr(result, "value"):
-                            value = result.value
-                            facts = (
-                                value.get("facts", "")
-                                if isinstance(value, dict)
-                                else getattr(value, "facts", "")
-                            )
-                        else:
-                            facts = (
-                                result.get("facts", "")
-                                if isinstance(result, dict)
-                                else getattr(result, "facts", "")
-                            )
-
-                        if facts and len(facts) > 2:
-                            memories.append(facts)
-                    except Exception:
-                        continue
-
-            if memories:
-                return "\n".join(memories)
-            return ""
-
-        except Exception as exc: 
-            logger.warning("Error while retrieving from in-memory langmem: %s", exc)
-            return ""
+    def retrieve_from_langmem(self, student_id: str, query: str = "") -> str:
+        """Retrieve stored context for a student using RAG."""
+        return shared_memory.retrieve(student_id, query)
         
     def add_to_history(self, role: str, content: str) -> None:
         """Add message to conversation history."""

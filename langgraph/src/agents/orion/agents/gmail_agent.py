@@ -34,15 +34,14 @@ openai_model = ChatOpenAI(
 )
 
 
+from ...shared_memory import shared_memory
+
 class GmailAgent():
     def __init__(self, gmail_tool=None):
         self.gmail_tool = gmail_tool
         embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
-        db_path = str(Path(__file__).parent.parent.parent / "vectorstore")
-        self.vectorstore = Chroma(
-            persist_directory=db_path,
-            embedding_function=embeddings
-        )
+        # Use shared memory vectorstore
+        self.vectorstore = shared_memory.vectorstore
         self.conversation_history: List[BaseMessage] = []
         self.memory_tools = memory_tools
         self.store = store

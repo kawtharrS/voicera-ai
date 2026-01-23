@@ -24,6 +24,11 @@ class MemoryHandlers:
         if not query:
             logger.warning("No query found in state")
             return state
+
+        # Check if history is empty before adding current user query
+        # This determines if it's the start of the conversation thread
+        history = self.agent.get_history(k=1)
+        state["is_first_message"] = (len(history) == 0)
                 
         self.agent.add_to_history("user", query)
         
@@ -44,7 +49,7 @@ class MemoryHandlers:
             
             self.agent.extract_and_save_to_langmem(query, student_id)
             
-            student_context = self.agent.retrieve_from_langmem(student_id)
+            student_context = self.agent.retrieve_from_langmem(student_id, query)
             state["student_context"] = student_context
     
         state["conversation_history"] = self.agent.get_history(k=1000)

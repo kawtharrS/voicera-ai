@@ -50,3 +50,4 @@ class GraphState(TypedDict):
     student_context: Optional[str]
     conversation_history: List[BaseMessage]
     query_category: Optional[str]
+    is_first_message: Optional[bool]

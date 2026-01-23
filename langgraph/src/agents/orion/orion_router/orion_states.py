@@ -22,4 +22,5 @@ class GraphState(TypedDict):
     rewrite_feedback: Optional[str]
     user_context: Optional[str]
     conversation_history: Optional[List[dict]]
+    is_first_message: Optional[bool]
     

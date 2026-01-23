@@ -43,3 +43,4 @@ class GraphState(TypedDict):
     conversation_history: List[BaseMessage]
     is_processing: bool
     route: Optional[str]
+    is_first_message: Optional[bool]
