@@ -17,8 +17,6 @@ model = Model()
 class GmailAgent():
     def __init__(self, gmail_tool=None):
         self.gmail_tool = gmail_tool
-        embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
-        self.vectorstore = shared_memory.vectorstore
 
         categorize_email_prompt = PromptTemplate(
             template=CATEGORIZE_EMAIL_PROMPT,

@@ -17,8 +17,6 @@ model = Model()
 class CalendarAgent():
     def __init__(self, calendar_tool=None):
         self.calendar_tool = calendar_tool
-        embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
-        self.vectorstore = shared_memory.vectorstore
 
         query_category_prompt = PromptTemplate(
             template= CATEGORIZE_QUERY_PROMPT,

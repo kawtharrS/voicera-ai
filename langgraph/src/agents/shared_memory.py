@@ -1,88 +1,133 @@
 import os
-import time
-import uuid
-from pathlib import Path
+import httpx
 from dotenv import load_dotenv
-from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser
-from prompts.memory import FACT_EXTRACTION_PROMPT
-from .model import Model
+from langmem import create_memory_store_manager
+from langgraph.store.memory import InMemoryStore
+from langchain_core.runnables import RunnableConfig
 
 load_dotenv()
-model = Model()
-MEMORY_DB_NAME = "user_memory_store"
-COLLECTION_NAME = "user_memories"
 
-
-base_path = Path(__file__).parent.parent.parent
 class SharedMemoryManager:
     _instance = None
 
-    #ensures that only one instance of the class can exist
-    def __new__(cls): 
+    def __new__(cls):
         if cls._instance is None:
             cls._instance = super(SharedMemoryManager, cls).__new__(cls)
             cls._instance._initialize()
         return cls._instance
 
     def _initialize(self):
-        self.embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
-        memory_db_path = str(base_path / MEMORY_DB_NAME)
+        self.memory_enabled = False
+        self.memory_manager = None
+        self.backend_url = os.getenv("BACKEND_URL")
         
-        self.vectorstore = Chroma(
-            collection_name=COLLECTION_NAME,
-            persist_directory=memory_db_path,
-            embedding_function=self.embeddings
-        )
-        
-        self.openai_model = ChatOpenAI(
-            model=os.getenv("OPENAI_MODEL"),
-            temperature=0,
-            openai_api_key=os.getenv("OPENAI_API_KEY"),
-        )
+        try:
+            openai_model = ChatOpenAI(
+                model=os.getenv("OPENAI_MODEL"),
+                temperature=0,
+                openai_api_key=os.getenv("OPENAI_API_KEY"),
+            )
+            
+            store = InMemoryStore(
+                index={
+                    "dims": 1536,
+                    "embed": "openai:text-embedding-3-small",
+                }
+            )
 
-    def extract_and_save(self, query: str, user_id: str) -> None:
-        if not query or not user_id:
+            self.memory_manager = create_memory_store_manager(
+                openai_model,
+                namespace=("memories", "{user_id}"),
+                store=store,
+            )
+            
+            self.memory_enabled = self.memory_manager is not None
+  
+        except Exception as e:
+            self.memory_manager = None
+            self.memory_enabled = False
+
+    async def extract_and_save(
+        self,
+        query: str,
+        user_id: str,
+        ai_response: str = "",
+        category: str = "general",
+        emotion: str = ""
+    ) -> None:
+        if not user_id or not query:
             return
 
-        fact_extraction_prompt = PromptTemplate(
-            template=FACT_EXTRACTION_PROMPT,
-            input_variables=["query"],
-        )
-
-        chain = fact_extraction_prompt | self.openai_model | StrOutputParser()
-        facts = chain.invoke({"query": query}).strip()
-
-        if facts and facts != "NO FACTS":
-            self.vectorstore.add_texts(
-                texts=[facts],
-                metadatas=[{
-                    "user_id": str(user_id),
-                    "timestamp": str(time.time()),                        
-                    "original_query": query
-                    }],
-                    ids=[str(uuid.uuid4())]
-                )
-
-    def retrieve(self, user_id: str, query: str = "", k: int = 5) -> str:
-        if not user_id:
-            return ""
-        try:
-            search_query = query if query else "important facts"
-            results = self.vectorstore.similarity_search(
-                search_query,
-                k=k,
-                filter={"user_id": str(user_id)}
+        sync_data = {
+            "user_id": int(user_id) if str(user_id).isdigit() else 1,
+            "user_query": query,
+            "ai_query": ai_response,
+            "category": category,
+            "emotion": emotion
+        }
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{self.backend_url}/api/save-memo",
+                json=sync_data,
+                timeout=5.0
             )
-            if results:
-                memories = [doc.page_content for doc in results]
-                unique_memories = list(dict.fromkeys(memories))
-                return "\n".join(unique_memories)
+
+        if not self.memory_enabled or self.memory_manager is None:
+            return
+
+        try:
+            messages = [
+                {"role": "user", "content": query},
+                {"role": "assistant", "content": ai_response}
+            ]
+            config = RunnableConfig(configurable={"user_id": str(user_id)})
+            
+            await self.memory_manager.ainvoke(
+                {"messages": messages},
+                config=config,
+            )
+            print(f"Saved interaction for user {user_id}")
+        except Exception as e:
+            print(f"[LangMem] Save failed: {e}")
+
+    async def retrieve(self, user_id: str, query: str = "") -> str:
+        if not user_id or not self.memory_enabled or self.memory_manager is None:
             return ""
-        except Exception: 
+
+        try:
+            config = RunnableConfig(configurable={"user_id": str(user_id)})
+            memories = await self.memory_manager.asearch(
+                query=query or "general memories",
+                config=config,
+            )
+            
+            if not memories:
+                return ""
+            
+            memory_texts = []
+            for item in memories:
+                if isinstance(item, str):
+                    memory_texts.append(item)
+                elif hasattr(item, 'value'):
+                    memory_texts.append(str(item.value))
+                elif hasattr(item, 'content'):
+                    memory_texts.append(str(item.content))
+                else:
+                    memory_texts.append(str(item))
+            
+            if memory_texts:
+                result = "\n".join(memory_texts)
+                print(f"Retrieved {len(memory_texts)} items for user {user_id}")
+                return result
+            
             return ""
+        except Exception as e:
+            print(f"[MemoryRetrieve] Failed: {e}")
+            return ""
+
+    def is_ready(self) -> bool:
+        return self.memory_enabled and self.memory_manager is not None
+
 
 shared_memory = SharedMemoryManager()

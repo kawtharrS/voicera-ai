@@ -51,7 +51,7 @@ async def process_question(query: StudentQuestion) -> AIResponse:
         "category": None,
         "messages": [],
     }
-    result = graph.invoke(
+    result = await graph.ainvoke(
         initial_state,
         {"configurable": {"thread_id": str(initial_state["student_id"])}},
     )

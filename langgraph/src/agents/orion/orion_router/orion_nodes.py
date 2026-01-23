@@ -24,3 +24,30 @@ class RouterNodes:
             return {
                 "category": "personal"
             }
+
+    async def save_to_langmem(self, state: GraphState) -> GraphState:
+        """Saves interaction and extracts facts for Orion tasks."""
+        print(Fore.YELLOW + "Orion: Syncing to backend and extracting facts..." + Style.RESET_ALL)
+        from ...shared_memory import shared_memory
+        
+        query = state.get("query", "")
+        interaction = state.get("current_interaction")
+        student_id = state.get("student_id")
+        
+        if not student_id: return state
+        
+        ai_response = ""
+        category = state.get("category", "work")
+        
+        if isinstance(interaction, dict):
+            ai_response = interaction.get("ai_response", "")
+        elif interaction is not None:
+            ai_response = getattr(interaction, "ai_response", "")
+            
+        await shared_memory.extract_and_save(
+            query=query,
+            ai_response=ai_response,
+            user_id=student_id,
+            category=f"work_{category}"
+        )
+        return state

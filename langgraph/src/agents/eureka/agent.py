@@ -83,8 +83,8 @@ class Agent():
             model.openai_model.with_structured_output(ProofReaderOutput)
         )
     
-    def extract_and_save_to_langmem(self, query: str, student_id: str) -> None:
-        shared_memory.extract_and_save(query, student_id)
+    async def extract_and_save_to_langmem(self, query: str, student_id: str, ai_response: str = "", category: str = "study") -> None:
+        await shared_memory.extract_and_save(query, student_id, ai_response=ai_response, category=category)
 
-    def retrieve_from_langmem(self, student_id: str, query: str = "") -> str:
-        return shared_memory.retrieve(student_id, query)
+    async def retrieve_from_langmem(self, student_id: str, query: str = "") -> str:
+        return await shared_memory.retrieve(student_id, query)
