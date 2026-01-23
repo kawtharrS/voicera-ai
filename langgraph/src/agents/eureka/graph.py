@@ -3,27 +3,23 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore
 from .state import GraphState
 from .nodes import ClassroomNodes
-from .memory import MemoryHandlers
-from .agent import Agent
 
 
 class ClassroomWorkflow():
     def __init__(self):
         workflow = StateGraph(GraphState)
-        agent = Agent()
         nodes = ClassroomNodes()
-        checkpointer = InMemorySaver()  
-        store = InMemoryStore()  
-        memory = MemoryHandlers(agent, store)
+        checkpointer = InMemorySaver()
+        store = InMemoryStore()
+
         workflow.add_node("load_courses", nodes.load_courses)
         workflow.add_node("load_coursework", nodes.load_coursework)
         workflow.add_node("load_and_index_materials", nodes.load_and_index_materials)
-        workflow.add_node("receive_student_query", memory.receive_query_with_memory)  
-        workflow.add_node("categorize_query", memory.categorize_with_memory)  
+        workflow.add_node("receive_student_query", nodes.receive_student_query)
+        workflow.add_node("categorize_query", nodes.categorize_student_query)
         workflow.add_node("construct_rag_queries", nodes.construct_rag_queries)
         workflow.add_node("generate_ai_response", nodes.generate_ai_response)
         workflow.add_node("verify_ai_response", nodes.verify_ai_response)
-        workflow.add_node("finalize_response", nodes.finalize_response)
 
         workflow.set_entry_point("load_courses")
 
@@ -39,9 +35,9 @@ class ClassroomWorkflow():
             "verify_ai_response",
             nodes.finalize_response,
             {
-                "end": END,         
-                "rewrite": "generate_ai_response"  
-            }
+                "end": END,
+                "rewrite": "generate_ai_response",
+            },
         )
 
         self.app = workflow.compile(checkpointer=checkpointer, store=store)

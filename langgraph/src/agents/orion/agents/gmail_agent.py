@@ -6,28 +6,12 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
 from langchain_chroma import Chroma 
 from langchain_core.messages import BaseMessage
-from langgraph.store.memory import InMemoryStore
-from langmem import create_manage_memory_tool, create_search_memory_tool
-from langgraph.checkpoint.memory import InMemorySaver
 from ..structure_outputs.gmail_structure_output import *
 from prompts.gmail import *
 from langgraph.src.agents.model import Model
 from ...shared_memory import shared_memory
 
 load_dotenv()
-
-checkpointer = InMemorySaver()
-store = InMemoryStore(
-    index={
-        "dims": 1536,
-        "embed": "openai:text-embedding-3-small"
-    }
-)
-namespace = ("gmail_agent_memories")
-memory_tools = [
-    create_manage_memory_tool(namespace),
-    create_search_memory_tool(namespace)
-]
 
 model = Model()
 
@@ -38,9 +22,6 @@ class GmailAgent():
         embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
         self.vectorstore = shared_memory.vectorstore
         self.conversation_history: List[BaseMessage] = []
-        self.memory_tools = memory_tools
-        self.store = store
-        self.checkpointer = checkpointer
 
         categorize_email_prompt = PromptTemplate(
             template=CATEGORIZE_EMAIL_PROMPT,

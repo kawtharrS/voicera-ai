@@ -11,9 +11,6 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langchain_core.documents import Document 
-from langgraph.store.memory import InMemoryStore
-from langmem import create_manage_memory_tool, create_search_memory_tool
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.src.agents.model import Model
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from .structure_output import *
@@ -23,18 +20,7 @@ from prompts.classroom import *
 load_dotenv()
 
 model = Model()
-checkpointer = InMemorySaver()
-store = InMemoryStore(
-    index={
-        "dims": 1536,
-        "embed": "openai:text-embedding-3-small",
-    }
-)
-namespace = "agent_memories"
-memory_tools = [
-    create_manage_memory_tool(namespace),
-    create_search_memory_tool(namespace),
-]
+
 
 class Agent():
     def __init__(self, classroom_tool=None): 
@@ -49,9 +35,6 @@ class Agent():
         retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
         self.conversation_history: List[BaseMessage] = []
-        self.memory_tools = memory_tools
-        self.store = store
-        self.checkpointer = checkpointer
 
         query_category_prompt = PromptTemplate(
             template=CATEGORIZE_QUERY_PROMPT, 
