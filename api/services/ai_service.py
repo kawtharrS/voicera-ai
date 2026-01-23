@@ -1,15 +1,27 @@
 import os
 import sys
-from pathlib import Path 
+from pathlib import Path
+
 from models import StudentQuestion, AIResponse
 from utils.response_extractor import (
     extract_ai_response,
     extract_recommendations,
     extract_emotion,
 )
-langgraph_src = Path(__file__).parent.parent / "langgraph" / "src" 
-sys.path.insert(0, str(langgraph_src)) 
-from agents.router.router_graph import graph
+
+def _load_graph():
+    langgraph_root = str(Path(__file__).parent.parent.parent / "langgraph")
+    langgraph_src = str(Path(__file__).parent.parent.parent / "langgraph" / "src")
+    
+    if langgraph_root not in sys.path:
+        sys.path.insert(0, langgraph_root)
+    if langgraph_src not in sys.path:
+        sys.path.insert(0, langgraph_src)
+    
+    from agents.router.router_graph import graph
+    return graph
+
+graph = _load_graph()
 
 DEFAULT_MAX_TRIALS = 3
 DEFAULT_STUDENT_ID = "default_student"

@@ -2,7 +2,7 @@ import os
 from colorama import Fore, Style
 from typing import Optional
 from langchain_openai import ChatOpenAI
-from langgraph.src.agents.model import Model 
+from ..model import Model 
 from .agent import Agent
 from .state import GraphState, Course, Coursework, CourseWorkMaterial, StudentInteraction
 from tools.classroomTools import ClassroomTool

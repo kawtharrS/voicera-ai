@@ -6,7 +6,7 @@ from ..structure_outputs.gmail_structure_output import CategorizeEmailOutput
 from prompts.gmail import CATEGORIZE_EMAIL_PROMPT
 from tools.gmailTools import GmailTool
 from ..agents.gmail_agent import GmailAgent
-from langgraph.src.agents.model import Model
+from ...model import Model
 
 model = Model()
 

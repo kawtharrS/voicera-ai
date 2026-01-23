@@ -1,18 +1,13 @@
 import os 
 import sys 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
-from langchain_chroma import Chroma 
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage 
-from langchain_core.documents import Document 
 from ..structure_outputs.calendar_structure_output import *
 from prompts.calendar import * 
-from langgraph.src.agents.model import Model 
+from ...model import Model 
 from ...shared_memory import shared_memory
 
 load_dotenv()
@@ -24,7 +19,6 @@ class CalendarAgent():
         self.calendar_tool = calendar_tool
         embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
         self.vectorstore = shared_memory.vectorstore
-        self.conversation_history: List[BaseMessage] = []
 
         query_category_prompt = PromptTemplate(
             template= CATEGORIZE_QUERY_PROMPT,

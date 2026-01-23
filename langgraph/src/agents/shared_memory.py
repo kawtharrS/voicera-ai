@@ -9,7 +9,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from prompts.memory import FACT_EXTRACTION_PROMPT
-from langgraph.src.agents.model import Model
+from .model import Model
 
 load_dotenv()
 model = Model()

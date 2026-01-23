@@ -1,14 +1,12 @@
 import os 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
-from langchain_chroma import Chroma 
-from langchain_core.messages import BaseMessage
 from ..structure_outputs.gmail_structure_output import *
 from prompts.gmail import *
-from langgraph.src.agents.model import Model
+from ...model import Model 
 from ...shared_memory import shared_memory
 
 load_dotenv()
@@ -21,7 +19,6 @@ class GmailAgent():
         self.gmail_tool = gmail_tool
         embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
         self.vectorstore = shared_memory.vectorstore
-        self.conversation_history: List[BaseMessage] = []
 
         categorize_email_prompt = PromptTemplate(
             template=CATEGORIZE_EMAIL_PROMPT,
