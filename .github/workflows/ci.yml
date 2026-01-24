@@ -19,7 +19,7 @@ jobs:
               run: docker compose build 
 
             - name: Run tests
-              run: docker compose run --rm backend pytest
+              run: docker compose run --rm fastapi pytest
 
 
     push: 
