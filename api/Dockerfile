@@ -8,7 +8,7 @@ RUN apt-get clean \
     && apt-get install -y --no-install-recommends gcc build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY api/requirements.txt .
+COPY requirements.txt .
 
 RUN pip install --upgrade pip \
     && pip install -r requirements.txt \
@@ -20,6 +20,6 @@ RUN pip install -e /langgraph
 
 COPY api/ .
 
-COPY agents/ /app/agents/
+COPY src/ /app/src/
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
