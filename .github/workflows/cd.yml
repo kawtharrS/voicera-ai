@@ -13,7 +13,7 @@ jobs:
               with: 
                 host: ${{secrets.AWS_IP}}
                 username: ${{secrets.AWS_USER}}
-                key:  ${{secrets.AWS.KEY}}
+                key: ${{secrets.AWS_KEY}}
                 script: |
                     docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
                     docker pull kawtharshaalan/voicera-ai:latest
@@ -21,7 +21,7 @@ jobs:
                     docker rm voicera-api || true
                     docker run -d \
                         -p 8000:8000 \
-                        -e OPENAI_API_KEY=${{secrets.OPENAI_API_KEY}}
-                        --name voicera-api
+                        -e OPENAI_API_KEY=${{secrets.OPENAI_API_KEY}} \
+                        --name voicera-api \
                         --restart always \
                         kawtharshaalan/voicera-ai:latest
