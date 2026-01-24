@@ -15,7 +15,7 @@ export default function VoiceraSwipeScreen() {
   const [aiIsSpeaking, setAiIsSpeaking] = useState(false);
 
   const recentlyDragged = useRef(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef(null);
 
   const {
     position,
