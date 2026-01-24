@@ -1,4 +1,3 @@
-// Simple utility to send text to the backend TTS endpoint and play the result.
 export async function speak(text: string) {
   if (!text) return;
 

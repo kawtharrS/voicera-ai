@@ -64,7 +64,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	client := http.Client{Timeout: 120 * time.Second}
+	client := http.Client{Timeout: 360 * time.Second}
 
 	resp, err := client.Do(req)
 

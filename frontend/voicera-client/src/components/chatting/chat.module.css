@@ -273,7 +273,6 @@
   cursor: not-allowed;
 }
 
-/* Send button (orange) */
 .sendButton {
   background: var(--mic-orange);
   color: var(--text-light);

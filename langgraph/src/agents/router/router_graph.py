@@ -5,13 +5,12 @@ from .router_response_nodes import ResponseNodes
 from ..eureka.graph import ClassroomWorkflow
 from ..orion.orion_router.orion_graph import graph as orion_graph
 from ..self.graph import SelfWorkflow
-from ..aria.agents.agent import EmotionAgent
 
 class RouterWorkflow:
     def __init__(self):
         workflow = StateGraph(GraphState)
         router_nodes = RouterNodes()
-        response_nodes = ResponseNodes(emotion_agent=EmotionAgent())
+        response_nodes = ResponseNodes(emotion_agent=None)
 
         workflow.add_node("router", router_nodes.route_query)
         workflow.add_node("study_agent", ClassroomWorkflow().app)

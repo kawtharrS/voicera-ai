@@ -6,12 +6,9 @@ from ..structure_outputs.gmail_structure_output import CategorizeEmailOutput
 from prompts.gmail import CATEGORIZE_EMAIL_PROMPT
 from tools.gmailTools import GmailTool
 from ..agents.gmail_agent import GmailAgent
+from ...model import Model
 
-openai_model = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0.1,
-    openai_api_key=os.getenv("OPENAI_API_KEY")
-)
+model = Model()
 
 class GmailNodes:
     def __init__(self):

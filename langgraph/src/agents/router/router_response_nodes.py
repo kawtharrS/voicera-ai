@@ -8,9 +8,22 @@ from langchain_core.prompts import ChatPromptTemplate
 from ..shared_memory import shared_memory
 from .router_state import GraphState
 
-def _load_personal_memory(student_id: Optional[str]) -> str:
+async def _load_personal_memory(student_id: Optional[str], query: str = "") -> str:
     """Load recent personal conversation snippets for this user."""
-    return shared_memory.retrieve(student_id) if student_id else ""
+    if not student_id:
+        print(Fore.YELLOW + "[Memory] No student_id provided" + Style.RESET_ALL)
+        return ""
+    
+    print(Fore.CYAN + f"[Memory] Loading memories for user {student_id}..." + Style.RESET_ALL)
+    memory = await shared_memory.retrieve(student_id, query)
+    
+    if memory:
+        print(Fore.GREEN + f"[Memory] Retrieved {len(memory)} chars of memory" + Style.RESET_ALL)
+        print(Fore.GREEN + f"[Memory] Content: {memory[:200]}..." + Style.RESET_ALL)
+    else:
+        print(Fore.YELLOW + "[Memory] No memories found for user" + Style.RESET_ALL)
+    
+    return memory
 
 class ResponseNodes:
     """Response generation for personal conversations."""
@@ -54,7 +67,7 @@ class ResponseNodes:
             system_parts.append(f"Additional user notes: {extra}")
 
         if memory:
-            system_parts.append(f"\nUSER HISTORY:\n{memory}")
+            system_parts.append(f"\nUSER HISTORY (Facts from past conversations):\n{memory}")
 
         system_msg = "\n".join(system_parts)
 
@@ -63,27 +76,34 @@ class ResponseNodes:
             ("human", "{query}")
         ])
 
-    def generate_personal_response(self, state: GraphState) -> GraphState:
+    async def generate_personal_response(self, state: GraphState) -> GraphState:
         print(Fore.CYAN + "Generating personal response..." + Style.RESET_ALL)
 
         query = state.get("query", "")
         prefs = state.get("user_preferences") or {}
         student_id = state.get("student_id")
 
-        memory_context = _load_personal_memory(student_id)
+        memory_context = await _load_personal_memory(student_id, query)
         detected_emotion = self._detect_emotion(query, prefs)
 
         prompt = self.build_prompt(prefs, memory_context)
 
         try:
-            response = self.llm.invoke(prompt.format(query=query))
+            response = await self.llm.ainvoke(prompt.format(query=query))
             ai_response = response.content
 
             if state.get("is_first_message"):
                 ai_response = f"Hi, I'm Aria! {ai_response}"
 
             if student_id:
-                shared_memory.extract_and_save(query, student_id)
+                # Save to LangMem and Supabase Interaction log
+                await shared_memory.extract_and_save(
+                    query=query, 
+                    ai_response=ai_response, 
+                    user_id=student_id, 
+                    category="personal", 
+                    emotion=detected_emotion or ""
+                )
 
             print(Fore.GREEN + "Personal response generated successfully" + Style.RESET_ALL)
 

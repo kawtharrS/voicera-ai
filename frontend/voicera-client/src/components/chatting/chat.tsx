@@ -345,7 +345,6 @@ export default function VoiceraSwipeScreen() {
             </div>
           )}
 
-          {/* Middle: Voicera title and instruction */}
           {!isRecording && !aiIsSpeaking && (
             <div
               className={`${styles.transcriptionDisplay} ${

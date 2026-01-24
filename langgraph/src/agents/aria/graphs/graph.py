@@ -1,7 +1,3 @@
-"""
-File: langgraph/src/agents/emotion/graph.py
-"""
-
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore

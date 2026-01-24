@@ -2,18 +2,17 @@ import os
 from colorama import Fore, Style
 from typing import Optional
 from langchain_openai import ChatOpenAI
-
+from ..model import Model 
 from .agent import Agent
 from .state import GraphState, Course, Coursework, CourseWorkMaterial, StudentInteraction
 from tools.classroomTools import ClassroomTool
 from tools.pdf_processor import PDFProcessor
 from prompts.classroom import RELEVANT_COURSEWORK_PROMPT, AI_RESPONSE_PROMPT
+from ..shared_memory import shared_memory
 
-openai_model = ChatOpenAI(
-    model=os.getenv("OPENAI_MODEL"),
-    temperature=0.1,
-    openai_api_key=os.getenv("OPENAI_API_KEY")
-)
+
+model = Model()
+
 class ClassroomNodes:
     def __init__(self):
         self.agents = Agent()
@@ -100,7 +99,7 @@ class ClassroomNodes:
 
         courses = state.get("courses", [])
         current_course = courses[0] if courses else None
-        selected_coursework = self._select_relevant_coursework(question, state.get("courseworks", []), openai_model)
+        selected_coursework = self._select_relevant_coursework(question, state.get("courseworks", []), model.openai_model)
             
         return {"current_interaction": StudentInteraction(
             current_course=current_course,
@@ -380,6 +379,40 @@ class ClassroomNodes:
         print(Fore.RED + "AI response needs improvement, rewriting..." + Style.RESET_ALL)
         return "rewrite"
 
-    def reset_interaction(self) -> GraphState:
+    async def retrieve_memory(self, state: GraphState) -> GraphState:
+        print(Fore.YELLOW + "Retrieving long-term memory..." + Style.RESET_ALL)
+        student_id = state.get("student_id")
+        if not student_id:
+            return {"student_context": ""}
+        
+        memory = await shared_memory.retrieve(student_id)
+        return {"student_context": memory}
+
+    async def save_to_langmem(self, state: GraphState) -> GraphState:
+        print(Fore.YELLOW + "Saving interaction to long-term memory..." + Style.RESET_ALL)
+        interaction = state.get("current_interaction")
+        student_id = state.get("student_id")
+        category = state.get("query_category") or "study"
+        
+        if not student_id or not interaction:
+            return state
+
+        if isinstance(interaction, dict):
+            query = interaction.get("student_question", "")
+            ai_response = interaction.get("ai_response", "")
+        else:
+            query = interaction.student_question
+            ai_response = interaction.ai_response
+
+        await shared_memory.extract_and_save(
+            query=query,
+            ai_response=ai_response,
+            user_id=student_id,
+            category=category
+        )
+        return state
+
+    def reset_interaction(self, state: GraphState) -> GraphState:
         return {"current_interaction": StudentInteraction()}
+
 
