@@ -43,5 +43,5 @@ jobs:
                 context: ./api
                 push: true
                 tags: kawtharshaalan/voicera-ai:latest
-                chache-form: type=gha
+                cache-from: type=gha
                 cache-to: type=gha, mode=max
