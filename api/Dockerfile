@@ -11,14 +11,15 @@ RUN apt-get clean \
 COPY requirements.txt .
 
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \
+    && apt-get purge -y --auto-remove gcc build-essential
 
-COPY langgraph /langgraph
+COPY langgraph/ /langgraph/
 
 RUN pip install -e /langgraph
 
 COPY api/ .
 
-COPY . .
+COPY agents/ /app/agents/
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
