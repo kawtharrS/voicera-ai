@@ -1,8 +1,3 @@
-"""
-File: langgraph/src/agents/emotion/nodes.py
-FIXED VERSION - ensures emotion is passed through the entire state
-"""
-
 import os
 from typing import Optional
 from datetime import datetime
@@ -14,14 +9,11 @@ from ..structure_outputs.structure_output import Emotion
 from ..states.state import EmotionDetectionState
 
 
-class EmotionDetectionNodes:
-    """Nodes for detecting user emotion using LLM agent"""
-    
+class EmotionDetectionNodes:    
     def __init__(self):
         self.emotion_agent = EmotionAgent()
 
     def receive_text(self, state: EmotionDetectionState) -> EmotionDetectionState:
-        """Receive and prepare text for emotion detection."""
         print(Fore.CYAN + "Receiving text for emotion analysis..." + Style.RESET_ALL)
 
         text = state.get("text") or ""
@@ -54,10 +46,6 @@ class EmotionDetectionNodes:
         }
 
     def detect_emotion(self, state: EmotionDetectionState) -> EmotionDetectionState:
-        """
-        Detect emotion from text using EmotionAgent (LLM-based)
-        IMPORTANT: Return detected_emotion so it persists through the workflow
-        """
         print(Fore.CYAN + "Running EmotionAgent..." + Style.RESET_ALL)
 
         text = state.get("text") or ""
@@ -92,10 +80,6 @@ class EmotionDetectionNodes:
             }
 
     def track_emotion_history(self, state: EmotionDetectionState) -> EmotionDetectionState:
-        """
-        Track emotion changes over conversation history
-        IMPORTANT: Preserve detected_emotion through the state
-        """
         print(Fore.MAGENTA + "Tracking emotion history..." + Style.RESET_ALL)
         
         current_emotion = state.get("detected_emotion", Emotion.unknown)
@@ -119,10 +103,6 @@ class EmotionDetectionNodes:
         }
 
     def continue_chat(self, state: EmotionDetectionState) -> EmotionDetectionState:
-        """
-        Continue with normal chat processing
-        CRITICAL: Return detected_emotion but don't include it in the response text
-        """
         print(Fore.YELLOW + "Processing chat with emotion context..." + Style.RESET_ALL)
         
         emotion = state.get("detected_emotion", Emotion.unknown)
