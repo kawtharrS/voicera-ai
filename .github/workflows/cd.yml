@@ -8,28 +8,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps: 
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Deploy on AWS
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.AWS_KEY }}
-          REMOTE_HOST: ${{ secrets.AWS_IP }}
-          REMOTE_USER: ec2-user
-          TARGET: /home/ec2-user/voicera
-        with:
-          source: "."
-          target: /home/ec2-user/voicera
-
-      - name: Run Docker container
         uses: appleboy/ssh-action@master
-        with:
+        with: 
           host: ${{ secrets.AWS_IP }}
           username: ec2-user
           key: ${{ secrets.AWS_KEY }}
           script: |
-            cd /home/ec2-user/voicera
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             docker pull kawtharshaalan/voicera-ai:latest
             docker stop voicera-api || true
@@ -40,3 +25,4 @@ jobs:
               --name voicera-api \
               --restart always \
               kawtharshaalan/voicera-ai:latest
+            echo "Deployment successful!"
