@@ -2,7 +2,7 @@ name: Build and Push to Docker Hub
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
   build:
@@ -25,6 +25,6 @@ jobs:
         with:
           context: ./api
           push: true
-          tags: kawtharshaaIan/voicera-ai:latest
+          tags: kawtharshaalan/voicera-ai:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
