@@ -1,25 +1,28 @@
-FROM python:3.9-slim 
+FROM python:3.10-slim
 
 WORKDIR /app
 
-RUN apt-get clean \ 
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get update --fix-missing \
-    && apt-get install -y --no-install-recommends gcc build-essential \
+RUN apt-get update --fix-missing \
+    && apt-get install -y --no-install-recommends \
+       gcc \
+       build-essential \
+       libmagic1 \
+       poppler-utils \
+       tesseract-ocr \
+       libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY api/requirements.txt .
 
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt \
-    && apt-get purge -y --auto-remove gcc build-essential
+    && pip install -r requirements.txt
 
-COPY langgraph/ /langgraph/
+COPY langgraph /langgraph
 
 RUN pip install -e /langgraph
 
 COPY api/ .
 
-COPY src/ /app/src/
+RUN apt-get purge -y --auto-remove gcc build-essential
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
