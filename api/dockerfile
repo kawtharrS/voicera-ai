@@ -12,18 +12,15 @@ RUN apt-get update --fix-missing \
        libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY api/requirements.txt .
+COPY requirements.txt .
 
 RUN pip install --upgrade pip \
     && pip install -r requirements.txt
 
-# Copy langgraph to /langgraph
 COPY langgraph /langgraph
 
-# Install langgraph dependencies
 RUN pip install -e /langgraph
 
-# Copy the rest of the API code
 COPY api/ .
 
 RUN apt-get purge -y --auto-remove gcc build-essential
