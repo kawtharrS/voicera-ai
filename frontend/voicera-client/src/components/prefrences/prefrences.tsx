@@ -66,7 +66,6 @@ export default function Preferences() {
       role="application"
       aria-label="Voicera swipe screen"
     >
-      {/* Screen 1 */}
       <div
         className={styles.screenFirst}
         style={{
@@ -97,7 +96,6 @@ export default function Preferences() {
         </div>
       </div>
 
-      {/* Screen 2 */}
       <div
         className={styles.screenSecond}
         style={{
