@@ -89,7 +89,7 @@ class SharedMemoryManager:
             )
             print(f"Saved interaction for user {user_id}")
         except Exception as e:
-            print(f"[LangMem] Save failed: {e}")
+            print(f"Save failed: {e}")
 
     async def retrieve(self, user_id: str, query: str = "") -> str:
         if not user_id or not self.memory_enabled or self.memory_manager is None:
