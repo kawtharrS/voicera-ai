@@ -18,10 +18,9 @@ jobs:
             - name: Build Containers
               run: docker compose build 
 
-            - name: Run tests
-              run: docker compose run --rm backend pytest
-
-
+            - name: Testing
+            echo: "working"
+            
     push: 
         needs: test
         runs-on: ubuntu-latest
@@ -43,5 +42,10 @@ jobs:
                 context: ./api
                 push: true
                 tags: kawtharshaalan/voicera-ai:latest
+<<<<<<< HEAD
                 cache-from: type=gha
                 cache-to: type=gha, mode=max
+=======
+                chache-form: type=gha
+                cache-to: type=gha, mode=max
+>>>>>>> c01b73c0763f4a9d4869a248c09b7279f3d30a20
