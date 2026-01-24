@@ -1,7 +1,6 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, MessagesPlaceholder
 from langchain_chroma import Chroma
@@ -11,13 +10,10 @@ from langchain_core.output_parsers import StrOutputParser
 from ..model import Model
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from .structure_output import *
-from ..shared_memory import shared_memory
 from prompts.classroom import *
 
 load_dotenv()
-
 model = Model()
-
 
 class Agent():
     def __init__(self, classroom_tool=None): 
@@ -82,9 +78,3 @@ class Agent():
             proofreader_prompt | 
             model.openai_model.with_structured_output(ProofReaderOutput)
         )
-    
-    async def extract_and_save_to_langmem(self, query: str, student_id: str, ai_response: str = "", category: str = "study") -> None:
-        await shared_memory.extract_and_save(query, student_id, ai_response=ai_response, category=category)
-
-    async def retrieve_from_langmem(self, student_id: str, query: str = "") -> str:
-        return await shared_memory.retrieve(student_id, query)
