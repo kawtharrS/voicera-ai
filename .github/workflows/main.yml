@@ -23,8 +23,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: ./api
+          context: .
+          file: ./api/Dockerfile
           push: true
-          tags: kawtharshaaIan/voicera-ai:latest
+          tags: kawtharshaalan/voicera-ai:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
