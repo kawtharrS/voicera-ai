@@ -18,6 +18,9 @@ jobs:
             - name: Build Containers
               run: docker compose build 
 
+            - name: Testing
+            echo: "working"
+            
     push: 
         needs: test
         runs-on: ubuntu-latest
