@@ -1,8 +1,7 @@
 FROM python:3.10-alpine
-
 WORKDIR /app
 
-RUN apk add --no-cache gcc musl-dev python3-dev
+RUN apk add --no-cache gcc musl-dev python3-dev cmake make
 
 COPY api/requirements.txt .
 COPY langgraph /langgraph
