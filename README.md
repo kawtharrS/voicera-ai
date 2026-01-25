@@ -2,13 +2,20 @@
 
 <br><br>
 
+## License
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+<br><br>
+
 <!-- project overview -->
 <img src="./readme/title2.svg"/>
 
 > Voicera is an application designed for blind people, on top of the accessibility layer to help them perform their tasks in a more dependent way.
 > Voicera is divided into 3 parts, each part is designated to an AI Agent.
 > Eureka, Aria & Orion are the ai agents each with a specific voice and a personality.
-
 
 <br><br>
 
