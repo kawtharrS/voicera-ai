@@ -10,16 +10,25 @@ from utils.response_extractor import (
 )
 
 def _load_graph():
-    langgraph_root = str(Path(__file__).parent.parent.parent / "langgraph")
-    langgraph_src = str(Path(__file__).parent.parent.parent / "langgraph" / "src")
+    # Primary path for Docker environment
+    docker_src = "/langgraph/src"
     
-    if langgraph_root not in sys.path:
-        sys.path.insert(0, langgraph_root)
-    if langgraph_src not in sys.path:
-        sys.path.insert(0, langgraph_src)
+    # Fallback for local development
+    local_src = str(Path(__file__).parent.parent.parent / "langgraph" / "src")
     
-    from agents.router.router_graph import graph
-    return graph
+    if os.path.exists(docker_src):
+        if docker_src not in sys.path:
+            sys.path.insert(0, docker_src)
+    elif os.path.exists(local_src):
+        if local_src not in sys.path:
+            sys.path.insert(0, local_src)
+            
+    try:
+        from agents.router.router_graph import graph
+        return graph
+    except ImportError as e:
+        print(f"Failed to import graph. Path: {sys.path}")
+        raise e
 
 graph = _load_graph()
 
