@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/handlers"
@@ -34,5 +35,5 @@ func main() {
 		handlers.AllowCredentials(),
 	)
 
-	http.ListenAndServe(":8080", corsHandler(router))
+	log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
 }
