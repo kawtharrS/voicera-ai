@@ -4,3 +4,9 @@ langgraph/token.json
 api/.env
 api/token.json
 langgraph/src/vectorstore/
+langgraph/src/agents/vectorstore/
+**/vectorstore/
+**/faiss_index/
+**/chromatadb/
+__pycache__/
+*.pyc
