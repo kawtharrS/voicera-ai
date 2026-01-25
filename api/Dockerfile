@@ -1,20 +1,15 @@
 FROM python:3.10-alpine
+
 WORKDIR /app
 
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    libmagic \
-    poppler \
-    tesseract-ocr \
-    libgl
+RUN apk add --no-cache gcc musl-dev python3-dev
 
 COPY api/requirements.txt .
 COPY langgraph /langgraph
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir -e /langgraph
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -e /langgraph
 
 COPY api/ .
 
