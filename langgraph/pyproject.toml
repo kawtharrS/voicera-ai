@@ -12,6 +12,13 @@ dependencies = [
     "langgraph>=1.0.0",
     "python-dotenv>=1.0.1",
     "langchain-openai>=0.1.0",
+    "langchain-chroma>=0.1.0",
+    "httpx>=0.28.1",
+    "unstructured[pdf]>=0.15.0",
+    "google-auth>=2.0.0",
+    "google-auth-oauthlib>=1.0.0",
+    "google-api-python-client>=2.0.0",
+    "colorama>=0.4.6",
 ]
 
 

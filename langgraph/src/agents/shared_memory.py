@@ -2,9 +2,13 @@ import os
 import httpx
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langmem import create_memory_store_manager
 from langgraph.store.memory import InMemoryStore
 from langchain_core.runnables import RunnableConfig
+
+try:
+    from langmem import create_memory_store_manager  # type: ignore
+except ImportError:  # langmem is optional (and requires Python >=3.11)
+    create_memory_store_manager = None  # type: ignore
 
 load_dotenv()
 
@@ -21,14 +25,19 @@ class SharedMemoryManager:
         self.memory_enabled = False
         self.memory_manager = None
         self.backend_url = os.getenv("BACKEND_URL")
-        
+
+        # langmem is optional and currently only supports Python >= 3.11.
+        # On environments where it's not installed, we gracefully disable memory.
+        if create_memory_store_manager is None:
+            return
+
         try:
             openai_model = ChatOpenAI(
                 model=os.getenv("OPENAI_MODEL"),
                 temperature=0,
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
             )
-            
+
             store = InMemoryStore(
                 index={
                     "dims": 1536,
@@ -41,9 +50,9 @@ class SharedMemoryManager:
                 namespace=("memories", "{user_id}"),
                 store=store,
             )
-            
+
             self.memory_enabled = self.memory_manager is not None
-  
+
         except Exception as e:
             self.memory_manager = None
             self.memory_enabled = False
