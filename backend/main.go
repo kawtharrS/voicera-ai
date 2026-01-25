@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -18,9 +17,6 @@ var router = mux.NewRouter()
 func main() {
 	godotenv.Load()
 	data.InitSupabase()
-	if err := data.InitDB(); err != nil {
-		fmt.Printf("Warning: Database initialization failed: %v\n", err)
-	}
 
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
