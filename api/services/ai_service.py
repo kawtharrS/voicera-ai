@@ -9,28 +9,10 @@ from utils.response_extractor import (
     extract_emotion,
 )
 
-def _load_graph():
-    # Primary path for Docker environment
-    docker_src = "/langgraph/src"
-    
-    # Fallback for local development
-    local_src = str(Path(__file__).parent.parent.parent / "langgraph" / "src")
-    
-    if os.path.exists(docker_src):
-        if docker_src not in sys.path:
-            sys.path.insert(0, docker_src)
-    elif os.path.exists(local_src):
-        if local_src not in sys.path:
-            sys.path.insert(0, local_src)
-            
-    try:
-        from agents.router.router_graph import graph
-        return graph
-    except ImportError as e:
-        print(f"Failed to import graph. Path: {sys.path}")
-        raise e
+langgraph_src = Path(__file__).parent.parent.parent / "langgraph" / "src"
+sys.path.insert(0, str(langgraph_src))
+from agents.router.router_graph import graph
 
-graph = _load_graph()
 
 DEFAULT_MAX_TRIALS = 3
 DEFAULT_STUDENT_ID = "default_student"
