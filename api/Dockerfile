@@ -1,7 +1,11 @@
-FROM python:3.10-alpine
+FROM python:3.10-slim
+
 WORKDIR /app
 
-RUN apk add --no-cache gcc musl-dev python3-dev cmake make
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY api/requirements.txt .
 COPY langgraph /langgraph
