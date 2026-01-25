@@ -16,13 +16,13 @@ import (
 var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 type Claims struct {
-	UserID int    `json:"user_id"`
+	UserID int64  `json:"user_id"`
 	Email  string `json:"email"`
 	RoleID int    `json:"role_id"`
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(userID int, email string, roleID int) (string, error) {
+func GenerateJWT(userID int64, email string, roleID int) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
@@ -175,7 +175,7 @@ func ClearCookie(response http.ResponseWriter) {
 	http.SetCookie(response, cookie)
 }
 
-func GetUserInfo(request *http.Request) (int, string, int, error) {
+func GetUserInfo(request *http.Request) (int64, string, int, error) {
 	var tokenStr string
 
 	// Check Authorization header first
@@ -218,7 +218,7 @@ func GetUserInfo(request *http.Request) (int, string, int, error) {
 
 // UserInfoResponse is a simple JSON shape returned by /api/user
 type UserInfoResponse struct {
-	ID     int    `json:"id"`
+	ID     int64  `json:"id"`
 	Email  string `json:"email"`
 	RoleID int    `json:"role_id"`
 }
