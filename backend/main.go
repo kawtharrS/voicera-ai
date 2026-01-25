@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/handlers"
@@ -16,6 +18,9 @@ var router = mux.NewRouter()
 func main() {
 	godotenv.Load()
 	data.InitSupabase()
+	if err := data.InitDB(); err != nil {
+		fmt.Printf("Warning: Database initialization failed: %v\n", err)
+	}
 
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
@@ -34,5 +39,5 @@ func main() {
 		handlers.AllowCredentials(),
 	)
 
-	http.ListenAndServe(":8080", corsHandler(router))
+	log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
 }
