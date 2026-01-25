@@ -9,6 +9,7 @@ __pycache__/
 token.json
 credentials.json
 src/tools/credentials.json
+src/vectorstore/
 
 # Distribution / packaging
 .Python

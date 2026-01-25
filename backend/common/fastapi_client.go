@@ -10,12 +10,10 @@ import (
 	"net/url"
 	"os"
 	"time"
-
 	"voicera-backend/data"
-	"voicera-backend/types"
 )
 
-func GetFastAPIHealth() (*types.HealthResponse, error) {
+func GetFastAPIHealth() (*HealthResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	client := http.Client{
@@ -33,19 +31,19 @@ func GetFastAPIHealth() (*types.HealthResponse, error) {
 		return nil, errors.New("FastAPI health check failed")
 	}
 
-	var health types.HealthResponse
+	var health HealthResponse
 	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
 		return nil, err
 	}
 
-	converted := &types.HealthResponse{
+	converted := &HealthResponse{
 		Status:  health.Status,
 		Message: health.Message,
 	}
 	return converted, err
 }
 
-func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
+func AskAnything(query UniversalQueryRequest) (*AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	body, err := json.Marshal(query)
@@ -71,20 +69,19 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() // prevents memory leaks
-
+	defer resp.Body.Close() 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
 	}
 
-	var aiResp types.AIResponse
+	var aiResp AIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
-	fmt.Printf("[DEBUG] FastAPI Response - Emotion: '%s', Category: '%s'\n", aiResp.Emotion, aiResp.Category)
+	fmt.Printf("FastAPI Response - Emotion: '%s', Category: '%s'\n", aiResp.Emotion, aiResp.Category)
 
-	converted := &types.AIResponse{
+	converted := &AIResponse{
 		Question:        aiResp.Question,
 		Response:        aiResp.Response,
 		Recommendations: aiResp.Recommendations,
@@ -96,7 +93,7 @@ func AskAnything(query types.UniversalQueryRequest) (*types.AIResponse, error) {
 		Emotion:         aiResp.Emotion,
 	}
 
-	fmt.Printf("[DEBUG] Converted Response - Emotion: '%s'\n", converted.Emotion)
+	fmt.Printf("Converted Response - Emotion: '%s'\n", converted.Emotion)
 	return converted, nil
 }
 
@@ -147,7 +144,7 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
-	var query types.UniversalQueryRequest
+	var query UniversalQueryRequest
 	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -158,7 +155,7 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 		query.StudentID = fmt.Sprintf("%d", userID)
 
 		if pref, pErr := data.GetLatestUserPreference(int64(userID)); pErr == nil && pref != nil {
-			query.Preferences = &types.Preferences{
+			query.Preferences = &Preferences{
 				Language:   pref.Language,
 				UserId:     fmt.Sprintf("%d", pref.UserID),
 				Tone:       pref.Tone,
@@ -195,7 +192,7 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func addPrefrences(query types.Preferences) (*types.AIResponse, error) {
+func addPrefrences(query Preferences) (*AIResponse, error) {
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 
 	body, err := json.Marshal(query)
@@ -221,18 +218,18 @@ func addPrefrences(query types.Preferences) (*types.AIResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() // prevents memory leaks
+	defer resp.Body.Close() 
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
 	}
 
-	var aiResp types.AIResponse
+	var aiResp AIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
 		return nil, err
 	}
-	converted := &types.AIResponse{
+	converted := &AIResponse{
 		Question:        aiResp.Question,
 		Response:        aiResp.Response,
 		Recommendations: aiResp.Recommendations,
