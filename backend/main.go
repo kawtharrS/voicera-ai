@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
-
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -16,13 +13,7 @@ import (
 var router = mux.NewRouter()
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("Note: Could not load .env file (not required if using system env vars)")
-	} else {
-		fmt.Println("Loaded .env file")
-	}
-
+	godotenv.Load()
 	data.InitSupabase()
 
 	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
@@ -35,7 +26,6 @@ func main() {
 	router.HandleFunc("/api/save-preference", common.SavePreferences).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/user", common.UserInfoHandler).Methods("GET", "OPTIONS")
 
-
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
@@ -43,5 +33,5 @@ func main() {
 		handlers.AllowCredentials(),
 	)
 
-	log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
+	http.ListenAndServe(":8080", corsHandler(router))
 }

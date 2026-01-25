@@ -2,20 +2,13 @@ import styles from "./chat.module.css";
 import { useSwipeScreen } from "../../hooks/useSwipeScreen";
 import { useAudioTTS } from "../../hooks/useAudioTTS";
 import { useChat } from "../../hooks/useChat";
-import api from "../../api/axios";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
+import { useChatHandlers } from "../../hooks/useChatHandlers";
+import { useState } from "react";
 import { MicIcon } from "./mic_icon";
 
 export default function VoiceraSwipeScreen() {
-  const [roleId, setRoleId] = useState<number | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [interimTranscript, setInterimTranscript] = useState("");
-  const [finalTranscript, setInterimTranscriptFinal] = useState("");
-  const [isSending, setIsSending] = useState(false);
   const [aiIsSpeaking, setAiIsSpeaking] = useState(false);
-
-  const recentlyDragged = useRef(false);
-  const recognitionRef = useRef<any>(null);
 
   const {
     position,
@@ -41,79 +34,36 @@ export default function VoiceraSwipeScreen() {
     }
   );
 
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition || recognitionRef.current) return;
+  const {
+    isRecording,
+    interimTranscript,
+    finalTranscript,
+    startRecording,
+    stopRecording,
+    resetTranscript,
+  } = useSpeechRecognition();
 
-    const rec = new SpeechRecognition();
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.lang = "en-US";
-
-    rec.onstart = () => setIsRecording(true);
-    rec.onresult = (e: any) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const transcript = e.results[i][0].transcript;
-        if (e.results[i].isFinal) setInterimTranscriptFinal((prev) => prev + transcript + " ");
-        else interim += transcript;
-      }
-      setInterimTranscript(interim);
-    };
-    rec.onerror = () => setIsRecording(false);
-    rec.onend = () => setIsRecording(false);
-
-    recognitionRef.current = rec;
-  }, []);
-
-
-  const startRecording = useCallback(() => {
-    if (recognitionRef.current && !isRecording) {
-      setInterimTranscriptFinal("");
-      setInterimTranscript("");
-      recognitionRef.current.start();
-    }
-  }, [isRecording]);
-
-  const stopRecording = useCallback(() => {
-    if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
-    }
-  }, [isRecording]);
-
-  const handleSendVoice = async () => {
-    const fullText = (finalTranscript + interimTranscript).trim();
-    if (fullText) {
-      setIsSending(true);
-      try {
-        await sendMessage(fullText);
-        setInterimTranscriptFinal("");
-        setInterimTranscript("");
-      } finally {
-        setIsSending(false);
-      }
-    }
-  };
-
-  const handleToggleVoice = () => {
-    if (recentlyDragged.current) return;
-    if (isRecording) {
-      stopRecording();
-      setTimeout(handleSendVoice, 500);
-    } else {
-      startRecording();
-    }
-  };
+  const {
+    roleId,
+    isSending,
+    handleSendVoice,
+    handleToggleVoice,
+    updateRecentlyDragged,
+  } = useChatHandlers({
+    sendMessage,
+    startRecording,
+    stopRecording,
+    resetTranscript,
+    finalTranscript,
+    interimTranscript,
+    isRecording,
+    isDragging,
+  });
 
   const getCategoryColor = (cat?: string) => {
     const colors: Record<string, string> = { study: "#4db6ac", work: "#FF9800", personal: "#8b7ab8" };
     return colors[cat || ""] || "#999";
   };
-
-
-  useEffect(() => {
-    api.get("/user").then(r => setRoleId(r.data.role_id || 1)).catch(() => setRoleId(1));
-  }, []);
 
   if (roleId === null) return <div className={styles.loadingContainer}><div className={styles.loader}></div></div>;
 
@@ -123,12 +73,12 @@ export default function VoiceraSwipeScreen() {
     return (
       <div
         className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
-        onTouchStart={(e) => { recentlyDragged.current = false; handleTouchStart(e); }}
+        onTouchStart={(e) => { updateRecentlyDragged(false); handleTouchStart(e); }}
         onTouchMove={handleTouchMove}
-        onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
-        onMouseDown={(e) => { recentlyDragged.current = false; handleMouseDown(e); }}
-        onMouseMove={(e) => { if (isDragging) recentlyDragged.current = true; handleMouseMove(e); }}
-        onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
+        onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
+        onMouseDown={(e) => { updateRecentlyDragged(false); handleMouseDown(e); }}
+        onMouseMove={(e) => { if (isDragging) updateRecentlyDragged(true); handleMouseMove(e); }}
+        onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
         onMouseLeave={() => isDragging && handleMouseUp()}
       >
         <div
@@ -272,7 +222,7 @@ export default function VoiceraSwipeScreen() {
                 data-sr="true"
                 data-sr-label={isRecording ? "Recording voice. Release to send." : "Hold to record voice message."}
               >
-              <MicIcon />
+                <MicIcon />
               </button>
               <button
                 type="submit"
@@ -294,12 +244,12 @@ export default function VoiceraSwipeScreen() {
   return (
     <div
       className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
-      onTouchStart={(e) => { recentlyDragged.current = false; handleTouchStart(e); }}
+      onTouchStart={(e) => { updateRecentlyDragged(false); handleTouchStart(e); }}
       onTouchMove={handleTouchMove}
-      onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
-      onMouseDown={(e) => { recentlyDragged.current = false; handleMouseDown(e); }}
-      onMouseMove={(e) => { if (isDragging) recentlyDragged.current = true; handleMouseMove(e); }}
-      onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) recentlyDragged.current = false; }, 100); }}
+      onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
+      onMouseDown={(e) => { updateRecentlyDragged(false); handleMouseDown(e); }}
+      onMouseMove={(e) => { if (isDragging) updateRecentlyDragged(true); handleMouseMove(e); }}
+      onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
       onMouseLeave={() => isDragging && handleMouseUp()}
     >
       <div
@@ -323,10 +273,10 @@ export default function VoiceraSwipeScreen() {
                 aiIsSpeaking
                   ? "Voicera is speaking."
                   : isSending
-                  ? "Voicera is thinking."
-                  : isRecording
-                  ? "Recording. Tap again to stop and send your message."
-                  : "Voicera orb. Tap to start speaking."
+                    ? "Voicera is thinking."
+                    : isRecording
+                      ? "Recording. Tap again to stop and send your message."
+                      : "Voicera orb. Tap to start speaking."
               }
             >
               <div
@@ -335,10 +285,10 @@ export default function VoiceraSwipeScreen() {
                   backgroundColor: aiIsSpeaking
                     ? '#5eadad'
                     : isSending
-                    ? '#FFB74D'
-                    : isRecording
-                    ? '#FFB74D'
-                    : '#8b7ab8',
+                      ? '#FFB74D'
+                      : isRecording
+                        ? '#FFB74D'
+                        : '#8b7ab8',
                 }}
               ></div>
               <div className={styles.orbGlow}></div>
@@ -347,9 +297,8 @@ export default function VoiceraSwipeScreen() {
 
           {!isRecording && !aiIsSpeaking && (
             <div
-              className={`${styles.transcriptionDisplay} ${
-                isThinking ? styles.blurred : ""
-              }`}
+              className={`${styles.transcriptionDisplay} ${isThinking ? styles.blurred : ""
+                }`}
             >
               <div className={styles.introCenter}>
                 <h1

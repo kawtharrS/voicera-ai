@@ -31,4 +31,4 @@ def extract_emotion(result: Dict[str, Any]) -> Optional[str]:
     if not emotion:
         emotion_output = result.get("emotion_output", {})
         emotion = emotion_output.get("emotion")
-    return None if emotion in (None, "unknown") else emotion
+    return emotion or "unknown"

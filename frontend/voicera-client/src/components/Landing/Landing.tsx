@@ -4,8 +4,8 @@ import Navbar from "./Navbar";
 import Hero from "./Hero";
 import Services from "./Services";
 import Footer from "./Footer";
-import Login from "../Login";
-import SignUp from "../SignUp";
+import Login from "../login";
+import SignUp from "../signUp";
 
 const Landing: React.FC = () => {
   const [showLogin, setLogin] = useState(false);
@@ -20,7 +20,7 @@ const Landing: React.FC = () => {
 
   return (
     <div className={styles.landing}>
-      <Navbar onSignUpClick={()=>setSignup(true)} />
+      <Navbar onSignUpClick={() => setSignup(true)} />
       <Hero onLoginClick={() => setLogin(true)} />
       <Services />
       <Footer />

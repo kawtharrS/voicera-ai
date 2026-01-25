@@ -404,11 +404,14 @@ class ClassroomNodes:
             query = interaction.student_question
             ai_response = interaction.ai_response
 
+        emotion = state.get("emotion") or ""
+        
         await shared_memory.extract_and_save(
             query=query,
             ai_response=ai_response,
             user_id=student_id,
-            category=category
+            category=category,
+            emotion=emotion
         )
         return state
 

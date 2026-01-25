@@ -84,7 +84,7 @@ class ResponseNodes:
         student_id = state.get("student_id")
 
         memory_context = await _load_personal_memory(student_id, query)
-        detected_emotion = self._detect_emotion(query, prefs)
+        detected_emotion = state.get("emotion") or ""
 
         prompt = self.build_prompt(prefs, memory_context)
 

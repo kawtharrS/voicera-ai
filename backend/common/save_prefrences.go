@@ -8,14 +8,6 @@ import (
 	"voicera-backend/helpers"
 )
 
-type SavePreferenceRequest struct {
-	UserID     int64  `json:"user_id"`
-	Language   string `json:"language"`
-	Tone       string `json:"tone"`
-	Name       string `json:"name"`
-	Preference string `json:"preference"`
-}
-
 func SavePreferences(w http.ResponseWriter, r *http.Request) {
 	helpers.SetHeaders(w)
 
