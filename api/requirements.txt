@@ -6,7 +6,6 @@ httpx==0.28.1
 langchain-openai>=0.1.0
 langchain-chroma>=0.1.0
 langgraph>=1.0.0
-unstructured[all]>=0.15.0
 google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
 google-api-python-client>=2.0.0
