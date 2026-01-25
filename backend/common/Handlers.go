@@ -16,13 +16,13 @@ import (
 var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 type Claims struct {
-	UserID int    `json:"user_id"`
+	UserID int64  `json:"user_id"`
 	Email  string `json:"email"`
 	RoleID int    `json:"role_id"`
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(userID int, email string, roleID int) (string, error) {
+func GenerateJWT(userID int64, email string, roleID int) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
@@ -89,7 +89,6 @@ func RegisterAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Login after register
 	var token string
 	user, err := data.GetUserByEmail(req.Email)
 	if err == nil {
@@ -123,16 +122,13 @@ func LoginAPIHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "email and password are required"})
 		return
 	}
-	// Validate credentials using hashed password comparison
 	if !data.UserIsValidByEmail(payload.Email, payload.Password) {
 		writeJSON(w, http.StatusUnauthorized, apiResponse{Ok: false, Message: "invalid credentials"})
 		return
 	}
 
-	// At this point, we know the email/password combo is valid; fetch the user to issue JWT
 	user, err := data.GetUserByEmail(payload.Email)
 	if err != nil {
-		// Should be rare since validation already passed, but handle gracefully
 		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "could not load user"})
 		return
 	}
@@ -175,15 +171,13 @@ func ClearCookie(response http.ResponseWriter) {
 	http.SetCookie(response, cookie)
 }
 
-func GetUserInfo(request *http.Request) (int, string, int, error) {
+func GetUserInfo(request *http.Request) (int64, string, int, error) {
 	var tokenStr string
 
-	// Check Authorization header first
 	authHeader := request.Header.Get("Authorization")
 	if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " {
 		tokenStr = authHeader[7:]
 	} else {
-		// Fallback to cookie
 		cookie, err := request.Cookie("access_token")
 		if err != nil {
 			return 0, "", 0, err
@@ -216,15 +210,12 @@ func GetUserInfo(request *http.Request) (int, string, int, error) {
 	return claims.UserID, claims.Email, claims.RoleID, nil
 }
 
-// UserInfoResponse is a simple JSON shape returned by /api/user
 type UserInfoResponse struct {
-	ID     int    `json:"id"`
+	ID     int64  `json:"id"`
 	Email  string `json:"email"`
 	RoleID int    `json:"role_id"`
 }
 
-// UserInfoHandler returns the current authenticated user's ID and email
-// based on the JWT stored in the access_token cookie.
 func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	helpers.SetHeaders(w)
 
@@ -240,7 +231,6 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, email, roleID, err := GetUserInfo(r)
 	if err != nil || userID == 0 {
-		// Not logged in or invalid token; return 401 with empty payload
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		_ = json.NewEncoder(w).Encode(UserInfoResponse{ID: 0, Email: "", RoleID: 0})
