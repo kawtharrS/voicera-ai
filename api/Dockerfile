@@ -1,28 +1,23 @@
-FROM python:3.10-alpine
+FROM python:3.10-slim
+
 WORKDIR /app
 
-RUN apt-get update --fix-missing \
-    && apt-get install -y --no-install-recommends \
-       gcc \
-       build-essential \
-       libmagic1 \
-       poppler-utils \
-       tesseract-ocr \
-       libgl1 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 COPY api/requirements.txt .
-
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
-
 COPY langgraph /langgraph
 
-RUN pip install -e /langgraph
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -e /langgraph && \
+    apt-get remove -y gcc build-essential && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY api/ .
-
-RUN apt-get purge -y --auto-remove gcc build-essential
 
 ENV PYTHONPATH=/langgraph/src:$PYTHONPATH
 
