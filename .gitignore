@@ -3,3 +3,4 @@ langgraph/src/tools/credentials.json
 langgraph/token.json
 api/.env
 api/token.json
+langgraph/src/vectorstore/

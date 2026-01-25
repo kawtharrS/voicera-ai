@@ -8,16 +8,10 @@ RUN apt-get clean \
     && apt-get install -y --no-install-recommends gcc build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY api/requirements.txt .
-
+COPY requirements.txt .
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
-
-COPY langgraph /langgraph
-
-RUN pip install -e /langgraph
-
-COPY api/ .
+    && pip install -r requirements.txt \
+    && apt-get purge -y --auto-remove gcc build-essential
 
 COPY . .
 
