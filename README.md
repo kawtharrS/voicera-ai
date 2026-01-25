@@ -5,16 +5,17 @@
 <!-- project overview -->
 <img src="./readme/title2.svg"/>
 
-> Description here.
->
-> Description here.
+> Voicera is an application designed for blind people, on top of the accessibility layer to help them perform their tasks in a more dependent way.
+> Voicera is divided into 3 parts, each part is designated to an AI Agent.
+> Eureka, Aria & Orion are the ai agents each with a specific voice and a personality.
+
 
 <br><br>
 
 <!-- System Design -->
 <img src="./readme/title3.svg"/>
 
-### Add Title Here
+### System Design 
 
 - To be decided on later on.
 
