@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import styles from "./chat.module.css";
 import { useSwipeScreen } from "../../hooks/useSwipeScreen";
-import { useNavigate } from "react-router-dom";
-import { useSavePreference } from "../../hooks/useSavePreference";
+import { useSavePreferencesHandler } from "../../hooks/useSavePrefrencesHandler";
 
 export default function Preferences() {
   const {
@@ -19,38 +18,23 @@ export default function Preferences() {
     closeSecondScreen,
   } = useSwipeScreen();
 
-  const navigate = useNavigate();
-  const savePreference = useSavePreference();
+  const { handleSavePreferences, error } =
+    useSavePreferencesHandler(closeSecondScreen);
 
   const [language, setLanguage] = useState("English");
   const [tone, setTone] = useState("Friendly");
   const [agentName, setAgentName] = useState("Voicera");
   const [memoryNotes, setMemoryNotes] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const tones = ["Friendly", "Formal", "Casual", "Professional", "Playful"];
 
-  const handleSavePreferences = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-
-    try {
-      await savePreference.mutateAsync({
-        language,
-        tone,
-        name: agentName,
-        preference: memoryNotes,
-      });
-
-      closeSecondScreen();
-      navigate("/login");
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to save preferences";
-      setError(message);
-    }
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    handleSavePreferences(e, {
+      language,
+      tone,
+      agentName,
+      memoryNotes,
+    });
   };
 
   return (
@@ -121,7 +105,7 @@ export default function Preferences() {
             </div>
           </header>
 
-          <form className={styles.prefForm} onSubmit={handleSavePreferences}>
+          <form className={styles.prefForm} onSubmit={onSubmit}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel} htmlFor="language">
                 Preferred language
@@ -136,7 +120,7 @@ export default function Preferences() {
                 <option>Spanish</option>
                 <option>French</option>
                 <option>German</option>
-                <option>Portuguese</option>
+                <option>Arabic</option>
               </select>
             </div>
 
@@ -196,17 +180,12 @@ export default function Preferences() {
                 type="button"
                 className={`${styles.primaryButton} ${styles.secondaryButton}`}
                 onClick={closeSecondScreen}
-                disabled={savePreference.isPending}
               >
                 Skip for now
               </button>
 
-              <button
-                type="submit"
-                className={styles.primaryButton}
-                disabled={savePreference.isPending}
-              >
-                {savePreference.isPending ? "Saving..." : "Save preferences"}
+              <button type="submit" className={styles.primaryButton}>
+                Save preferences
               </button>
             </div>
           </form>
