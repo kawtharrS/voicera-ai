@@ -14,14 +14,6 @@ import (
 )
 
 var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-
-type Claims struct {
-	UserID int64  `json:"user_id"`
-	Email  string `json:"email"`
-	RoleID int    `json:"role_id"`
-	jwt.RegisteredClaims
-}
-
 func GenerateJWT(userID int64, email string, roleID int) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
@@ -39,19 +31,6 @@ func GenerateJWT(userID int64, email string, roleID int) (string, error) {
 		key = []byte("default_secret_key")
 	}
 	return token.SignedString(key)
-}
-
-type registerRequest struct {
-	Name            string `json:"name"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	ConfirmPassword string `json:"confirmPassword"`
-}
-
-type apiResponse struct {
-	Ok      bool   `json:"ok"`
-	Message string `json:"message"`
-	Token   string `json:"token,omitempty"`
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload apiResponse) {
@@ -208,12 +187,6 @@ func GetUserInfo(request *http.Request) (int64, string, int, error) {
 	}
 
 	return claims.UserID, claims.Email, claims.RoleID, nil
-}
-
-type UserInfoResponse struct {
-	ID     int64  `json:"id"`
-	Email  string `json:"email"`
-	RoleID int    `json:"role_id"`
 }
 
 func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
