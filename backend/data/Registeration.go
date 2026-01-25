@@ -123,3 +123,32 @@ func userIsValidSupabase(username, password string) bool {
 
 	return checkPassword(result[0].Password, password)
 }
+
+func registerUserInMemory(name, email, hashedPassword string) error {
+	userMu.Lock()
+	defer userMu.Unlock()
+
+	if _, exists := users[name]; exists {
+		return errors.New("user already exists")
+	}
+
+	users[name] = User{
+		ID:       int64(len(users) + 1),
+		Name:     name,
+		Email:    email,
+		Password: hashedPassword,
+		RoleID:   1,
+	}
+	return nil
+}
+
+func userIsValidInMemory(username, password string) bool {
+	userMu.RLock()
+	defer userMu.RUnlock()
+
+	user, ok := users[username]
+	if !ok {
+		return false
+	}
+	return checkPassword(user.Password, password)
+}

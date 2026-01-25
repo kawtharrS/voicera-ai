@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
@@ -63,6 +65,8 @@ func Migrate() error {
 			preference TEXT DEFAULT '',
 			created_at TIMESTAMPTZ DEFAULT NOW()
 		);`,
+		`ALTER TABLE user_memo ADD COLUMN IF NOT EXISTS emotion TEXT;`,
+		`ALTER TABLE user_memo ADD COLUMN IF NOT EXISTS category TEXT;`,
 	}
 
 	for _, q := range queries {
