@@ -10,3 +10,4 @@ langgraph/src/agents/vectorstore/
 **/chromatadb/
 __pycache__/
 *.pyc
+DEPLOYMENT_GUIDE.md
