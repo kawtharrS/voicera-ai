@@ -11,3 +11,4 @@ langgraph/src/agents/vectorstore/
 __pycache__/
 *.pyc
 DEPLOYMENT_GUIDE.md
+COMPLEX_PROACTIVE_AGENT_PLAN.md

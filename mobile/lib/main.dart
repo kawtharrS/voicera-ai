@@ -4,8 +4,11 @@ import 'screens/sign_in/sign_in.dart';
 import 'screens/login/login.dart';
 import 'screens/chat/voice_chat.dart';
 import 'constants/colors.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   runApp(const MyApp());
 }
 
@@ -15,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Voicera',
       theme: ThemeData(
         useMaterial3: true,
