@@ -28,7 +28,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Entity Relationship Diagram 
 <img src="./readme/er_diagram.svg"/>
 
-
+### Agentic System 
+<img src="./readme/agentic_system.svg"/>
 
 <br><br>
 
