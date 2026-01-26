@@ -49,6 +49,8 @@ jobs:
                 context: ./backend
                 file: ./backend/Dockerfile
                 push: true
-                tags: ${{ secrets.DOCKER_USERNAME }}/voicera-ai:latest
+                tags: |
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-ai:latest
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-ai:${{ github.sha }}
                 cache-from: type=gha
                 cache-to: type=gha,mode=max
