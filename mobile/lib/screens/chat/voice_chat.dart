@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mobile/apis/auth_service.dart';
-
 import 'voice_controller.dart';
 import 'widgets/voice_orb.dart';
 import 'widgets/message_input.dart';
@@ -20,43 +19,43 @@ class VoiceChatPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => VoiceChatController(
-        tts: TtsService(AudioPlayer(), AuthService.baseUrl ?? ''),
-        agent: AgentService(AuthService.goBaseUrl ?? ''),
+        tts: TtsService(AudioPlayer(), AuthService.baseUrl),
+        agent: AgentService(AuthService.goBaseUrl),
         speech: SpeechService(),
       ),
-      child: const _VoiceChatView(),
+      child: const VoiceChatView(),
     );
   }
 }
 
-class _VoiceChatView extends StatefulWidget {
-  const _VoiceChatView();
+class VoiceChatView extends StatefulWidget {
+  const VoiceChatView();
 
   @override
-  State<_VoiceChatView> createState() => _VoiceChatViewState();
+  State<VoiceChatView> createState() => VoiceChatViewState();
 }
 
-class _VoiceChatViewState extends State<_VoiceChatView> {
-  UserInfo? _userInfo;
+class VoiceChatViewState extends State<VoiceChatView> {
+  UserInfo? userInfo;
 
   @override
   void initState() {
     super.initState();
-    _loadUserInfo();
+    loadUserInfo();
   }
 
-  Future<void> _loadUserInfo() async {
+  Future<void> loadUserInfo() async {
     final info = await AuthService.fetchCurrentUser();
     if (!mounted) return;
     setState(() {
-      _userInfo = info;
+      userInfo = info;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<VoiceChatController>();
-    final bool canTypeMessage = _userInfo?.roleId == 2;
+    final bool canTypeMessage = userInfo?.roleId == 2;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -74,7 +73,7 @@ class _VoiceChatViewState extends State<_VoiceChatView> {
                     onTap: () => Navigator.pop(context),
                     child: const IconButton(
                       icon: Icon(Icons.arrow_back),
-                      onPressed: null, // Let AccessibleWidget handle taps
+                      onPressed: null, 
                     ),
                   ),
                   const Text(
@@ -106,7 +105,7 @@ class _VoiceChatViewState extends State<_VoiceChatView> {
                     onLongPress: controller.readCurrentText,
                     child: VoiceOrb(
                       state: controller.state,
-                      onTap: () {}, // Let AccessibleWidget handle taps
+                      onTap: () {}, 
                       onLongPress: controller.readCurrentText,
                     ),
                   ),

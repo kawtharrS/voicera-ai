@@ -44,8 +44,6 @@ class VoiceChatController extends ChangeNotifier {
     }
     
     await testConnection();
-
-    debugPrint('Pre-generating common TTS phrases...');
     await tts.preGenerateCommonPhrases(voice: selectedVoice);
 
     isInitialized = true;
@@ -103,26 +101,6 @@ class VoiceChatController extends ChangeNotifier {
     }
 
     if (!speech.isInitialized) {
-      final permStatus = await speech.getPermissionStatus();
-      String message;
-      
-      switch (permStatus) {
-        case 'permanentlyDenied':
-          message = 'Microphone permission is permanently denied. Please enable it in your device settings under app permissions.';
-          break;
-        case 'denied':
-          message = 'Microphone permission is required. Please grant permission when prompted.';
-          // Try to request permission again
-          await speech.checkAndRequestMicrophonePermission();
-          break;
-        case 'restricted':
-          message = 'Microphone access is restricted. Please check your device settings.';
-          break;
-        default:
-          message = 'Microphone is not available. Please check your device settings.';
-      }
-      
-      tts.speak(message, selectedVoice);
       state = VoiceState.error;
       notifyListeners();
       return;
@@ -153,7 +131,6 @@ class VoiceChatController extends ChangeNotifier {
     }
   }
 
-  /// Sends [text] (or the current transcription) to the agent.
   Future<void> sendText([String? text]) async {
     final message = text ?? transcription;
     if (message.isEmpty) {
@@ -171,17 +148,11 @@ class VoiceChatController extends ChangeNotifier {
       state = VoiceState.speaking;
       notifyListeners();
 
-      // Backend emotion categories: joy, sadness, anger, fear, surprise, disgust, neutral, unknown
-      final negativeEmotions = ['sadness', 'anger', 'fear', 'disgust'];
-      debugPrint('Emotion detected: ${result.emotion}');
-      
+      final negativeEmotions = ['sadness', 'anger', 'fear', 'disgust'];      
       if (negativeEmotions.contains(result.emotion.toLowerCase())) {
         debugPrint('Negative emotion detected: ${result.emotion}. Scheduling check-in in 1 minute.');
         await NotificationService().scheduleCheckIn(minutes: 1);
-      } else {
-        debugPrint('Positive/neutral emotion detected: ${result.emotion}. No notification scheduled.');
       }
-
       await tts.speak(answer, selectedVoice);
       state = VoiceState.idle;
     } catch (e) {

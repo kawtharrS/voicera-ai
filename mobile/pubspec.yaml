@@ -26,8 +26,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
-  flutter_launcher_name: ^0.0.1
-
 
 flutter:
   uses-material-design: true
@@ -35,10 +33,12 @@ flutter:
   assets:
     - assets/images/image.png
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
+
   image_path: assets/images/logo.png
 
-flutter_launcher_name:
-  name: Voicera
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/images/logo.png
+
