@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/apis/auth_service.dart';
+import 'package:mobile/services/notification_service.dart';
 import 'services/tts_service.dart';
 import 'services/agent_service.dart';
 import 'services/speech_service.dart';
@@ -33,10 +34,16 @@ class VoiceChatController extends ChangeNotifier {
   }
 
   Future<void> _init() async {
-    await speech.init();
+    final speechInitialized = await speech.init();
+    
+    if (!speechInitialized) {
+      debugPrint('Speech service failed to initialize - microphone may not be available');
+      state = VoiceState.error;
+      notifyListeners();
+      return;
+    }
+    
     await testConnection();
-
-    debugPrint('Pre-generating common TTS phrases...');
     await tts.preGenerateCommonPhrases(voice: selectedVoice);
 
     isInitialized = true;
@@ -88,6 +95,17 @@ class VoiceChatController extends ChangeNotifier {
   }
 
   Future<void> startListening() async {
+    if (!isInitialized) {
+      tts.speak('Speech recognition is still initializing. Please wait.', selectedVoice);
+      return;
+    }
+
+    if (!speech.isInitialized) {
+      state = VoiceState.error;
+      notifyListeners();
+      return;
+    }
+
     state = VoiceState.listening;
     notifyListeners();
 
@@ -113,7 +131,6 @@ class VoiceChatController extends ChangeNotifier {
     }
   }
 
-  /// Sends [text] (or the current transcription) to the agent.
   Future<void> sendText([String? text]) async {
     final message = text ?? transcription;
     if (message.isEmpty) {
@@ -125,11 +142,17 @@ class VoiceChatController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final answer = await agent.ask(message);
+      final result = await agent.ask(message);
+      final answer = result.response;
       transcription = answer;
       state = VoiceState.speaking;
       notifyListeners();
 
+      final negativeEmotions = ['sadness', 'anger', 'fear', 'disgust'];      
+      if (negativeEmotions.contains(result.emotion.toLowerCase())) {
+        debugPrint('Negative emotion detected: ${result.emotion}. Scheduling check-in in 1 minute.');
+        await NotificationService().scheduleCheckIn(minutes: 1);
+      }
       await tts.speak(answer, selectedVoice);
       state = VoiceState.idle;
     } catch (e) {

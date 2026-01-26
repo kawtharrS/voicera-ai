@@ -13,36 +13,38 @@ class HomePage extends StatelessWidget{
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        toolbarHeight: 70,
+        leadingWidth: 80,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Image.asset(
+            'assets/images/image.png',
+            height: 72,
+            width: 72,
+            fit: BoxFit.contain,
+          ),
+        ),
         actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text('Features', style: TextStyle(color: Colors.black)),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text('Accessibility', style: TextStyle(color: Colors.black)),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text("Contact", style:TextStyle(color: Colors.black))
-          ),
-          const SizedBox(width:8),
+          const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
-                shape: RoundedRectangleBorder(borderRadius:BorderRadius.circular(20), ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
-            onPressed: () {
-              Navigator.pushNamed(context, '/signin');
-            },
-            child: const Text('Sign In')
+              onPressed: () {
+                Navigator.pushNamed(context, '/signin');
+              },
+              child: const Text('Sign In'),
             ),
-            ),
-            const SizedBox(width: AppPadding.vP),
+          ),
+          const SizedBox(width: AppPadding.vP),
         ],
       ),
+
       body: SingleChildScrollView(child: Column(children: [
         Container(
           color: Colors.white,
@@ -182,4 +184,3 @@ class HomePage extends StatelessWidget{
     );
   }
 }
-

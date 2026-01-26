@@ -20,11 +20,11 @@ class AccessibleWidget extends StatefulWidget {
   });
 
   @override
-  State<AccessibleWidget> createState() => _AccessibleWidgetState();
+  State<AccessibleWidget> createState() => AccessibleWidgetState();
 }
 
-class _AccessibleWidgetState extends State<AccessibleWidget> {
-  bool _isHovering = false;
+class AccessibleWidgetState extends State<AccessibleWidget> {
+  bool isHovering = false;
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +34,8 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
     final bool isHighlighted = focusedLabel == widget.label;
 
     return MouseRegion(
-      onEnter: (_) => _handleEnter(),
-      onExit: (_) => _handleExit(),
+      onEnter: (_) => handleEnter(),
+      onExit: (_) => handleExit(),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
 
@@ -44,15 +44,15 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
           if (box != null) {
             final local = box.globalToLocal(details.globalPosition);
             if (box.paintBounds.contains(local)) {
-              _handleEnter();
+              handleEnter();
             } else {
-              _handleExit();
+              handleExit();
             }
           }
         },
         
-        onPanEnd: (_) => _handleExit(),
-        onPanCancel: () => _handleExit(),
+        onPanEnd: (_) => handleExit(),
+        onPanCancel: () => handleExit(),
 
         onTap: () {
           if (isHighlighted) {
@@ -65,7 +65,7 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
         onLongPress: widget.onLongPress,
 
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 20),
           decoration: BoxDecoration(
             border: Border.all(
               color: isHighlighted ? AppColors.orange : Colors.transparent,
@@ -91,18 +91,18 @@ class _AccessibleWidgetState extends State<AccessibleWidget> {
     );
   }
 
-  void _handleEnter() {
-    if (!_isHovering) {
-      _isHovering = true;
+  void handleEnter() {
+    if (!isHovering) {
+      isHovering = true;
       final controller = context.read<VoiceChatController>();
       controller.setFocus(widget.label);
       controller.speak(widget.label);
     }
   }
 
-  void _handleExit() {
-    if (_isHovering) {
-      _isHovering = false;
+  void handleExit() {
+    if (isHovering) {
+      isHovering = false;
     }
   }
 }
