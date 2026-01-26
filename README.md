@@ -23,8 +23,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <img src="./readme/title3.svg"/>
 
 ### System Design 
-
 <img src="./readme/stack_diagram.svg"/>
+### Entity Relationship Diagram 
+<img src="./readme/er_diagram.svg"/>
+
 
 
 <br><br>
