@@ -19,7 +19,7 @@ jobs:
                     docker stop voicera-api || true
                     docker rm voicera-api || true
                     docker run -d \
-                        -p 8000:8000 \
+                        -p 80:8080 \
                         -e OPENAI_API_KEY=${{secrets.OPENAI_API_KEY}} \
                         --name voicera-api \
                         --restart always \
