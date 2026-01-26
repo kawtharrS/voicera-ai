@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/apis/auth_service.dart';
+import 'package:mobile/services/notification_service.dart';
 import 'services/tts_service.dart';
 import 'services/agent_service.dart';
 import 'services/speech_service.dart';
@@ -33,7 +34,15 @@ class VoiceChatController extends ChangeNotifier {
   }
 
   Future<void> _init() async {
-    await speech.init();
+    final speechInitialized = await speech.init();
+    
+    if (!speechInitialized) {
+      debugPrint('Speech service failed to initialize - microphone may not be available');
+      state = VoiceState.error;
+      notifyListeners();
+      return;
+    }
+    
     await testConnection();
 
     debugPrint('Pre-generating common TTS phrases...');
@@ -88,6 +97,37 @@ class VoiceChatController extends ChangeNotifier {
   }
 
   Future<void> startListening() async {
+    if (!isInitialized) {
+      tts.speak('Speech recognition is still initializing. Please wait.', selectedVoice);
+      return;
+    }
+
+    if (!speech.isInitialized) {
+      final permStatus = await speech.getPermissionStatus();
+      String message;
+      
+      switch (permStatus) {
+        case 'permanentlyDenied':
+          message = 'Microphone permission is permanently denied. Please enable it in your device settings under app permissions.';
+          break;
+        case 'denied':
+          message = 'Microphone permission is required. Please grant permission when prompted.';
+          // Try to request permission again
+          await speech.checkAndRequestMicrophonePermission();
+          break;
+        case 'restricted':
+          message = 'Microphone access is restricted. Please check your device settings.';
+          break;
+        default:
+          message = 'Microphone is not available. Please check your device settings.';
+      }
+      
+      tts.speak(message, selectedVoice);
+      state = VoiceState.error;
+      notifyListeners();
+      return;
+    }
+
     state = VoiceState.listening;
     notifyListeners();
 
@@ -125,10 +165,22 @@ class VoiceChatController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final answer = await agent.ask(message);
+      final result = await agent.ask(message);
+      final answer = result.response;
       transcription = answer;
       state = VoiceState.speaking;
       notifyListeners();
+
+      // Backend emotion categories: joy, sadness, anger, fear, surprise, disgust, neutral, unknown
+      final negativeEmotions = ['sadness', 'anger', 'fear', 'disgust'];
+      debugPrint('Emotion detected: ${result.emotion}');
+      
+      if (negativeEmotions.contains(result.emotion.toLowerCase())) {
+        debugPrint('Negative emotion detected: ${result.emotion}. Scheduling check-in in 1 minute.');
+        await NotificationService().scheduleCheckIn(minutes: 1);
+      } else {
+        debugPrint('Positive/neutral emotion detected: ${result.emotion}. No notification scheduled.');
+      }
 
       await tts.speak(answer, selectedVoice);
       state = VoiceState.idle;

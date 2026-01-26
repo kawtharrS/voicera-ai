@@ -69,7 +69,7 @@ func AskAnything(query UniversalQueryRequest) (*AIResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() 
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("FastAPI error: %s", string(b))
@@ -185,11 +185,51 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 			} else {
 				fmt.Printf("Memo saved (ID: %d) - Category: %s, Emotion: %s\n", memo.ID, memo.Category, memo.Emotion)
 			}
+
+			// Proactive Check-in Logic
+			ScheduleCheckInIfNeeded(userID, response.Emotion)
 		}()
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// BadEmotions defines the set of emotions that trigger a check-in
+var BadEmotions = map[string]bool{
+	"sad":        true,
+	"angry":      true,
+	"anxious":    true,
+	"frustrated": true,
+	"stressed":   true,
+	"depressed":  true,
+	"lonely":     true,
+	"unhappy":    true,
+}
+
+// ScheduleCheckInIfNeeded schedules a check-in if the emotion is negative
+func ScheduleCheckInIfNeeded(userID int64, emotion string) {
+	if _, exists := BadEmotions[emotion]; exists {
+		fmt.Printf("Negative emotion '%s' detected for user %d. Scheduling check-in in 30 minutes.\n", emotion, userID)
+
+		// 30 minutes delay
+		// For testing purposes, you might want to reduce this to 30 * time.Second
+		time.AfterFunc(30*time.Minute, func() {
+			CheckInAction(userID)
+		})
+	}
+}
+
+// CheckInAction is executed after the delay
+func CheckInAction(userID int64) {
+	// TODO: Integrate with a Push Notification Service (e.g., FCM)
+	// For now, we print to console.
+
+	message := "Hey, just checking in. How are you feeling now?"
+	fmt.Printf("=== [PUSH NOTIFICATION] ===\nTo: User %d\nMessage: %s\n===========================\n", userID, message)
+
+	// Future:
+	// Use SendPushNotification(userID, message)
 }
 
 func addPrefrences(query Preferences) (*AIResponse, error) {
@@ -218,7 +258,7 @@ func addPrefrences(query Preferences) (*AIResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() 
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
