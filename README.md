@@ -24,7 +24,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### System Design 
 
-- To be decided on later on.
+<img src="./readme/stack_diagram.svg"/>
+
 
 <br><br>
 
