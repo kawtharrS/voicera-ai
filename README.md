@@ -30,6 +30,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Agentic System 
 <img src="./readme/agentic_system.svg"/>
+<img src="./readme/agents.svg"/>
 
 <br><br>
 
