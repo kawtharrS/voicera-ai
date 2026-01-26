@@ -1,17 +1,4 @@
 services:
-  fastapi:
-    build:
-      context: .
-      dockerfile: ./api/Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
-    volumes:
-      - ./api:/app
-      - ./langgraph:/langgraph
-
   go:
     build:
       context: ./backend
@@ -19,11 +6,8 @@ services:
     ports:
       - "80:8080"
     environment:
-      - FASTAPI_URL=http://fastapi:8000
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
-    depends_on:
-      - fastapi
     
