@@ -1,31 +1,56 @@
-name: Build and Push to Docker Hub
-
+name: CI/CD
 on:
-  push:
-    branches: [main]
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                go-version: '1.24'
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+            - name: Run tests
+              working-directory: ./backend
+              run: go test ./...
 
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./api/Dockerfile
-          push: true
-          tags: kawtharshaalan/voicera-ai:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            - name: Build
+              working-directory: ./backend
+              run: go build -o main .
+          
+    push: 
+        needs: test
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+
+        steps: 
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Login to Docker Hub 
+              uses: docker/login-action@v2
+              with:
+                username: ${{ secrets.DOCKER_USERNAME }}
+                password: ${{ secrets.DOCKER_PASSWORD }}
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v4
+              with: 
+                context: ./backend
+                file: ./backend/Dockerfile
+                push: true
+                tags: |
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-ai:latest
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-ai:${{ github.sha }}
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
