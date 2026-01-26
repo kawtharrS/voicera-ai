@@ -37,9 +37,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <!-- Project Highlights -->
 <img src="./readme/title4.svg"/>
 
-### Add Title Here
+### Key Features
 
-- List the sexy features.
+#### Voice First AI Assistant 
+- Fully hands-free interaction, no typing required
+
+#### Multi-Agent Architecture with Personas
+- Voicera uses specialized AI agents, each with a clear role and personality
+- Aria: Friendly
+- Orion: Professional
+- Eureka: Nerdy
+
+#### Personal RAG Knowledge Base
+- Per-user private memory system
+- Stores:
+    - uploaded documents
+    - notes
 
 <br><br>
 
