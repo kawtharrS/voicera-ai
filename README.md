@@ -65,7 +65,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 | Login screen                            | Register screen                       | Register screen                       |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/demo/1440x1024.png) | ![fsdaf](./readme/demo/1440x1024.png) | ![fsdaf](./readme/gifs/register.gif) |
+| ![Landing](./readme/screens-mobile//home.jpg) | ![fsdaf](./readme/screens-mobile/login.jpg) | ![fsdaf](./readme/gifs/register.gif) |
 
 
 ### Admin Screens (Web)
