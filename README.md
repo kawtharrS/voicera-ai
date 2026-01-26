@@ -29,7 +29,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <img src="./readme/er_diagram.svg"/>
 
 ### Agentic System 
-<img src="./readme/agentic_system.svg"/>
 <img src="./readme/agents.svg"/>
 
 <br><br>
@@ -47,6 +46,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Aria: Friendly
 - Orion: Professional
 - Eureka: Nerdy
+
+<img src="./readme/agentic_system.svg"/>
+
 
 #### Personal RAG Knowledge Base
 - Per-user private memory system
