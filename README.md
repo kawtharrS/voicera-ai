@@ -50,7 +50,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <img src="./readme/agentic_system.svg"/>
 
 
-#### Personal RAG Knowledge Base
+#### Multimodal RAG Knowledge Base
 - Per-user private memory system
 - Stores:
     - uploaded documents
