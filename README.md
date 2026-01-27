@@ -73,20 +73,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 | Landing | Login | Register |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/demo/landing.png) | ![Login](./readme/demo/login.png) | ![Register](./readme/demo/register.gif) |
+| ![Landing](./readme/screens-mobile/home.jpg) | ![Login](./readme/screens-mobile/home.jpg) | ![Register](./readme/screens-mobile/home.jpg) |
 
 | Home Page (Empty) | Home Page (Full) | Device Data |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Home Page Empty](./readme/demo/home-page-empty.png) | ![Home Page Full](./readme/demo/home-page-full.png) | ![Device Data](./readme/demo/device-data.gif) |
-
-| Journal Prompts | Write Journal | Journal Entries |
-| --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Journal Prompts](./readme/demo/journal-prompts.png) | ![Write Journal](./readme/demo/write-journal.gif) | ![Journal Entries](./readme/demo/journal-entries.png) |
-
-| Playlist | Music | Moody Blues |
-| --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Playlist](./readme/demo/playlist.gif) | ![Music](./readme/demo/music.gif) | ![Moody Blues](./readme/demo/moody-blues.gif) |
-
+| ![Home Page Empty](./readme/screens-mobile/home.jpg) | ![Home Page Full](./readme/screens-mobile/home.jpg) | ![Device Data](./readme/screens-mobile/home.jpg) |
 
 ### Admin Screens (Web)
 | Login screen                            | Register screen                       |
