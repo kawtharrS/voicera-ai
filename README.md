@@ -64,12 +64,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### User Screens (Mobile)
 
 | Landing | Login | Register |
-| --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/screens-mobile/home.jpg) | ![Login](./readme/screens-mobile/login.jpg) | ![Register](./readme/gifs/register.gif) |
-
-| Prefrences | Voice Chat | Emotion Notification |
-| --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Prefrences](./readme/screens-mobile/home.jpg) | ![Chat](./readme/gifs/chat.gif) | ![Emotion](./readme/screens-mobile/emotion.jpg) |
+| --------------------------------------- | --------------------------------------- | --------------------------------------- |
+| ![Landing](./readme/screens-mobile/landing.jpg) | ![Login](./readme/screens-mobile/login.jpg) | ![Register](./readme/gifs/register.gif) |
+| Preferences | Voice Chat | Emotion Notification |
+| --------------------------------------- | --------------------------------------- | --------------------------------------- |
+| ![Preferences](./readme/screens-mobile/preferences.jpg) | ![Voice Chat](./readme/gifs/chat.gif) | ![Emotion](./readme/screens-mobile/emotion.jpg) |
 
 
 ### Admin Screens (Web)
