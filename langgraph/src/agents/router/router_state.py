@@ -31,3 +31,5 @@ class GraphState(TypedDict):
     rewrite_feedback: Optional[str]
     user_preferences: Optional[dict]
     is_first_message: Optional[bool]
+    study_plan: Optional[dict]
+    email_draft_id: Optional[str]

@@ -415,6 +415,51 @@ class ClassroomNodes:
         )
         return state
 
+    def generate_study_plan(self, state: GraphState) -> GraphState:
+        print(Fore.YELLOW + "Extracting study plan from response..." + Style.RESET_ALL)
+        
+        interaction = state["current_interaction"]
+        if isinstance(interaction, dict):
+            ai_response = interaction.get("ai_response", "")
+        else:
+            ai_response = interaction.ai_response
+        
+        if not ai_response:
+            print(Fore.YELLOW + "No AI response to extract study plan from" + Style.RESET_ALL)
+            return {"study_plan": None}
+        
+        try:
+            # Extract study slots from the AI response
+            result = self.agents.extract_study_slots.invoke({"ai_response": ai_response})
+            
+            # Validate the result
+            if not result or not hasattr(result, 'slots') or not result.slots:
+                print(Fore.YELLOW + "No study slots could be extracted from the response" + Style.RESET_ALL)
+                return {"study_plan": None}
+            
+            # Validate each slot has required fields
+            valid_slots = []
+            for slot in result.slots:
+                if all(hasattr(slot, attr) for attr in ['day', 'start_time', 'end_time', 'activity']):
+                    valid_slots.append(slot)
+            
+            if not valid_slots:
+                print(Fore.YELLOW + "Study slots extracted but none are valid" + Style.RESET_ALL)
+                return {"study_plan": None}
+            
+            print(Fore.GREEN + f"Extracted study plan with {len(valid_slots)} time slots" + Style.RESET_ALL)
+            for slot in valid_slots[:5]:
+                print(Fore.CYAN + f"  • {slot.day} {slot.start_time}-{slot.end_time}: {slot.activity}" + Style.RESET_ALL)
+            
+            # Return validated result
+            from .structure_output import StudyPlanOutput
+            return {"study_plan": StudyPlanOutput(slots=valid_slots)}
+        except Exception as e:
+            print(Fore.RED + f"Study plan extraction failed: {e}" + Style.RESET_ALL)
+            import traceback
+            traceback.print_exc()
+            return {"study_plan": None}
+
     def reset_interaction(self, state: GraphState) -> GraphState:
         return {"current_interaction": StudentInteraction()}
 
