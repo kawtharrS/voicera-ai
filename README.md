@@ -63,13 +63,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### User Screens (Mobile)
 
-| Login screen                            | Register screen                       | Register screen                       |
-| --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/screens-mobile//home.jpg) | ![fsdaf](./readme/screens-mobile/login.jpg) | ![fsdaf](./readme/gifs/register.gif) | 
+### User Screens (Mobile)
 
-| Chat screen                            | Emotion Checkoup screen                       | Prefrences screen                       |
-| --------------------------------------- | ------------------------------------- | ------------------------------------- |
+| Login screen | Register screen | Register screen |
+|--------------|-----------------|-----------------|
+| ![Landing](./readme/screens-mobile/home.jpg) | ![fsdaf](./readme/screens-mobile/login.jpg) | ![fsdaf](./readme/gifs/register.gif) |
+| Chat screen | Emotion Checkup screen | Preferences screen |
 | ![Landing](./readme/gifs/chat.gif) | ![fsdaf](./readme/screens-mobile/emotion.jpg) | ![fsdaf](./readme/gifs/register.gif) |
+
 
 ### Admin Screens (Web)
 | Login screen                            | Register screen                       |
