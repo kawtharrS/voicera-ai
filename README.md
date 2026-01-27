@@ -67,8 +67,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | --- | --- | --- |
 | ![Landing](./readme/screens-mobile/home.jpg) | ![Login](./readme/screens-mobile/login.jpg) | ![Register](./readme/gifs/register.gif) |
 
-| Preferences | Voice Chat | Emotion Notification |
-| ---- | ---- | ---- |
+| Preferences | Voice Chat | Notification |
+| --- | --- | --- |
 | ![Preferences](./readme/screens-mobile/login.jpg) | ![Voice Chat](./readme/gifs/chat.gif) | ![Emotion](./readme/screens-mobile/emotion.jpg) ||
 
 ### Admin Screens (Web)
