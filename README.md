@@ -77,7 +77,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 | Home Page (Empty) | Home Page (Full) | Device Data |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Home Page Empty](./readme/screens-mobile/home.jpg) | ![Home Page Full](./readme/gifs/chat.gif) | ![Device Data](./readme/screens-mobile/emotion.jpg) |
+| ![Home Page Empty](./readme/screens-mobile/home.jpg) | ![Home Page Full](./readme/gifs/chat.gif) | ![Device Data](./readme/screens-mobile/login.jpg) |
 
 ### Admin Screens (Web)
 | Login screen                            | Register screen                       |
