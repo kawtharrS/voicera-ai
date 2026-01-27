@@ -67,7 +67,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/screens-mobile/home.jpg) | ![Login](./readme/screens-mobile/login.jpg) | ![Register](./readme/gifs/register.gif) |
 
-| Home Page (Empty) | Home Page (Full) | Device Data |
+| Prefrences | Chat | Notification |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
 | ![Home Page Empty](./readme/screens-mobile/login.jpg) | ![Home Page Full](./readme/gifs/chat.gif) | ![Device Data](./readme/screens-mobile/not.jpg) |
 
