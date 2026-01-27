@@ -72,9 +72,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | ![Home Page Empty](./readme/screens-mobile/login.jpg) | ![Home Page Full](./readme/gifs/chat.gif) | ![Device Data](./readme/screens-mobile/not.jpg) |
 
 ### Admin Screens (Web)
-| Login screen                            | Register screen                       |
+| Chat screen                             | Write Chat screen                       |
 | --------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/demo/1440x1024.png) | ![fsdaf](./readme/demo/1440x1024.png) |
+| ![Landing](./readme/screens-web/chat-home.png) | ![fsdaf](./readme/screens-web/chat.png) |
 
 
 <br><br>
