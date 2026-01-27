@@ -83,3 +83,12 @@ class CalendarAgent():
             delete_prompt |
             model.openai_model.with_structured_output(DeleteEventArgs)
         )
+
+        recommendation_prompt = PromptTemplate(
+            template=RECOMMENDATION_PROMPT,
+            input_variables=["query", "current_time", "memories"],
+        )
+        self.recommendation_generator = (
+            recommendation_prompt |
+            model.openai_model.with_structured_output(RecommendationOutput)
+        )

@@ -67,7 +67,18 @@ class ResponseNodes:
             system_parts.append(f"Additional user notes: {extra}")
 
         if memory:
-            system_parts.append(f"\nUSER HISTORY (Facts from past conversations):\n{memory}")
+            system_parts.append(
+                """
+USER HISTORY (Facts from past conversations):
+{memory}
+
+Use this USER HISTORY to recover stable facts about the user such as their name,
+recurring routines, and preferences.
+- If the user has ever said something like "My name is X" or "I am X", treat X as their name.
+- If they ask "what is my name" (or similar), answer with that name exactly.
+- If no name appears in USER HISTORY, say you don't know rather than guessing.
+""".format(memory=memory)
+            )
 
         system_msg = "\n".join(system_parts)
 

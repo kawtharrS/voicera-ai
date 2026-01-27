@@ -10,6 +10,7 @@ from ..structure_outputs.calendar_structure_output import CategorizeQueryOutput,
 from prompts.calendar import CATEGORIZE_QUERY_PROMPT
 from tools.calendarTools import CalendarTool
 from ..agents.calendar_agent import CalendarAgent
+from ...shared_memory import shared_memory
 
 openai_model = ChatOpenAI(
     model="gpt-4o-mini",
@@ -391,3 +392,35 @@ class CalendarNodes:
                     }
                 )
             }
+
+    async def generate_recommendations(self, state: GraphState) -> GraphState:
+        print(Fore.YELLOW + "Generating proactive recommendations..." + Style.RESET_ALL)
+        
+        interaction_model, query = self._get_current_interaction(state)
+        student_id = state.get("student_id")
+        
+        memories = ""
+        if student_id:
+            memories = await shared_memory.retrieve(student_id, query)
+        
+        current_time = _get_reference_dt().strftime("%Y-%m-%d %H:%M:%S")
+        
+        try:
+            result = self.agents.recommendation_generator.invoke({
+                "query": query,
+                "current_time": current_time,
+                "memories": memories or "No specific patterns found yet.",
+            })
+            recommendations = result.recommendations
+            print(Fore.GREEN + f"Generated {len(recommendations)} recommendations" + Style.RESET_ALL)
+        except Exception as e:
+            print(Fore.RED + f"Recommendation error: {e}" + Style.RESET_ALL)
+            recommendations = []
+            
+        return {
+            "current_interaction": interaction_model.model_copy(
+                update={
+                    "recommendations": recommendations,
+                }
+            )
+        }

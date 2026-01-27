@@ -101,38 +101,91 @@ class SharedMemoryManager:
             print(f"Save failed: {e}")
 
     async def retrieve(self, user_id: str, query: str = "") -> str:
-        if not user_id or not self.memory_enabled or self.memory_manager is None:
+        """Retrieve long-term memories for a user.
+
+        Preference order:
+        1. langmem vector store (if available)
+        2. Supabase-backed memos via the Go backend /api/memos endpoint
+        """
+        if not user_id:
+            return ""
+
+        # First try langmem vector store if configured
+        if self.memory_enabled and self.memory_manager is not None:
+            try:
+                config = RunnableConfig(configurable={"user_id": str(user_id)})
+                memories = await self.memory_manager.asearch(
+                    query=query or "general memories",
+                    config=config,
+                )
+
+                if memories:
+                    memory_texts = []
+                    for item in memories:
+                        if isinstance(item, str):
+                            memory_texts.append(item)
+                        elif hasattr(item, "value"):
+                            memory_texts.append(str(item.value))
+                        elif hasattr(item, "content"):
+                            memory_texts.append(str(item.content))
+                        else:
+                            memory_texts.append(str(item))
+
+                    if memory_texts:
+                        result = "\n".join(memory_texts)
+                        print(f"Retrieved {len(memory_texts)} items for user {user_id} from langmem")
+                        return result
+            except Exception as e:
+                print(f"[Memory] langmem retrieval failed: {e}")
+
+        # Fallback: fetch recent memos from backend (Supabase)
+        if not self.backend_url:
             return ""
 
         try:
-            config = RunnableConfig(configurable={"user_id": str(user_id)})
-            memories = await self.memory_manager.asearch(
-                query=query or "general memories",
-                config=config,
-            )
-            
-            if not memories:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{self.backend_url}/api/memos",
+                    params={"user_id": user_id, "limit": 50},
+                    timeout=5.0,
+                )
+
+            if resp.status_code != 200:
+                print(f"[Memory] backend memos fetch failed with status {resp.status_code}")
                 return ""
-            
-            memory_texts = []
-            for item in memories:
-                if isinstance(item, str):
-                    memory_texts.append(item)
-                elif hasattr(item, 'value'):
-                    memory_texts.append(str(item.value))
-                elif hasattr(item, 'content'):
-                    memory_texts.append(str(item.content))
-                else:
-                    memory_texts.append(str(item))
-            
-            if memory_texts:
-                result = "\n".join(memory_texts)
-                print(f"Retrieved {len(memory_texts)} items for user {user_id}")
-                return result
-            
-            return ""
+
+            payload = resp.json()
+            memos = payload.get("data") or []
+            if not isinstance(memos, list) or not memos:
+                return ""
+
+            # Each memo has user_query, ai_query, category, emotion
+            lines = []
+            for memo in memos:
+                user_q = memo.get("user_query") or ""
+                ai_q = memo.get("ai_query") or ""
+                category = memo.get("category") or ""
+                emotion = memo.get("emotion") or ""
+                parts = []
+                if user_q:
+                    parts.append(f"User: {user_q}")
+                if ai_q:
+                    parts.append(f"AI: {ai_q}")
+                if category:
+                    parts.append(f"Category: {category}")
+                if emotion:
+                    parts.append(f"Emotion: {emotion}")
+                if parts:
+                    lines.append(" | ".join(parts))
+
+            if not lines:
+                return ""
+
+            result = "\n".join(lines)
+            print(f"[Memory] Retrieved {len(lines)} memos for user {user_id} from backend")
+            return result
         except Exception as e:
-            print(f"Failed: {e}")
+            print(f"[Memory] backend retrieval failed: {e}")
             return ""
 
     def is_ready(self) -> bool:

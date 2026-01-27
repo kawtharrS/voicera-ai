@@ -18,6 +18,7 @@ class CalendarWorkflow():
         workflow.add_node("search_event", nodes.search_event)
         workflow.add_node("update_event", nodes.update_event)
         workflow.add_node("delete_event", nodes.delete_event)
+        workflow.add_node("generate_recommendations", nodes.generate_recommendations)
 
         workflow.set_entry_point("receive_user_query")
         workflow.add_edge("receive_user_query", "categorize_user_query")
@@ -34,13 +35,14 @@ class CalendarWorkflow():
                 "search_event":"search_event",
                 "update_event":"update_event",
                 "delete_event":"delete_event",
-                "end" : END
+                "end" : "generate_recommendations"
             }
         )
-        workflow.add_edge("create_event", END)
-        workflow.add_edge("search_event", END)
-        workflow.add_edge("update_event", END)
-        workflow.add_edge("delete_event", END)
+        workflow.add_edge("create_event", "generate_recommendations")
+        workflow.add_edge("search_event", "generate_recommendations")
+        workflow.add_edge("update_event", "generate_recommendations")
+        workflow.add_edge("delete_event", "generate_recommendations")
+        workflow.add_edge("generate_recommendations", END)
 
         self.app = workflow.compile(checkpointer=checkpointer, store=store)
 

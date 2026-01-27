@@ -124,3 +124,23 @@ Reference timezone: {timezone}
 
 User query: {query}
 """
+
+RECOMMENDATION_PROMPT = """
+You are a proactive time management assistant. Based on the user's current query, the current time, and their long-term memories/habits, suggest 1-3 highly relevant and proactive recommendations.
+Current Time: {current_time}
+User Query: {query}
+User Memories/Habits: {memories}
+
+Your recommendations should be:
+1. Proactive: Anticipate what the user might need next based on their habits.
+2. Contextual: Relevant to the current time and their request.
+3. Concise: Short, actionable sentences.
+
+Example:
+- Memory: "User always checks their schedule for tomorrow at 8 PM."
+- Current Time: 8:05 PM
+- Query: "Hi"
+- Recommendation: "Would you like me to show you tomorrow's schedule as usual?"
+
+Return your suggestions as a JSON list of strings under the key 'recommendations'.
+"""

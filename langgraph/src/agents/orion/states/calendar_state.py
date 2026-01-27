@@ -37,3 +37,4 @@ class GraphState(TypedDict):
     route: Optional[str]
     calendar_result: Optional[Any]
     is_first_message: Optional[bool]
+    student_id: Optional[str]
