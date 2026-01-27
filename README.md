@@ -69,7 +69,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 | Prefrences | Voice Chat | Emotion Notification |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Home Page Empty](./readme/screens-mobile/home.jpg) | ![Home Page Full](./readme/gifs/chat.gif) | ![Device Data](./readme/screens-mobile/emotion.jpg) |
+| ![Prefrences](./readme/screens-mobile/home.jpg) | ![Chat](./readme/gifs/chat.gif) | ![Emotion](./readme/screens-mobile/emotion.jpg) |
 
 
 ### Admin Screens (Web)
