@@ -67,9 +67,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/screens-mobile//home.jpg) | ![fsdaf](./readme/screens-mobile/login.jpg) | ![fsdaf](./readme/gifs/register.gif) | 
 
-| Chat screen                             | Emotion checkup notification                       |
-| --------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/gifs/chat.gif) | ![fsdaf](./readme/screens-mobile/emotion.jpg) | 
+| Chat screen                             | Emotion checkup notification                       | Register screen                       |
+| --------------------------------------- | ------------------------------------- | ------------------------------------- |
+| ![Landing](./readme/gifs/chat.gif) | | ![Landing](./readme/gifs/chat.gif) | ![fsdaf](./readme/screens-mobile/emotion.jpg) | 
 
 ### Admin Screens (Web)
 | Login screen                            | Register screen                       |
