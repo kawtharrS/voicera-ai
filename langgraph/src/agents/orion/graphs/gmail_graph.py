@@ -28,10 +28,8 @@ class GmailWorkflow():
         workflow.set_entry_point("load_emails")
 
         def check_inbox_condition(state: GraphState) -> str:
-            # Check if user is retrieving drafts
             if state.get("retrieving_drafts"):
                 return "retrieve_drafts"
-            # Check if user is sending drafts instead of loading inbox
             if state.get("sending_drafts"):
                 return "send_drafts"
             emails = state.get("emails", [])

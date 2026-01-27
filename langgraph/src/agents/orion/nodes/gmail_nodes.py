@@ -43,7 +43,6 @@ class GmailNodes:
         query = state.get("query", "").lower()
         print(Fore.CYAN + f"[load_emails] Received query: '{query}'" + Style.RESET_ALL)
         
-        # Check if user is asking to view/retrieve drafts
         retrieve_keywords = ["show drafts", "list drafts", "what drafts", "get drafts", "my drafts", "see drafts"]
         if any(k in query for k in retrieve_keywords):
             print(Fore.YELLOW + "User requesting to retrieve drafts..." + Style.RESET_ALL)
@@ -55,8 +54,6 @@ class GmailNodes:
                 "current_interaction": EmailInteraction(ai_response="Retrieving your drafts...")
             }
         
-        # Check if user is asking to send an existing draft
-        # If they say "send draft X" or "send the draft"
         has_send_draft_keyword = "send draft" in query or "send the draft" in query
         
         if has_send_draft_keyword:
@@ -69,13 +66,11 @@ class GmailNodes:
                 "current_interaction": EmailInteraction(ai_response="Sending your drafted email replies...")
             }
         
-        # Detect if this is a general "check" or a specific "reply"
         is_specific_reply = any(k in query for k in ["reply", "respond", "email to", "email from"])
         is_empty_query = not query or query.strip() == ""
         
         print(Fore.YELLOW + f"Loading emails from inbox (inclusive={is_specific_reply})..." + Style.RESET_ALL)
         try:
-            # If user is asking for something specific, include threads that already have drafts
             unanswered_emails = self.gmail_tool.fetch_unanswered_emails(max_results=10, include_drafted=is_specific_reply)
             emails = [
                 Email(
@@ -191,7 +186,6 @@ class GmailNodes:
             return {"retrieved_documents": ""}
 
         try:
-            # Check if vectorstore is available
             if not hasattr(self.agents, 'vectorstore') or self.agents.vectorstore is None:
                 print(Fore.YELLOW + "Vectorstore not available, skipping RAG retrieval" + Style.RESET_ALL)
                 return {"retrieved_documents": ""}
@@ -287,7 +281,6 @@ class GmailNodes:
         user_approved = state.get("user_approved", False)
         query = state.get("query", "").lower()
         
-        # Auto-approve if user explicitly said "send" or "yes" or "go ahead"
         if any(k in query for k in ["send it", "send the email", "send this", "yes", "go ahead", "do it", "approve"]):
             user_approved = True
             
@@ -473,13 +466,11 @@ class GmailNodes:
                     "available_drafts": []
                 }
             
-            # Build a readable list of drafts
             draft_list = []
             for i, draft in enumerate(drafts, 1):
                 draft_id = draft.get("id")
                 thread_id = draft.get("threadId")
                 
-                # Try to get draft message details
                 try:
                     message = self.gmail_tool.service.users().messages().get(
                         userId="me", 
@@ -510,7 +501,6 @@ class GmailNodes:
                         "to": "[Details unavailable]"
                     })
             
-            # Format response
             draft_text = f"You have {len(draft_list)} draft(s):\n\n"
             for draft in draft_list:
                 draft_text += f"Draft #{draft['number']}:\n"
@@ -540,7 +530,6 @@ class GmailNodes:
         print(Fore.YELLOW + "Sending Gmail draft email..." + Style.RESET_ALL)
         
         try:
-            # Get all drafts from Gmail
             drafts = self.gmail_tool.fetch_draft_replies()
             
             if not drafts:
@@ -550,15 +539,12 @@ class GmailNodes:
                     "current_interaction": EmailInteraction(ai_response=response_msg)
                 }
             
-            # Check user intent from query
             query = state.get("query", "").lower()
             available_drafts = state.get("available_drafts", [])
             print(Fore.CYAN + f"Query for send decision: '{query}'" + Style.RESET_ALL)
             
-            # Check if user wants to send all
             send_all = any(k in query for k in ["send all", "send them all", "send all drafts"])
             
-            # Check if user wants to send a specific draft by number (e.g., "send draft 1")
             draft_number = None
             for word in query.split():
                 if word.isdigit():
@@ -566,7 +552,6 @@ class GmailNodes:
                     break
             
             if send_all:
-                # Send all drafts
                 sent_count = 0
                 for draft in drafts:
                     try:
@@ -579,16 +564,13 @@ class GmailNodes:
                 
                 response_msg = f"Successfully sent {sent_count} drafted email(s)."
             elif draft_number is not None and draft_number > 0 and draft_number <= len(drafts):
-                # Send specific draft by number
                 draft_id = drafts[draft_number - 1].get("id")
                 self.gmail_tool.send_draft(draft_id)
                 print(Fore.GREEN + f"Sent draft #{draft_number} ({draft_id})" + Style.RESET_ALL)
                 response_msg = f"Successfully sent draft #{draft_number}."
             elif draft_number is not None:
-                # Invalid draft number
                 response_msg = f"Draft #{draft_number} not found. You have {len(drafts)} draft(s)."
             else:
-                # Send only the most recent draft (first one in the list)
                 draft_id = drafts[0].get("id")
                 self.gmail_tool.send_draft(draft_id)
                 print(Fore.GREEN + f"Sent most recent draft {draft_id}" + Style.RESET_ALL)

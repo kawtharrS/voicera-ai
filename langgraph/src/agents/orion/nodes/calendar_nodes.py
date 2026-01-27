@@ -134,7 +134,6 @@ class CalendarNodes:
         }
     
     def route_after_categorize(self, state:GraphState) -> GraphState:
-        # Special handling: send previously created email draft if user asks to send it
         interaction = state.get("current_interaction")
         q = ""
         if isinstance(interaction, dict):
@@ -184,7 +183,6 @@ class CalendarNodes:
         try:
             result = tool.invoke(payload)
             
-            # Use AI to format the response
             query_info = f"User asked: {query}\nAction: Create Event\nResult Data: {json.dumps(result, indent=2) if isinstance(result, dict) else result}"
             formatted_response = self.agents.ai_response_generator.invoke({
                 "query_information": query_info,
@@ -241,7 +239,6 @@ class CalendarNodes:
             result = tool.invoke(payload)
             count = len(result) if isinstance(result, list) else 0
             
-            # Use AI to format the response
             query_info = f"User asked: {query}\nCalendar Search Results: {json.dumps(result, indent=2)}"
             formatted_response = self.agents.ai_response_generator.invoke({
                 "query_information": query_info,
@@ -358,7 +355,6 @@ class CalendarNodes:
             tool = self.calendar_tool.updateEvent()
             result = tool.invoke(update_payload)
             
-            # Use AI to format the response
             query_info = f"User asked: {query}\nAction: Update Event\nEvent ID: {event_id}\nResult Data: {json.dumps(result, indent=2) if isinstance(result, dict) else result}"
             formatted_response = self.agents.ai_response_generator.invoke({
                 "query_information": query_info,
@@ -459,7 +455,6 @@ class CalendarNodes:
             tool = self.calendar_tool.deleteEvent()
             result = tool.invoke(delete_payload)
             
-            # Use AI to format the response
             query_info = f"User asked: {query}\nAction: Delete Event\nEvent ID: {event_id}\nResult Data: {result}"
             formatted_response = self.agents.ai_response_generator.invoke({
                 "query_information": query_info,
@@ -502,7 +497,6 @@ class CalendarNodes:
                 )
             }
         
-        # Handle both dict and object formats
         slots = []
         if isinstance(study_plan, dict):
             slots = study_plan.get("slots", [])
@@ -524,7 +518,6 @@ class CalendarNodes:
             created_events = []
             ref_dt = _get_reference_dt()
             
-            # Map day names to weekday offsets
             day_offsets = {
                 "Monday": 0,
                 "Tuesday": 1,
@@ -535,7 +528,7 @@ class CalendarNodes:
                 "Sunday": 6,
             }
             
-            current_weekday = ref_dt.weekday()  # 0=Monday, 6=Sunday
+            current_weekday = ref_dt.weekday()  
             
             slots = study_plan.get("slots") if isinstance(study_plan, dict) else getattr(study_plan, "slots", [])
             
@@ -550,7 +543,6 @@ class CalendarNodes:
                 }
 
             for slot_data in slots:
-                # Handle both dict and object
                 if isinstance(slot_data, dict):
                     day = slot_data.get("day")
                     start_time_str = slot_data.get("start_time")
@@ -562,19 +554,16 @@ class CalendarNodes:
                     end_time_str = slot_data.end_time
                     activity = slot_data.activity
 
-                # Calculate the date for this slot in the upcoming week
                 target_weekday = day_offsets.get(day, 0)
                 days_ahead = target_weekday - current_weekday
                 if days_ahead <= 0:
-                    days_ahead += 7  # Next week if day has already passed
+                    days_ahead += 7  
                 
                 slot_date = ref_dt + timedelta(days=days_ahead)
                 
-                # Parse start and end times
                 start_time = datetime.strptime(start_time_str, "%H:%M").time()
                 end_time = datetime.strptime(end_time_str, "%H:%M").time()
                 
-                # Combine date and time
                 start_dt = datetime.combine(slot_date.date(), start_time)
                 end_dt = datetime.combine(slot_date.date(), end_time)
                 
@@ -591,8 +580,6 @@ class CalendarNodes:
             
             summary_text = f"Created {len(created_events)} calendar events from your study plan:\n" + "\n".join(created_events)
 
-            # Optional: create an email DRAFT summary if user asked for it.
-            # It is NOT sent automatically. User can later say: "send the draft".
             q = (query or "").lower()
             draft_id = None
             if any(k in q for k in ["email", "gmail", "mail", "email me", "email a summary", "summary email", "then email"]):

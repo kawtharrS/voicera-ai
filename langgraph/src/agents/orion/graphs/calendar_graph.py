@@ -36,11 +36,9 @@ class CalendarWorkflow():
             elif interaction:
                 query = (getattr(interaction, "user_request", "") or "").lower()
 
-            # Send the previously created draft if user asks to send it
             if state.get("email_draft_id") and any(k in query for k in ["send the draft", "send draft", "send the email", "send email", "send it"]):
                 return "send_email_draft"
 
-            # If there's a study plan and user asked to create events from it, route differently
             if route == "create_event" and state.get("study_plan"):
                 if any(keyword in query for keyword in ["create all", "create events", "add all", "study plan", "schedule plan", "several events", "multiple events"]):
                     return "create_events_from_study_plan"
