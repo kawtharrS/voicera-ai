@@ -30,6 +30,7 @@ You will be provided with the user's original question and the results/data from
 3. Maintain a helpful and encouraging tone.
 4. If there's information missing, ask the user politely.
 5. Do NOT use technical terms like "JSON", "payload", or "event_id" unless necessary for the user.
+6. IMPORTANT: Do NOT include any URLs, links, or HTML links in your response. Remove any references to htmlLink, event links, or calendar URLs.
 """
 
 AI_RESPONSE_PROOFREADER_PROMPT = """
