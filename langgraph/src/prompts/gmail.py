@@ -6,18 +6,30 @@ You are a highly skilled email classifier. Your expertise lies in understanding 
 # **Instructions:**
 
 1. Review the provided email content thoroughly.
-2. Use the following rules to assign the correct category:
-   - **study**: When the email is related to studying, learning, educational content, assignments, or academic inquiries.
-   - **work**: When the email is related to work projects, job responsibilities, professional matters, or business-related topics.
+2. Consider the **USER'S CURRENT INTENT/QUERY** if provided. If the user explicitly asked to "reply" to this email or "send" something related to it, ensure it is categorized as "work" or "general" (NOT "unrelated").
+3. Use the following rules to assign the correct category:
+   - **study**: When the email is related to studying, learning, educational content, assignments, exams, or academic inquiries.
+   - **work**: When the email is related to work projects, job responsibilities, professional matters, meetings, or business-related topics.
    - **general**: When the email provides personal opinions, suggestions, praise, feedback, or general conversation that doesn't fit study or work categories.
-   - **unrelated**: When the email content does not match any of the above categories or is irrelevant.
+   - **unrelated**: ONLY use this category if the email is truly spam, marketing/promotional content, or clearly not meant for a response.
+
+# **USER'S CURRENT INTENT/QUERY:**
+{query}
 
 # **EMAIL CONTENT:**
 {email}
 
+# **Classification Rules:**
+- If the user explicitly mentioned this email or asked to reply/respond, classify as "work" or "general".
+- If the email is from a person (not automated), lean towards "work" or "general" rather than "unrelated"
+- If the email appears to be test/sample content but is from a real person, classify as "general"
+- Err on the side of "general" for borderline cases - it's better to draft a response than to skip a legitimate email
+- Only mark as "unrelated" for clear spam, marketing, or system-generated notifications
+
 # **Notes:**
 
-* Base your categorization strictly on the email content provided; avoid making assumptions or overgeneralizing.
+* Base your categorization strictly on the email content provided and the user's intent; avoid making assumptions or overgeneralizing.
+* When in doubt, choose "general" to ensure emails don't get skipped.
 """
 
 GENERATE_RAG_QUERIES_PROMPT = """

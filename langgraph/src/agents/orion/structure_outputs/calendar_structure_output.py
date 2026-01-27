@@ -113,3 +113,7 @@ class DeleteEventArgs(BaseModel):
         default=None,
         description="Whether to send updates to attendees: 'all', 'externalOnly', or 'none'",
     )
+
+
+class RecommendationOutput(BaseModel):
+    recommendations: List[str] = Field(..., description="A list of proactive recommendations based on user history and context")

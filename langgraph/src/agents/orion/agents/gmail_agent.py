@@ -20,7 +20,7 @@ class GmailAgent():
 
         categorize_email_prompt = PromptTemplate(
             template=CATEGORIZE_EMAIL_PROMPT,
-            input_variables=["email"]
+            input_variables=["email", "query"]
         )
         self.categorize_email = (
             categorize_email_prompt

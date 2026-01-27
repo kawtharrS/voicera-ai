@@ -3,6 +3,7 @@ from typing import List, Optional, Annotated
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
 from langchain_core.messages import BaseMessage
+from .structure_output import StudyPlanOutput
 
 class Course(BaseModel):
     id: str = Field(..., description="Unique identifier of the course")
@@ -51,3 +52,4 @@ class GraphState(TypedDict):
     conversation_history: List[BaseMessage]
     query_category: Optional[str]
     is_first_message: Optional[bool]
+    study_plan: Optional[StudyPlanOutput]

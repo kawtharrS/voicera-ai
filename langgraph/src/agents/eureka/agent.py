@@ -78,3 +78,13 @@ class Agent():
             proofreader_prompt | 
             model.openai_model.with_structured_output(ProofReaderOutput)
         )
+
+        # Extract study slots from the AI response
+        extract_slots_prompt = PromptTemplate(
+            template=EXTRACT_STUDY_SLOTS_PROMPT,
+            input_variables=["ai_response"]
+        )
+        self.extract_study_slots = (
+            extract_slots_prompt |
+            model.openai_model.with_structured_output(StudyPlanOutput)
+        )

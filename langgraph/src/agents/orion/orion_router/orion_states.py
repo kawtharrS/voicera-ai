@@ -17,4 +17,6 @@ class GraphState(TypedDict):
     user_context: Optional[str]
     conversation_history: Optional[List[dict]]
     is_first_message: Optional[bool]
+    study_plan: Optional[dict]
+    email_draft_id: Optional[str]
     

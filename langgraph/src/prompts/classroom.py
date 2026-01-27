@@ -252,3 +252,56 @@ Message: {query}
 
 Extracted facts:
 """
+
+STUDY_PLAN_PROMPT="""
+Based on the student's request, generate a CONCRETE structured weekly study plan with SPECIFIC times.
+
+IMPORTANT:
+- Convert vague terms to concrete times: "morning" = before 12:00, "afternoon" = 12:00-17:00, "evening" = 17:00-21:00, "night" = after 21:00
+- If student mentions "classes in the morning", use 09:00-12:00 for classes
+- Create at least 7-10 distinct study slots across the week (Monday-Sunday)
+- Each slot must have: exact day, exact start time (HH:MM), exact end time (HH:MM), and activity name
+- Slots should be 45 minutes to 2 hours each
+- Include: deep work sessions, review sessions, exercise/break time, and study sessions
+- Avoid overlaps with mentioned class times
+- Make the schedule realistic and balanced
+
+Example format for reference:
+Monday: 13:00-14:30 Deep Work - Mathematics
+Monday: 15:00-15:45 Exercise Break
+Tuesday: 09:00-10:30 Deep Work - Physics
+etc.
+
+Student request: {query}
+
+Generate the complete weekly study plan with specific day, time, and activity for each slot. Be concrete and specific - no vague times.
+"""
+
+EXTRACT_STUDY_SLOTS_PROMPT="""
+You are given a study plan response from an educational tutor. Extract all CONCRETE time slots from this text and return them as a structured list.
+
+Look for patterns like:
+- "Monday 1 PM to 2:30 PM: Deep Work"
+- "Tuesday afternoon: Study"
+- "Wednesday 14:00-15:00: Review"
+- "Exercise sessions, ideally 30 minutes"
+- "Reserve a daily deep work period of 60 to 90 minutes"
+
+For each activity mentioned with a time or time range, create a study slot:
+- Day: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday (use exact day names)
+- Start time: Convert descriptions (morning=09:00, afternoon=14:00, evening=18:00) to HH:MM format
+- End time: Add duration to start time. If duration is mentioned ("30 minutes", "1-2 hours"), use that. Default to 1 hour.
+- Activity: The study activity or exercise type
+
+IMPORTANT:
+- Generate at least 7-10 slots from the response (multiple days, varying times)
+- Convert all time references to 24-hour HH:MM format
+- If "daily" is mentioned, create slots for Monday-Friday
+- If "morning" mentioned, use 09:00, "afternoon" use 14:00, "evening" use 18:00
+- Create realistic, non-overlapping time slots
+
+Tutor's Study Plan Response:
+{ai_response}
+
+Extract and structure all time slots from the above response.
+"""

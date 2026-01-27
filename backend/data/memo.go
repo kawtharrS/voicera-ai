@@ -3,6 +3,8 @@ package data
 import (
 	"errors"
 	"fmt"
+
+	postgrest "github.com/supabase-community/postgrest-go"
 )
 
 func SaveUserMemo(userID int64, userQuery, aiQuery, category, emotion string) (*UserMemo, error) {
@@ -37,6 +39,7 @@ func GetUserMemos(userID int64, limit int) ([]UserMemo, error) {
 	_, err := supabaseClient.From("user_memo").
 		Select("*", "", false).
 		Eq("user_id", fmt.Sprintf("%d", userID)).
+		Order("id", &postgrest.OrderOpts{Ascending: false}).
 		Limit(limit, "").
 		ExecuteTo(&memos)
 

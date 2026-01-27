@@ -13,6 +13,15 @@ class GmailTool:
     def __init__(self):
         self.service = self._get_gmail_service()
 
+    def get_my_email(self) -> str:
+        """Return the authenticated Gmail address for the current token."""
+        try:
+            profile = self.service.users().getProfile(userId="me").execute()
+            return profile.get("emailAddress", "")
+        except Exception as e:
+            print(f"Error getting Gmail profile: {e}")
+            return ""
+
     def _get_gmail_service(self):
         """Authenticate and build Gmail API service."""
         SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
@@ -60,15 +69,17 @@ class GmailTool:
         
         return build('gmail', 'v1', credentials=creds)
 
-    def fetch_unanswered_emails(self, max_results: int = 50) -> List[Dict]:
+    def fetch_unanswered_emails(self, max_results: int = 50, include_drafted: bool = False) -> List[Dict]:
         """Fetch unanswered emails from the inbox."""
         try:
             recent_emails = self.fetch_recent_emails(max_results)
             if not recent_emails:
                 return []
             
-            drafts = self.fetch_draft_replies()
-            threads_with_drafts = {draft['threadId'] for draft in drafts}
+            threads_with_drafts = set()
+            if not include_drafted:
+                drafts = self.fetch_draft_replies()
+                threads_with_drafts = {draft['threadId'] for draft in drafts}
             
             seen_threads = set()
             unanswered_emails = []
@@ -76,7 +87,7 @@ class GmailTool:
             for email in recent_emails:
                 thread_id = email['threadId']
                 
-                if thread_id not in seen_threads and thread_id not in threads_with_drafts:
+                if thread_id not in seen_threads and (include_drafted or thread_id not in threads_with_drafts):
                     seen_threads.add(thread_id)
                     email_info = self._get_email_info(email['id'])
                     
@@ -90,10 +101,10 @@ class GmailTool:
             return []
 
     def fetch_recent_emails(self, max_results: int = 50) -> List[Dict]:
-        """Fetch emails from the last 8 hours."""
+        """Fetch emails from the last 24 hours."""
         try:
             now = datetime.now()
-            delay = now - timedelta(hours=8)
+            delay = now - timedelta(hours=24)
             after_timestamp = int(delay.timestamp())
             before_timestamp = int(now.timestamp())
             query = f"after:{after_timestamp} before:{before_timestamp}"
@@ -235,6 +246,38 @@ class GmailTool:
             
         except Exception as e:
             print(f"Error creating draft: {e}")
+            return False
+
+    def send_message(self, to: str, subject: str, body: str) -> bool:
+        """Send a new outbound email (not a reply)."""
+        try:
+            msg = self._create_message(sender="me", to=to, subject=subject, message_text=body)
+            self.service.users().messages().send(userId="me", body=msg).execute()
+            return True
+        except Exception as e:
+            print(f"Error sending message: {e}")
+            return False
+
+    def create_draft_message(self, to: str, subject: str, body: str) -> Optional[str]:
+        """Create a new draft email (not a reply) and return the draft ID."""
+        try:
+            msg = self._create_message(sender="me", to=to, subject=subject, message_text=body)
+            draft = {"message": msg}
+            created = self.service.users().drafts().create(userId="me", body=draft).execute()
+            return created.get("id")
+        except Exception as e:
+            print(f"Error creating draft message: {e}")
+            return None
+
+    def send_draft(self, draft_id: str) -> bool:
+        """Send an existing Gmail draft by draft ID."""
+        try:
+            if not draft_id:
+                return False
+            self.service.users().drafts().send(userId="me", body={"id": draft_id}).execute()
+            return True
+        except Exception as e:
+            print(f"Error sending draft: {e}")
             return False
 
     def _create_message(self, sender: str, to: str, subject: str, 

@@ -10,14 +10,14 @@ load_dotenv()
 class OrionRouterAgent():
     def __init__(self):
         self.model = ChatOpenAI(
-            model = os.getenv("OPENAI_MODEL"), 
+            model=os.getenv("OPENAI_MODEL"),
             temperature=0,
-            openai_api_key= os.getenv("OPENAI_API_KEY")
+            openai_api_key=os.getenv("OPENAI_API_KEY"),
         )
 
         self.router_prompt = PromptTemplate(
-            template = ROUTER_PROMPT,
-            inpute_variables = ["query"]
+            template=ROUTER_PROMPT,
+            input_variables=["query"],
         )
 
         self.router_runnable = (
@@ -25,6 +25,6 @@ class OrionRouterAgent():
             | self.model.with_structured_output(RouterOutput)
         )
 
-    def route(self, query:str) -> RouterOutput:
+    def route(self, query: str) -> RouterOutput:
         """Routes the user query to the appropriate category"""
-        return self.router_runnable.invoke({"query":query})
+        return self.router_runnable.invoke({"query": query})
