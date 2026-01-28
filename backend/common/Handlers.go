@@ -137,7 +137,6 @@ func SetCookie(token string, response http.ResponseWriter) {
 		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(response, cookie)
-	fmt.Println("Cookie set")
 }
 
 func ClearCookie(response http.ResponseWriter) {

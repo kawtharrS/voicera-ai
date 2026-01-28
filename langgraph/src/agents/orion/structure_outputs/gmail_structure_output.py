@@ -47,3 +47,9 @@ class EmailProofreaderOutput(BaseModel):
         ...,
         description="Detailed feedback for improvements if send is false"
     )
+
+
+class SendNewEmailArgs(BaseModel):
+    recipient: str = Field(..., description="The email address of the recipient")
+    subject: str = Field(..., description="The subject of the email")
+    body: str = Field(..., description="The body content of the email")

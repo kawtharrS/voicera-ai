@@ -52,3 +52,5 @@ class GraphState(TypedDict):
     available_drafts: Optional[List[dict]]
     user_approved: Optional[bool]
     user_preferences: Optional[dict]
+    sending_new_email: Optional[bool]
+    new_email_details: Optional[dict]

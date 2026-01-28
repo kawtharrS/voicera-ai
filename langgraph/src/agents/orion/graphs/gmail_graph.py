@@ -24,6 +24,8 @@ class GmailWorkflow():
         workflow.add_node("skip_email", nodes.skip_email)
         workflow.add_node("send_all_drafts", nodes.send_all_drafts)
         workflow.add_node("retrieve_drafts", nodes.retrieve_drafts)
+        workflow.add_node("extract_details", nodes.extract_new_details)
+        workflow.add_node("send_new_email", nodes.send_new_email)
 
         workflow.set_entry_point("load_emails")
 
@@ -32,6 +34,8 @@ class GmailWorkflow():
                 return "retrieve_drafts"
             if state.get("sending_drafts"):
                 return "send_drafts"
+            if state.get("sending_new_email"):
+                return "extract_details"
             emails = state.get("emails", [])
             return "categorize" if emails else "end"
 
@@ -42,6 +46,7 @@ class GmailWorkflow():
                 "categorize": "categorize_email",
                 "send_drafts": "send_all_drafts",
                 "retrieve_drafts": "retrieve_drafts",
+                "extract_details": "extract_details",
                 "end": END
             }
         )
@@ -97,16 +102,25 @@ class GmailWorkflow():
 
         def user_confirmed(state: GraphState) -> str:
             user_approved = state.get("user_approved", False)
-            return "send" if user_approved else "draft"
+            if user_approved:
+                if state.get("new_email_details"):
+                    return "send_new"
+                return "send_reply"
+            return "draft"
 
         workflow.add_conditional_edges(
             "ask_confirmation",
             user_confirmed,
             {
-                "send": "send_email",
+                "send_new": "send_new_email",
+                "send_reply": "send_email",
                 "draft": "create_draft"
             }
         )
+
+
+        workflow.add_edge("extract_details", "ask_confirmation")
+        workflow.add_edge("send_new_email", END)
 
         def has_more_emails(state: GraphState) -> str:
             emails = state.get("emails", [])

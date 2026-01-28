@@ -44,7 +44,7 @@ def user_id(token):
 def test_health():
     resp = requests.get(f"{BASE_URL}/health")
     assert resp.status_code == 200
-    assert "hi" in resp.text
+    assert resp.json().get("message") == "hi"
 
 @pytest.mark.parametrize("i", range(3))
 def test_register_multiple_iterations(i):
@@ -108,7 +108,8 @@ def test_image_describe():
         resp = requests.post(f"{BASE_URL}/api/image/describe", files=files)
     
     assert resp.status_code == 200
-    assert resp.json().get("description")
+    data = resp.json()["data"]
+    assert data.get("description")
 
 
 def test_save_preference(token):
@@ -149,7 +150,7 @@ def test_agent_calendar(token, query, expected_category):
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.post(f"{BASE_URL}/api/ask-anything", headers=headers, json={"question": query})
     assert resp.status_code == 200
-    data = resp.json()
+    data = resp.json()["data"]
     assert "response" in data
     
     if data.get("category"):
@@ -164,7 +165,7 @@ def test_agent_email(token, query, expected_category):
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.post(f"{BASE_URL}/api/ask-anything", headers=headers, json={"question": query})
     assert resp.status_code == 200
-    data = resp.json()
+    data = resp.json()["data"]
     assert "response" in data
     if data.get("category"):
         assert any(c in data["category"].lower() for c in ["email", "gmail", "communication"])
@@ -181,7 +182,7 @@ def test_agent_general_chat(token, query):
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.post(f"{BASE_URL}/api/ask-anything", headers=headers, json={"question": query})
     assert resp.status_code == 200
-    data = resp.json()
+    data = resp.json()["data"]
     assert len(data.get("response", "")) > 0
 
 def test_agent_emotion_detection(token):
@@ -189,7 +190,7 @@ def test_agent_emotion_detection(token):
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.post(f"{BASE_URL}/api/ask-anything", headers=headers, json={"question": "I am feeling very sad and lonely today."})
     assert resp.status_code == 200
-    data = resp.json()
+    data = resp.json()["data"]
     emotion = data.get("emotion", "").lower()
     if emotion:
         assert emotion in ["sadness", "sad", "lonely", "depression", "negative", "unhappy"]
@@ -201,7 +202,7 @@ def test_eureka_rag_query(token):
     resp = requests.post(f"{BASE_URL}/api/ask-anything", headers=headers, 
                          json={"question": "What are the key concepts of machine learning?"})
     assert resp.status_code == 200
-    assert "response" in resp.json()
+    assert "response" in resp.json()["data"]
 
 def test_study_plan_generation(token):
     """Test generating a study plan (Eureka capability)."""
@@ -209,7 +210,7 @@ def test_study_plan_generation(token):
     resp = requests.post(f"{BASE_URL}/api/ask-anything", headers=headers, 
                          json={"question": "Create a study plan for learning Python in 2 weeks."})
     assert resp.status_code == 200
-    data = resp.json()
+    data = resp.json()["data"]
     assert "Python" in data.get("response", "")
 
 def test_sequential_conversation(token):
@@ -223,5 +224,5 @@ def test_sequential_conversation(token):
     resp2 = requests.post(f"{BASE_URL}/api/ask-anything", headers=headers, 
                           json={"question": "What is my name?"})
     assert resp2.status_code == 200
-    assert "Alice" in resp2.json().get("response", "")
+    assert "Alice" in resp2.json()["data"].get("response", "")
 

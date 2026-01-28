@@ -5,16 +5,14 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/apis/auth_service.dart';
 
 class AudioCacheService {
-  /// only one instance is created
   static final AudioCacheService _instance = AudioCacheService._internal();
   factory AudioCacheService() => _instance;
   AudioCacheService._internal();
 
-  Directory? _cacheDir; //_cacheDir where MP3 files are stored
+  Directory? _cacheDir; 
   final Map<String, String> _cachedFiles = {};
   bool _isInitialized = false;
 
-  /// pre cache these phrase => most used
   static const List<String> commonPhrases = [
     'Go Back',
     'Select Voices',
@@ -37,7 +35,6 @@ class AudioCacheService {
     'Selected shimmer voice',
   ];
 
-  /// get - create - load
   Future<void> initialize() async {
     if (_isInitialized) return;
     try {
@@ -53,7 +50,6 @@ class AudioCacheService {
     }
   }
 
-  /// this reads the folder and stores existing MP3 in cachefile
   Future<void> loadExistingCache() async {
     if (_cacheDir == null) return;
     final files = _cacheDir!.listSync();
@@ -124,7 +120,9 @@ class AudioCacheService {
         _cachedFiles[key] = filePath;
         return filePath;
       }
+      return null;
     } catch (e) {
+      debugPrint('Cache audio error: $e');
       return null;
     }
   }

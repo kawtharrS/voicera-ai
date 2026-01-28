@@ -9,15 +9,6 @@ interface Message {
     imageUrl?: string;
 }
 
-interface UniversalQueryResponse {
-    question: string;
-    category: string;
-    response: string;
-    recommendations?: string[];
-    observation?: string;
-    metadata?: any;
-    emotion?: string;
-}
 
 export const useChat = (onResponse: (text: string, category: string) => void) => {
     const [input, setInput] = useState("");
@@ -71,9 +62,10 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
                     };
                 }
 
-                const response = await api.post<UniversalQueryResponse>("/ask-anything", payload);
+                const response = await api.post<any>("/ask-anything", payload);
+                const responseData = response.data;
+                const data = responseData.data || responseData;
 
-                const data = response.data;
                 const aiText = data.response || (data as any).ai_response || "No answer received.";
                 const category = data.category || "unknown";
                 const recommendations = data.recommendations || [];

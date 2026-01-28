@@ -18,7 +18,7 @@ func SaveMemoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeJSON(w, http.StatusMethodNotAllowed, apiResponse{Ok: false, Message: "Method not allowed"})
 		return
 	}
 
@@ -49,18 +49,13 @@ func SaveMemoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"ok":      true,
-		"message": "Memo saved successfully",
-		"data":    memo,
+	writeJSON(w, http.StatusCreated, apiResponse{
+		Ok:      true,
+		Message: "Memo saved successfully",
+		Data:    memo,
 	})
 }
 
-// GetMemosHandler returns the latest memos for a given user.
-// This is used by the LangGraph agents as a long-term memory fallback
-// when the langmem vector store is not available.
 func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 	helpers.SetHeaders(w)
 	if r.Method == http.MethodOptions {
@@ -69,7 +64,7 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeJSON(w, http.StatusMethodNotAllowed, apiResponse{Ok: false, Message: "Method not allowed"})
 		return
 	}
 
@@ -99,9 +94,8 @@ func GetMemosHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"ok":   true,
-		"data": memos,
+	writeJSON(w, http.StatusOK, apiResponse{
+		Ok:   true,
+		Data: memos,
 	})
 }

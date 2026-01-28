@@ -28,13 +28,9 @@ def _get_reference_dt():
 
 def _remove_links_from_response(response: str) -> str:
     """Remove any URLs, links, or HTML links from the response."""
-    # Remove http/https URLs
     response = re.sub(r'https?://\S+', '', response)
-    # Remove markdown links [text](url)
     response = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', response)
-    # Remove remaining HTML-like patterns
     response = re.sub(r'<[^>]+>', '', response)
-    # Clean up extra whitespace
     response = re.sub(r'\s+', ' ', response).strip()
     return response
 
@@ -42,7 +38,24 @@ def _remove_links_from_response(response: str) -> str:
 class CalendarNodes:
     def __init__(self):
         self.calendar_tool = CalendarTool()
+        self.gmail_tool = GmailTool()
         self.agents = CalendarAgent(self.calendar_tool)
+
+    def _send_notification_email(self, action: str, details: str):
+        """Helper to send a notification email when a calendar event is modified."""
+        try:
+            user_email = self.gmail_tool.get_my_email()
+            if not user_email:
+                print(Fore.RED + "Could not fetch user email for notification" + Style.RESET_ALL)
+                return
+            
+            subject = f"Calendar Notification: Event {action.capitalize()}d"
+            body = f"An event has been {action}d in your calendar.\n\nDetails:\n{details}\n\nBest regards,\nVoicera AI"
+            
+            self.gmail_tool.send_message(to=user_email, subject=subject, body=body)
+            print(Fore.GREEN + f"Notification email sent to {user_email}" + Style.RESET_ALL)
+        except Exception as e:
+            print(Fore.RED + f"Error sending notification email: {e}" + Style.RESET_ALL)
 
     def send_email_draft(self, state: GraphState) -> GraphState:
         """Send the previously created Gmail draft (if any)."""
@@ -71,7 +84,6 @@ class CalendarNodes:
                             "observation": "Email draft sent successfully.",
                         }
                     ),
-                    # Clear so user doesn't accidentally resend
                     "email_draft_id": None,
                     "calendar_result": {"email_sent": True},
                 }
@@ -201,6 +213,8 @@ class CalendarNodes:
                 "query_information": query_info,
                 "history": []
             })
+
+            self._send_notification_email("create", f"Summary: {extractor.summary}\nStart: {payload.get('start_datetime')}\nEnd: {payload.get('end_datetime')}")
 
             return {
                 "current_interaction": interaction_model.model_copy(
@@ -374,6 +388,8 @@ class CalendarNodes:
                 "history": []
             })
 
+            self._send_notification_email("update", f"Event ID: {event_id}\nNew Summary: {update_payload.get('summary') or 'Unchanged'}\nNew Start: {update_payload.get('start_datetime') or 'Unchanged'}")
+
             return {
                 "current_interaction": interaction_model.model_copy(
                     update={
@@ -473,6 +489,8 @@ class CalendarNodes:
                 "query_information": query_info,
                 "history": []
             })
+
+            self._send_notification_email("delete", f"Event ID: {event_id}\nAction: Deleted because of user request: {query}")
 
             return {
                 "current_interaction": interaction_model.model_copy(

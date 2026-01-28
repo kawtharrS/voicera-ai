@@ -1,13 +1,18 @@
 package common
 
 import (
-	"encoding/json"
 	"net/http"
+	"voicera-backend/helpers"
 )
 
 func FastAPIHealthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "hi",
+	helpers.SetHeaders(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	writeJSON(w, http.StatusOK, apiResponse{
+		Ok:      true,
+		Message: "hi",
 	})
 }

@@ -65,3 +65,12 @@ class GmailAgent():
             proofreader_prompt
             | model.openai_model.with_structured_output(EmailProofreaderOutput)
         )
+
+        extract_new_prompt = PromptTemplate(
+            template=EXTRACT_NEW_EMAIL_PROMPT,
+            input_variables=["query"]
+        )
+        self.extract_new_email_details = (
+            extract_new_prompt
+            | model.openai_model.with_structured_output(SendNewEmailArgs)
+        )
