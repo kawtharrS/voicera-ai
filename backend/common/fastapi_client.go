@@ -304,8 +304,6 @@ func DescribeImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	contentType := fileHeader.Header.Get("Content-Type")
 
-	// If the content type is missing or too generic, infer it from the file extension.
-	// This lets us support many common image formats regardless of how the client uploads them.
 	if contentType == "" || contentType == "application/octet-stream" {
 		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 		switch ext {
@@ -330,16 +328,11 @@ func DescribeImageHandler(w http.ResponseWriter, r *http.Request) {
 		case ".svg":
 			contentType = "image/svg+xml"
 		default:
-			// Fallback to jpeg if we don't recognize the extension but still want to try
 			contentType = "image/jpeg"
 		}
 	}
 
 	fmt.Printf("Received file: %s, Content-Type: %s\n", fileHeader.Filename, contentType)
-
-	// We'll be more lenient here and let the upstream service handle specifics if needed,
-	// but we still want to ensure it's at least an image.
-	// Accept image/jpeg, image/png, image/jpg, and even image/heic
 
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 	if fastAPIURL == "" {
@@ -350,8 +343,6 @@ func DescribeImageHandler(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 
-	// Create a multipart part with explicit Content-Type so FastAPI sees
-	// the correct image type (image/png or image/jpeg) instead of application/octet-stream.
 	mimeHeader := textproto.MIMEHeader{}
 	mimeHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, fileHeader.Filename))
 	mimeHeader.Set("Content-Type", contentType)
