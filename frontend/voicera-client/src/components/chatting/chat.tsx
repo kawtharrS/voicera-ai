@@ -1,14 +1,20 @@
-import styles from "./chat.module.css";
+﻿import styles from "./chat.module.css";
 import { useSwipeScreen } from "../../hooks/useSwipeScreen";
 import { useAudioTTS } from "../../hooks/useAudioTTS";
 import { useChat } from "../../hooks/useChat";
 import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
 import { useChatHandlers } from "../../hooks/useChatHandlers";
-import { useState } from "react";
+import api from "../../api/axios";
+import { useState, useRef, ChangeEvent } from "react";
 import { MicIcon } from "./mic_icon";
 
 export default function VoiceraSwipeScreen() {
   const [aiIsSpeaking, setAiIsSpeaking] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDescribingImage, setIsDescribingImage] = useState(false);
+
+  const { speak } = useAudioTTS(null);
 
   const {
     position,
@@ -22,17 +28,25 @@ export default function VoiceraSwipeScreen() {
     handleMouseUp,
     openSecondScreen,
     closeSecondScreen,
-  } = useSwipeScreen();
-
-  const { speak } = useAudioTTS(null);
-
-  const { input, setInput, messages, waiting, currentCategory, sendMessage } = useChat(
-    (text, category) => {
-      setAiIsSpeaking(true);
-      speak(text, category);
-      setTimeout(() => setAiIsSpeaking(false), text.length * 100);
+  } = useSwipeScreen(() => {
+    // On swipe up, open the camera if not already describing.
+    if (!isDescribingImage && fileInputRef.current) {
+      fileInputRef.current.click();
     }
-  );
+  });
+
+  const {
+    input,
+    setInput,
+    messages,
+    waiting,
+    currentCategory,
+    sendMessage,
+  } = useChat((text, category) => {
+    setAiIsSpeaking(true);
+    speak(text, category);
+    setTimeout(() => setAiIsSpeaking(false), text.length * 100);
+  });
 
   const {
     isRecording,
@@ -60,27 +74,88 @@ export default function VoiceraSwipeScreen() {
     isDragging,
   });
 
+  const handleImageSelected = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsDescribingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await api.post<{ description: string }>("/image/describe", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const description = response.data.description || "I couldn't describe the image.";
+      speak(description, "image");
+    } catch (error) {
+      console.error("Error describing image", error);
+      speak("Sorry, I couldn't describe that image.", "error");
+    } finally {
+      setIsDescribingImage(false);
+      if (e.target) {
+        e.target.value = "";
+      }
+    }
+  };
+
   const getCategoryColor = (cat?: string) => {
     const colors: Record<string, string> = { study: "#4db6ac", work: "#FF9800", personal: "#8b7ab8" };
     return colors[cat || ""] || "#999";
   };
 
-  if (roleId === null) return <div className={styles.loadingContainer}><div className={styles.loader}></div></div>;
+  if (roleId === null) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.loader}></div>
+      </div>
+    );
+  }
 
   const isThinking = waiting || isSending;
 
   if (roleId === 2) {
     return (
       <div
-        className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
-        onTouchStart={(e) => { updateRecentlyDragged(false); handleTouchStart(e); }}
+        className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ""}`}
+        onTouchStart={(e) => {
+          updateRecentlyDragged(false);
+          handleTouchStart(e);
+        }}
         onTouchMove={handleTouchMove}
-        onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
-        onMouseDown={(e) => { updateRecentlyDragged(false); handleMouseDown(e); }}
-        onMouseMove={(e) => { if (isDragging) updateRecentlyDragged(true); handleMouseMove(e); }}
-        onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
+        onTouchEnd={() => {
+          handleTouchEnd();
+          setTimeout(() => {
+            if (!isDragging) updateRecentlyDragged(false);
+          }, 100);
+        }}
+        onMouseDown={(e) => {
+          updateRecentlyDragged(false);
+          handleMouseDown(e);
+        }}
+        onMouseMove={(e) => {
+          if (isDragging) updateRecentlyDragged(true);
+          handleMouseMove(e);
+        }}
+        onMouseUp={() => {
+          handleMouseUp();
+          setTimeout(() => {
+            if (!isDragging) updateRecentlyDragged(false);
+          }, 100);
+        }}
         onMouseLeave={() => isDragging && handleMouseUp()}
       >
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          ref={fileInputRef}
+          onChange={handleImageSelected}
+          style={{ display: "none" }}
+        />
         <div
           className={styles.screenFirst}
           style={{
@@ -107,7 +182,7 @@ export default function VoiceraSwipeScreen() {
                 openSecondScreen();
                 speak("Start Chat");
               }}
-              onMouseEnter={() => { }}
+              onMouseEnter={() => {}}
               data-sr="true"
               data-sr-label="Start Chat button. Opens the chat screen."
             >
@@ -136,11 +211,11 @@ export default function VoiceraSwipeScreen() {
               <button
                 onClick={closeSecondScreen}
                 className={styles.backButton}
-                onMouseEnter={() => { }}
+                onMouseEnter={() => {}}
                 data-sr="true"
                 data-sr-label="Back button. Returns to Ask Voicera screen."
               >
-                ←
+               
               </button>
               <h1
                 className={styles.titleLarge}
@@ -167,13 +242,25 @@ export default function VoiceraSwipeScreen() {
               {messages.map((msg: any, i) => (
                 <div
                   key={i}
-                  className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}
+                  className={`${styles.chatMessage} ${
+                    msg.sender === "user" ? styles.user : styles.ai
+                  }`}
                 >
                   <div
                     className={styles.chatBubble}
-                    onClick={() => speak(msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`)}
+                    onClick={() =>
+                      speak(
+                        msg.sender === "user"
+                          ? `You said: ${msg.text}`
+                          : `Voicera said: ${msg.text}`,
+                      )
+                    }
                     data-sr="true"
-                    data-sr-label={msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`}
+                    data-sr-label={
+                      msg.sender === "user"
+                        ? `You said: ${msg.text}`
+                        : `Voicera said: ${msg.text}`
+                    }
                   >
                     {msg.text}
                   </div>
@@ -197,7 +284,10 @@ export default function VoiceraSwipeScreen() {
 
             <form
               className={styles.chatForm}
-              onSubmit={(e) => { e.preventDefault(); if (input.trim()) sendMessage(input); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (input.trim()) sendMessage(input);
+              }}
             >
               <input
                 className={styles.chatInput}
@@ -205,8 +295,8 @@ export default function VoiceraSwipeScreen() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your message..."
                 disabled={waiting}
-                onMouseEnter={() => { }}
-                onFocus={() => { }}
+                onMouseEnter={() => {}}
+                onFocus={() => {}}
                 data-sr="true"
                 data-sr-label="Message input. Type your message here."
               />
@@ -214,13 +304,23 @@ export default function VoiceraSwipeScreen() {
                 type="button"
                 className={`${styles.micButton} ${isRecording ? styles.recording : ""}`}
                 onMouseDown={startRecording}
-                onMouseUp={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
+                onMouseUp={() => {
+                  stopRecording();
+                  setTimeout(handleSendVoice, 500);
+                }}
                 onTouchStart={startRecording}
-                onTouchEnd={() => { stopRecording(); setTimeout(handleSendVoice, 500); }}
+                onTouchEnd={() => {
+                  stopRecording();
+                  setTimeout(handleSendVoice, 500);
+                }}
                 disabled={waiting || isSending}
-                onMouseEnter={() => { }}
+                onMouseEnter={() => {}}
                 data-sr="true"
-                data-sr-label={isRecording ? "Recording voice. Release to send." : "Hold to record voice message."}
+                data-sr-label={
+                  isRecording
+                    ? "Recording voice. Release to send."
+                    : "Hold to record voice message."
+                }
               >
                 <MicIcon />
               </button>
@@ -228,7 +328,7 @@ export default function VoiceraSwipeScreen() {
                 type="submit"
                 className={styles.sendButton}
                 disabled={!input.trim() || waiting}
-                onMouseEnter={() => { }}
+                onMouseEnter={() => {}}
                 data-sr="true"
                 data-sr-label="Send button. Sends the typed message."
               >
@@ -243,15 +343,42 @@ export default function VoiceraSwipeScreen() {
 
   return (
     <div
-      className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ''}`}
-      onTouchStart={(e) => { updateRecentlyDragged(false); handleTouchStart(e); }}
+      className={`${styles.voiceraContainer} ${isDragging ? styles.dragging : ""}`}
+      onTouchStart={(e) => {
+        updateRecentlyDragged(false);
+        handleTouchStart(e);
+      }}
       onTouchMove={handleTouchMove}
-      onTouchEnd={() => { handleTouchEnd(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
-      onMouseDown={(e) => { updateRecentlyDragged(false); handleMouseDown(e); }}
-      onMouseMove={(e) => { if (isDragging) updateRecentlyDragged(true); handleMouseMove(e); }}
-      onMouseUp={() => { handleMouseUp(); setTimeout(() => { if (!isDragging) updateRecentlyDragged(false); }, 100); }}
+      onTouchEnd={() => {
+        handleTouchEnd();
+        setTimeout(() => {
+          if (!isDragging) updateRecentlyDragged(false);
+        }, 100);
+      }}
+      onMouseDown={(e) => {
+        updateRecentlyDragged(false);
+        handleMouseDown(e);
+      }}
+      onMouseMove={(e) => {
+        if (isDragging) updateRecentlyDragged(true);
+        handleMouseMove(e);
+      }}
+      onMouseUp={() => {
+        handleMouseUp();
+        setTimeout(() => {
+          if (!isDragging) updateRecentlyDragged(false);
+        }, 100);
+      }}
       onMouseLeave={() => isDragging && handleMouseUp()}
     >
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        ref={fileInputRef}
+        onChange={handleImageSelected}
+        style={{ display: "none" }}
+      />
       <div
         className={styles.screenFirst}
         style={{ transform: `translateY(${position}%)`, opacity: position === -100 ? 0 : 1 }}
@@ -263,32 +390,34 @@ export default function VoiceraSwipeScreen() {
             </div>
           ) : (
             <div
-              className={`${styles.orbContainer} ${isRecording ? styles.recording : ""} ${aiIsSpeaking ? styles.speaking : ""} ${isSending ? styles.thinking : ""}`}
+              className={`${styles.orbContainer} ${
+                isRecording ? styles.recording : ""
+              } ${aiIsSpeaking ? styles.speaking : ""} ${isSending ? styles.thinking : ""}`}
               style={{
-                transition: 'all 0.3s ease',
+                transition: "all 0.3s ease",
               }}
-              onMouseEnter={() => { }}
+              onMouseEnter={() => {}}
               data-sr="true"
               data-sr-label={
                 aiIsSpeaking
                   ? "Voicera is speaking."
                   : isSending
-                    ? "Voicera is thinking."
-                    : isRecording
-                      ? "Recording. Tap again to stop and send your message."
-                      : "Voicera orb. Tap to start speaking."
+                  ? "Voicera is thinking."
+                  : isRecording
+                  ? "Recording. Tap again to stop and send your message."
+                  : "Voicera orb. Tap to start speaking."
               }
             >
               <div
                 className={styles.orbInner}
                 style={{
                   backgroundColor: aiIsSpeaking
-                    ? '#5eadad'
+                    ? "#5eadad"
                     : isSending
-                      ? '#FFB74D'
-                      : isRecording
-                        ? '#FFB74D'
-                        : '#8b7ab8',
+                    ? "#FFB74D"
+                    : isRecording
+                    ? "#FFB74D"
+                    : "#8b7ab8",
                 }}
               ></div>
               <div className={styles.orbGlow}></div>
@@ -297,13 +426,14 @@ export default function VoiceraSwipeScreen() {
 
           {!isRecording && !aiIsSpeaking && (
             <div
-              className={`${styles.transcriptionDisplay} ${isThinking ? styles.blurred : ""
-                }`}
+              className={`${styles.transcriptionDisplay} ${
+                isThinking ? styles.blurred : ""
+              }`}
             >
               <div className={styles.introCenter}>
                 <h1
                   className={styles.title}
-                  onClick={() => speak('Voicera')}
+                  onClick={() => speak("Voicera")}
                   data-sr="true"
                   data-sr-label="Voicera. Tap orb to speak."
                 >
@@ -311,7 +441,7 @@ export default function VoiceraSwipeScreen() {
                 </h1>
                 <p
                   className={styles.instructionText}
-                  onClick={() => speak('Tap orb to speak')}
+                  onClick={() => speak("Tap orb to speak")}
                   data-sr="true"
                   data-sr-label="Tap the orb to start speaking."
                 >
@@ -327,7 +457,7 @@ export default function VoiceraSwipeScreen() {
               e.stopPropagation();
               openSecondScreen();
             }}
-            onMouseEnter={() => { }}
+            onMouseEnter={() => {}}
             data-sr="true"
             data-sr-label="History. Swipe up or tap to see previous interactions."
           >
@@ -346,11 +476,11 @@ export default function VoiceraSwipeScreen() {
             <button
               onClick={closeSecondScreen}
               className={styles.backButton}
-              onMouseEnter={() => { }}
+              onMouseEnter={() => {}}
               data-sr="true"
               data-sr-label="Back button. Returns to the main Voicera screen."
             >
-              ←
+             
             </button>
             <h1
               className={styles.titleLarge}
@@ -364,7 +494,7 @@ export default function VoiceraSwipeScreen() {
               <div
                 className={styles.categoryBadge}
                 style={{ backgroundColor: getCategoryColor(currentCategory) }}
-                onMouseEnter={() => { }}
+                onMouseEnter={() => {}}
                 data-sr="true"
                 data-sr-label={`Current mode: ${currentCategory}`}
               >
@@ -377,13 +507,25 @@ export default function VoiceraSwipeScreen() {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`${styles.chatMessage} ${msg.sender === "user" ? styles.user : styles.ai}`}
+                className={`${styles.chatMessage} ${
+                  msg.sender === "user" ? styles.user : styles.ai
+                }`}
               >
                 <div
                   className={styles.chatBubble}
-                  onClick={() => speak(msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`)}
+                  onClick={() =>
+                    speak(
+                      msg.sender === "user"
+                        ? `You said: ${msg.text}`
+                        : `Voicera said: ${msg.text}`,
+                    )
+                  }
                   data-sr="true"
-                  data-sr-label={msg.sender === "user" ? `You said: ${msg.text}` : `Voicera said: ${msg.text}`}
+                  data-sr-label={
+                    msg.sender === "user"
+                      ? `You said: ${msg.text}`
+                      : `Voicera said: ${msg.text}`
+                  }
                 >
                   {msg.text}
                 </div>

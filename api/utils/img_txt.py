@@ -47,6 +47,8 @@ def describe_image_bytes(image_bytes: bytes, content_type: str) -> str:
     )
 
     if response.status_code != 200:
-        raise RuntimeError(response.text)
+        print(f"OpenAI error status: {response.status_code}")
+        print(f"OpenAI error response: {response.text}")
+        raise RuntimeError(f"OpenAI API error: {response.text}")
 
     return response.json()["choices"][0]["message"]["content"]

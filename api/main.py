@@ -1,6 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from routes.ai_routes import router as ai_router
 from routes.tts_routes import router as tts_router

@@ -6,7 +6,7 @@ on:
         branches: [main]
 
 jobs:
-    test:
+    test-backend:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -24,9 +24,30 @@ jobs:
             - name: Build
               working-directory: ./backend
               run: go build -o main .
-          
+
+    test-api:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                python-version: '3.10'
+
+            - name: Install dependencies
+              working-directory: ./api
+              run: |
+                python -m pip install --upgrade pip
+                pip install -r requirements.txt
+
+            - name: Run tests
+              working-directory: ./api
+              run: pytest
+
     push: 
-        needs: test
+        needs: [test-backend, test-api]
         runs-on: ubuntu-latest
         if: github.ref == 'refs/heads/main'
 
@@ -43,14 +64,26 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v2
 
-            - name: Build and push Docker image
+            - name: Build and push Backend image
               uses: docker/build-push-action@v4
               with: 
                 context: ./backend
                 file: ./backend/Dockerfile
                 push: true
                 tags: |
-                  ${{ secrets.DOCKER_USERNAME }}/voicera-ai:latest
-                  ${{ secrets.DOCKER_USERNAME }}/voicera-ai:${{ github.sha }}
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-backend:latest
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-backend:${{ github.sha }}
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
+
+            - name: Build and push API image
+              uses: docker/build-push-action@v4
+              with: 
+                context: ./api
+                file: ./api/Dockerfile
+                push: true
+                tags: |
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-api:latest
+                  ${{ secrets.DOCKER_USERNAME }}/voicera-api:${{ github.sha }}
                 cache-from: type=gha
                 cache-to: type=gha,mode=max

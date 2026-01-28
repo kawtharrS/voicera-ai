@@ -6,11 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
+
 	"voicera-backend/data"
+	"voicera-backend/helpers"
 )
 
 func GetFastAPIHealth() (*HealthResponse, error) {
@@ -186,7 +192,6 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Printf("Memo saved (ID: %d) - Category: %s, Emotion: %s\n", memo.ID, memo.Category, memo.Emotion)
 			}
 
-			// Proactive Check-in Logic
 			ScheduleCheckInIfNeeded(userID, response.Emotion)
 		}()
 	}
@@ -195,7 +200,6 @@ func AskAnythingHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// BadEmotions defines the set of emotions that trigger a check-in
 var BadEmotions = map[string]bool{
 	"sad":        true,
 	"angry":      true,
@@ -207,29 +211,19 @@ var BadEmotions = map[string]bool{
 	"unhappy":    true,
 }
 
-// ScheduleCheckInIfNeeded schedules a check-in if the emotion is negative
 func ScheduleCheckInIfNeeded(userID int64, emotion string) {
 	if _, exists := BadEmotions[emotion]; exists {
 		fmt.Printf("Negative emotion '%s' detected for user %d. Scheduling check-in in 30 minutes.\n", emotion, userID)
 
-		// 30 minutes delay
-		// For testing purposes, you might want to reduce this to 30 * time.Second
 		time.AfterFunc(30*time.Minute, func() {
 			CheckInAction(userID)
 		})
 	}
 }
 
-// CheckInAction is executed after the delay
 func CheckInAction(userID int64) {
-	// TODO: Integrate with a Push Notification Service (e.g., FCM)
-	// For now, we print to console.
-
 	message := "Hey, just checking in. How are you feeling now?"
-	fmt.Printf("=== [PUSH NOTIFICATION] ===\nTo: User %d\nMessage: %s\n===========================\n", userID, message)
-
-	// Future:
-	// Use SendPushNotification(userID, message)
+	fmt.Printf("mess: %s\n", message)
 }
 
 func addPrefrences(query Preferences) (*AIResponse, error) {
@@ -281,4 +275,134 @@ func addPrefrences(query Preferences) (*AIResponse, error) {
 		Emotion:         aiResp.Emotion,
 	}
 	return converted, nil
+}
+
+func DescribeImageHandler(w http.ResponseWriter, r *http.Request) {
+	helpers.SetHeaders(w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "failed to parse form data"})
+		return
+	}
+
+	file, fileHeader, err := r.FormFile("file")
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Ok: false, Message: "file field is required"})
+		return
+	}
+	defer file.Close()
+
+	contentType := fileHeader.Header.Get("Content-Type")
+
+	// If the content type is missing or too generic, infer it from the file extension.
+	// This lets us support many common image formats regardless of how the client uploads them.
+	if contentType == "" || contentType == "application/octet-stream" {
+		ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+		switch ext {
+		case ".jpg", ".jpeg", ".jfif":
+			contentType = "image/jpeg"
+		case ".png":
+			contentType = "image/png"
+		case ".gif":
+			contentType = "image/gif"
+		case ".webp":
+			contentType = "image/webp"
+		case ".bmp":
+			contentType = "image/bmp"
+		case ".tif", ".tiff":
+			contentType = "image/tiff"
+		case ".heic", ".heif":
+			contentType = "image/heic"
+		case ".avif":
+			contentType = "image/avif"
+		case ".ico":
+			contentType = "image/x-icon"
+		case ".svg":
+			contentType = "image/svg+xml"
+		default:
+			// Fallback to jpeg if we don't recognize the extension but still want to try
+			contentType = "image/jpeg"
+		}
+	}
+
+	fmt.Printf("Received file: %s, Content-Type: %s\n", fileHeader.Filename, contentType)
+
+	// We'll be more lenient here and let the upstream service handle specifics if needed,
+	// but we still want to ensure it's at least an image.
+	// Accept image/jpeg, image/png, image/jpg, and even image/heic
+
+	fastAPIURL := os.Getenv("FASTAPI_URL")
+	if fastAPIURL == "" {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "FASTAPI_URL not configured"})
+		return
+	}
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Create a multipart part with explicit Content-Type so FastAPI sees
+	// the correct image type (image/png or image/jpeg) instead of application/octet-stream.
+	mimeHeader := textproto.MIMEHeader{}
+	mimeHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, fileHeader.Filename))
+	mimeHeader.Set("Content-Type", contentType)
+
+	part, err := writer.CreatePart(mimeHeader)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "failed to create form file"})
+		return
+	}
+
+	if _, err := io.Copy(part, file); err != nil {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "failed to read uploaded file"})
+		return
+	}
+
+	if err := writer.Close(); err != nil {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "failed to finalize form data"})
+		return
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fastAPIURL+"/image/describe",
+		&buf,
+	)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "failed to build upstream request"})
+		return
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := http.Client{Timeout: 60 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Error contacting image service: %v\n", err)
+		writeJSON(w, http.StatusBadGateway, apiResponse{Ok: false, Message: fmt.Sprintf("error contacting image service: %v", err)})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Printf("Image service returned error (%d): %s\n", resp.StatusCode, string(body))
+		writeJSON(w, resp.StatusCode, apiResponse{Ok: false, Message: fmt.Sprintf("image service error: %s", string(body))})
+		return
+	}
+
+	fmt.Printf("Successfully received description from image service\n")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		fmt.Printf("failed to stream image description response: %v\n", err)
+	}
 }

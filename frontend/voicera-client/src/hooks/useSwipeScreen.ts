@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 
-export const useSwipeScreen = () => {
+export const useSwipeScreen = (onOpen?: () => void) => {
   const [position, setPosition] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isSecondScreenActive, setIsSecondScreenActive] = useState(false);
@@ -28,6 +28,9 @@ export const useSwipeScreen = () => {
     const isOpening = position < -30;
     setPosition(isOpening ? -100 : 0);
     setIsSecondScreenActive(isOpening);
+    if (isOpening && onOpen) {
+      onOpen();
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -51,6 +54,9 @@ export const useSwipeScreen = () => {
     const isOpening = position < -30;
     setPosition(isOpening ? -100 : 0);
     setIsSecondScreenActive(isOpening);
+    if (isOpening && onOpen) {
+      onOpen();
+    }
   };
 
   const openSecondScreen = useCallback(() => {

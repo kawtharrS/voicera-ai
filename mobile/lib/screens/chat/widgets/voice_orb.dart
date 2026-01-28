@@ -6,12 +6,14 @@ class VoiceOrb extends StatefulWidget {
   final VoiceState state;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final VoidCallback? onSwipeUp;
 
   const VoiceOrb({
     super.key,
     required this.state,
     required this.onTap,
     required this.onLongPress,
+    this.onSwipeUp,
   });
 
   @override
@@ -68,6 +70,12 @@ class _VoiceOrbState extends State<VoiceOrb> with TickerProviderStateMixin {
         GestureDetector(
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
+          onVerticalDragEnd: (details) {
+            // Negative velocity = swipe up.
+            if (details.primaryVelocity != null && details.primaryVelocity! < -300) {
+              widget.onSwipeUp?.call();
+            }
+          },
           child: Semantics(
             button: true,
             enabled: true,

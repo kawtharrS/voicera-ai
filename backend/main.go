@@ -24,6 +24,7 @@ func main() {
 	router.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
 	router.HandleFunc("/api/ask-anything", common.AskAnythingHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
+	router.HandleFunc("/api/image/describe", common.DescribeImageHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/save-memo", common.SaveMemoHandler).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/memos", common.GetMemosHandler).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/save-preference", common.SavePreferences).Methods("POST", "OPTIONS")

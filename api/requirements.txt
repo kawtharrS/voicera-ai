@@ -9,3 +9,4 @@ google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
 google-api-python-client>=2.0.0
 colorama>=0.4.6
+pytest==7.4.3
