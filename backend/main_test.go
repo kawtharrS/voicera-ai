@@ -10,10 +10,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// Set dummy environment variables for tests
 	os.Setenv("FASTAPI_URL", "http://localhost:9999")
 	os.Setenv("JWT_SECRET", "test_secret")
-	// Make sure SUPABASE_URL is empty so it uses in-memory mode
 	os.Setenv("SUPABASE_URL", "")
 
 	exitCode := m.Run()
@@ -32,8 +30,6 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 
 	expected := `{"message":"hi"}`
-	// The handler might include a newline or not depending on the encoder
-	// So we check if it contains the expected string
 	if !bytes.Contains(rr.Body.Bytes(), []byte(expected)) {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
 	}
@@ -42,7 +38,6 @@ func TestHealthEndpoint(t *testing.T) {
 func TestAuthFlow(t *testing.T) {
 	r := SetupRouter()
 
-	// 1. Register
 	regPayload := map[string]string{
 		"name":            "TestUser",
 		"email":           "test@example.com",
@@ -68,7 +63,6 @@ func TestAuthFlow(t *testing.T) {
 		t.Fatalf("No token returned in register response")
 	}
 
-	// 2. User Info
 	req, _ = http.NewRequest("GET", "/api/user", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rr = httptest.NewRecorder()
@@ -78,7 +72,6 @@ func TestAuthFlow(t *testing.T) {
 		t.Errorf("UserInfo failed: got %v want %v. Body: %s", status, http.StatusOK, rr.Body.String())
 	}
 
-	// 3. Login
 	loginPayload := map[string]string{
 		"email":    "test@example.com",
 		"password": "password123",
