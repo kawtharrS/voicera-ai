@@ -2,7 +2,6 @@ package data
 
 import (
 	"sync"
-
 	"github.com/supabase-community/supabase-go"
 )
 

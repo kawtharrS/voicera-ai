@@ -45,7 +45,8 @@ class ImageDescribeService {
     }
 
     try {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = responseData['data'] as Map<String, dynamic>? ?? {};
       final desc = data['description'] as String?;
       if (desc == null || desc.isEmpty) {
         debugPrint('Image description is empty or null');

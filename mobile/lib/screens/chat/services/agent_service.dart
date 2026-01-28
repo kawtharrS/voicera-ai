@@ -22,7 +22,8 @@ class AgentService {
     if (response.statusCode != 200) {
       throw Exception('Agent Error (${response.statusCode}): ${response.body}');
     }
-    final data = jsonDecode(response.body);
+    final responseData = jsonDecode(response.body);
+    final data = responseData['data'] ?? {};
         
     final agentResponse = AgentResponse(
       response: data['response'] ?? '',

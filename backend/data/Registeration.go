@@ -5,33 +5,52 @@ import (
 	"strings"
 )
 
+var (
+	ErrMissingFields       = errors.New("name, email, and password are required")
+	ErrWeakPassword        = errors.New("password must be at least 6 characters")
+	ErrUserNotFound        = errors.New("user not found")
+	ErrUserAlreadyExists   = errors.New("user already exists")
+	ErrEmptyEmail          = errors.New("email cannot be empty")
+	ErrFailedHashPassword  = errors.New("failed to hash password")
+)
+
+const MinPasswordLength = 6
+
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
+func normalizeName(name string) string {
+	return strings.TrimSpace(name)
+}
+
+func normalizePassword(password string) string {
+	return strings.TrimSpace(password)
+}
+
 func RegisterUser(name, email, password string) error {
-	name = strings.TrimSpace(name)
-	email = strings.ToLower(strings.TrimSpace(email))
+	name = normalizeName(name)
+	email = normalizeEmail(email)
+	password = normalizePassword(password)
 
-	if name == "" || email == "" || password == "" {
-		return errors.New("name, email, and password are required")
-	}
-
-	if len(password) < 6 {
-		return errors.New("password must be at least 6 characters")
+	if err := validateRegistration(name, email, password); err != nil {
+		return err
 	}
 
 	hashed, err := hashPassword(password)
 	if err != nil {
-		return errors.New("failed to hash password")
+		return ErrFailedHashPassword
 	}
 
 	if supabaseClient != nil {
 		return registerUserSupabase(name, email, hashed)
 	}
-
 	return registerUserInMemory(name, email, hashed)
 }
 
 func UserIsValid(username, password string) bool {
-	username = strings.TrimSpace(username)
-	password = strings.TrimSpace(password)
+	username = normalizeName(username)
+	password = normalizePassword(password)
 
 	if supabaseClient != nil {
 		return userIsValidSupabase(username, password)
@@ -40,8 +59,8 @@ func UserIsValid(username, password string) bool {
 }
 
 func UserIsValidByEmail(email, password string) bool {
-	email = strings.ToLower(strings.TrimSpace(email))
-	password = strings.TrimSpace(password)
+	email = normalizeEmail(email)
+	password = normalizePassword(password)
 
 	if email == "" || password == "" {
 		return false
@@ -51,40 +70,64 @@ func UserIsValidByEmail(email, password string) bool {
 	if err != nil {
 		return false
 	}
+
 	return checkPassword(user.Password, password)
 }
 
 func GetUserByEmail(email string) (*User, error) {
-	email = strings.ToLower(strings.TrimSpace(email))
+	email = normalizeEmail(email)
+
 	if email == "" {
-		return nil, errors.New("email cannot be empty")
+		return nil, ErrEmptyEmail
 	}
 
 	if supabaseClient != nil {
-		var result []User
-		_, err := supabaseClient.From("users").
-			Select("*", "", false).
-			Eq("email", email).
-			ExecuteTo(&result)
+		return getUserByEmailSupabase(email)
+	}
+	return getUserByEmailInMemory(email)
+}
 
-		if err != nil {
-			return nil, err
-		}
-		if len(result) == 0 {
-			return nil, errors.New("user not found")
-		}
-		return &result[0], nil
+func validateRegistration(name, email, password string) error {
+	if name == "" || email == "" || password == "" {
+		return ErrMissingFields
+	}
+	if len(password) < MinPasswordLength {
+		return ErrWeakPassword
+	}
+	return nil
+}
+
+func getUserByEmailSupabase(email string) (*User, error) {
+	var result []User
+	_, err := supabaseClient.From("users").
+		Select("*", "", false).
+		Eq("email", email).
+		ExecuteTo(&result)
+
+	if err != nil {
+		return nil, err
 	}
 
+	if len(result) == 0 {
+		return nil, ErrUserNotFound
+	}
+
+	return &result[0], nil
+}
+
+func getUserByEmailInMemory(email string) (*User, error) {
 	userMu.RLock()
 	defer userMu.RUnlock()
+
 	for _, u := range users {
-		if strings.ToLower(u.Email) == email {
+		if normalizeEmail(u.Email) == email {
 			return &u, nil
 		}
 	}
-	return nil, errors.New("user not found")
+
+	return nil, ErrUserNotFound
 }
+
 func registerUserSupabase(name, email, hashedPassword string) error {
 	var count []map[string]interface{}
 	_, err := supabaseClient.From("users").
@@ -93,7 +136,7 @@ func registerUserSupabase(name, email, hashedPassword string) error {
 		ExecuteTo(&count)
 
 	if err == nil && len(count) > 0 {
-		return errors.New("user already exists")
+		return ErrUserAlreadyExists
 	}
 
 	record := map[string]interface{}{
@@ -129,7 +172,7 @@ func registerUserInMemory(name, email, hashedPassword string) error {
 	defer userMu.Unlock()
 
 	if _, exists := users[name]; exists {
-		return errors.New("user already exists")
+		return ErrUserAlreadyExists
 	}
 
 	users[name] = User{
@@ -139,6 +182,7 @@ func registerUserInMemory(name, email, hashedPassword string) error {
 		Password: hashedPassword,
 		RoleID:   1,
 	}
+
 	return nil
 }
 
@@ -150,5 +194,6 @@ func userIsValidInMemory(username, password string) bool {
 	if !ok {
 		return false
 	}
+
 	return checkPassword(user.Password, password)
 }

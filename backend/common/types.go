@@ -1,8 +1,10 @@
-package common 
+package common
+
 import (
-	"github.com/golang-jwt/jwt/v5"
 	"encoding/json"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type SavePreferenceRequest struct {
@@ -21,9 +23,10 @@ type registerRequest struct {
 }
 
 type apiResponse struct {
-	Ok      bool   `json:"ok"`
-	Message string `json:"message"`
-	Token   string `json:"token,omitempty"`
+	Ok      bool        `json:"ok"`
+	Message string      `json:"message"`
+	Token   string      `json:"token,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 type UserInfoResponse struct {
@@ -31,7 +34,6 @@ type UserInfoResponse struct {
 	Email  string `json:"email"`
 	RoleID int    `json:"role_id"`
 }
-
 
 type Claims struct {
 	UserID int64  `json:"user_id"`
@@ -84,18 +86,47 @@ type UniversalQueryResponse struct {
 }
 
 type Preferences struct {
-	Language string  `json:"language"`
-	UserId string `json:"user_id"`
-	Tone string `json:"tone"`
-	Name string `json:"name"`
+	Language   string `json:"language"`
+	UserId     string `json:"user_id"`
+	Tone       string `json:"tone"`
+	Name       string `json:"name"`
 	Prefrences string `json:"prefrences"`
 }
 
 type EmotionLog struct {
-	ID        int64     `gorm:"primaryKey"`
-	UserID    int64     `gorm:"index"`
+	ID        int64 `gorm:"primaryKey"`
+	UserID    int64 `gorm:"index"`
 	Emotion   string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
+const (
+	HealthCheckTimeout  = 5 * time.Second
+	AskAnythingTimeout  = 360 * time.Second
+	PreferencesTimeout  = 120 * time.Second
+	ImageServiceTimeout = 60 * time.Second
+	MaxUploadSize       = 10 << 20 // 
+	CheckInDelay        = 30 * time.Minute
+)
+
+var BadEmotions = map[string]bool{
+	"sad":        true,
+	"angry":      true,
+	"anxious":    true,
+	"frustrated": true,
+	"stressed":   true,
+	"depressed":  true,
+	"lonely":     true,
+	"unhappy":    true,
+}
+
+var imageContentTypeMap = map[string]string{
+	".jpg":  "image/jpeg",
+	".jpeg": "image/jpeg",
+	".png":  "image/png",
+	".gif":  "image/gif",
+	".webp": "image/webp",
+	".bmp":  "image/bmp",
+	".svg":  "image/svg+xml",
+}

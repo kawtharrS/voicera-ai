@@ -3,7 +3,6 @@ package data
 import (
 	"errors"
 	"fmt"
-
 	"github.com/supabase-community/postgrest-go"
 )
 
