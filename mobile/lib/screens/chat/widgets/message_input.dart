@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 
 class MessageInput extends StatefulWidget {
   final String text;

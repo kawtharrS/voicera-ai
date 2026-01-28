@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'accessibility.dart';
 import 'services.dart';
-import 'package:mobile/constants/colors.dart';
-import 'package:mobile/constants/paddings.dart';
+import 'package:mobile/theme/theme.dart';
 
 class HomePage extends StatelessWidget{
   const HomePage({Key? key}):super(key:key);

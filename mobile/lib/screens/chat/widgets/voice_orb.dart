@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/screens/chat/voice_controller.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 
 class VoiceOrb extends StatefulWidget {
   final VoiceState state;

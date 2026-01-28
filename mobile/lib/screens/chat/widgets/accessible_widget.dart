@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../voice_controller.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 
 class AccessibleWidget extends StatefulWidget {
   final Widget child;

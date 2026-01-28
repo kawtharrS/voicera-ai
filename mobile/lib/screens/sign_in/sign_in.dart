@@ -1,6 +1,5 @@
-import 'package:mobile/constants/paddings.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 import 'package:mobile/screens/sign_in/sign_in_service.dart';
 
 class SignInPage extends StatefulWidget {
