@@ -97,7 +97,7 @@ Voicera is powered by an **Agentic Workflow**, a sophisticated multi-agent syste
 | --------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/gifs/imgtt.gif) | ![fsdaf](./readme/screens-web/pdf_analysis.png) |
 
-<br>
+<br><br>
 
 <!-- Development & Testing -->
 <img src="./readme/title6.svg"/>
@@ -106,7 +106,7 @@ Voicera is powered by an **Agentic Workflow**, a sophisticated multi-agent syste
 | --------------------------------------- | ------------------------------------- | ------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/tests/service.png) | ![fsdaf](./readme/tests/checks.png) | ![fsdaf](./readme/tests/test.png) | ![fsdaf](./readme/tests/agents.png) |
 
-<br>
+<br><br>
 
 <img src="./readme/title7.svg"/>
 
