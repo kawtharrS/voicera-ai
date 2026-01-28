@@ -29,9 +29,12 @@ func TestHealthEndpoint(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	expected := `{"message":"hi"}`
-	if !bytes.Contains(rr.Body.Bytes(), []byte(expected)) {
-		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	var got map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &got); err != nil {
+		t.Fatalf("failed to decode health response: %v (body=%s)", err, rr.Body.String())
+	}
+	if got["message"] != "hi" {
+		t.Fatalf("handler returned unexpected message: got %v want %v", got["message"], "hi")
 	}
 }
 
