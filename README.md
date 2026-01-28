@@ -93,7 +93,7 @@ Voicera is powered by an **Agentic Workflow**, a sophisticated multi-agent syste
 | --------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/screens-web/chat-home.png) | ![fsdaf](./readme/screens-web/chat.png) |
 
-| Image to text                              | pdf Rag Chat                        |
+| Image to text                              | PDF Rag Chat                        |
 | --------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/gifs/imgtt.gif) | ![fsdaf](./readme/screens-web/pdf_analysis.png) |
 
