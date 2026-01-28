@@ -16,7 +16,7 @@ DEFAULT_STUDENT_ID = "default_student"
 TTS_MODEL = "tts-1"
 SPEED = 1.0
 TIMEOUT = 30.0
-
+MAX_TOKENS= 300
 VOICE_MAPPING = {
     "study": "alloy",
     "work": "onyx",
@@ -29,4 +29,8 @@ HEADERS= {
     "Content-Type": "application/json",
 }
 
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+
+MODEL= "gpt-4o"
 settings = Settings()

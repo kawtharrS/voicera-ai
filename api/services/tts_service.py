@@ -4,7 +4,6 @@ from fastapi import HTTPException, Response
 from config import TTS_MODEL, SPEED, TIMEOUT, VOICE_MAPPING, HEADERS
 
 async def generate_tts(text: str, voice: str, category: str | None):
-    api_key = os.getenv("OPENAI_API_KEY")
     selected_voice = VOICE_MAPPING.get(category, voice)
     async with httpx.AsyncClient() as client:
         response = await client.post(
