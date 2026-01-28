@@ -10,7 +10,7 @@ from utils.response_extractor import (
     extract_emotion,
 )
 
-langgraph_src = Path(__file__).parent.parent.parent / "langgraph" / "src"
+langgraph_src = Path(__file__).parent.parent.parent / "agents" / "langgraph" / "src"
 sys.path.insert(0, str(langgraph_src))
 from agents.router.router_graph import graph
 
