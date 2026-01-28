@@ -305,3 +305,21 @@ Tutor's Study Plan Response:
 
 Extract and structure all time slots from the above response.
 """
+
+RELEVANT_COURSE_PROMPT="""
+You are an academic assistant.
+Task:
+From the list of courses below, choose the ONE course that best matches the student's question.
+User question:
+"{question}"
+
+Courses:
+{course_list}
+
+Rules:
+- Choose only ONE course.
+- Choose based on meaning, subject matter, and intent.
+- If multiple courses seem relevant, pick the most specific one.
+- If none are relevant, respond with: NONE
+- Respond ONLY with the index number or NONE.
+"""

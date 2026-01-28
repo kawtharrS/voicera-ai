@@ -39,6 +39,30 @@ class ClassroomNodes:
             return cw if isinstance(cw, Coursework) else Coursework(**cw)
         return None
 
+    def _select_relevant_course(self, question: str, courses: list, llm) -> Optional[Course]:
+        if not courses:
+            return None
+        if len(courses) == 1:
+            return courses[0]
+            
+        items = [f"{i}. Name: {c.name}\n   Description: {c.description}" 
+                 for i, c in enumerate(courses)]
+
+        result = self.agents.select_relevant_course.invoke({
+            "question": question, "course_list": "\n".join(items)
+        })
+        
+        response = result.index.strip()
+
+        if response.upper() == "NONE" or not response.isdigit():
+            return None
+            
+        index = int(response)
+        if 0 <= index < len(courses):
+            return courses[index]
+        return None
+
+
     def load_courses(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Loading courses..." + Style.RESET_ALL)
         courses_list = self.classroom_tools.list_courses()
@@ -98,7 +122,7 @@ class ClassroomNodes:
         question = incoming.get("student_question", "") if isinstance(incoming, dict) else incoming.student_question
 
         courses = state.get("courses", [])
-        current_course = courses[0] if courses else None
+        current_course = self._select_relevant_course(question, courses, model.openai_model)
         selected_coursework = self._select_relevant_coursework(question, state.get("courseworks", []), model.openai_model)
             
         return {"current_interaction": StudentInteraction(
@@ -259,7 +283,8 @@ class ClassroomNodes:
             if not course_id:
                 return ""
             
-            query = f"{student_question} {' '.join(recommendations[:2])}"
+            # Use a cleaner query for better vector search results
+            query = student_question
             retriever = self.pdf_processor.get_retriever(k=6, filter_dict={"course_id": course_id}, use_mmr=True)
             
             results = retriever.invoke(query)
@@ -325,8 +350,8 @@ class ClassroomNodes:
         if isinstance(interaction, dict):
             if review.send:
                 interaction.update({
-                    "ai_response": ai_response + f"Feedback: {review.feedback}",
-                    "observation": observation
+                    "ai_response": ai_response,
+                    "observation": f"{observation} Feedback: {review.feedback}"
                 })
                 return {
                     "current_interaction": interaction,
@@ -347,8 +372,8 @@ class ClassroomNodes:
             if review.send:
                 return {
                     "current_interaction": interaction.model_copy(update={
-                        "ai_response": ai_response + f"Feedback: {review.feedback}",
-                        "observation": observation
+                        "ai_response": ai_response,
+                        "observation": f"{observation} Feedback: {review.feedback}"
                     }),
                     "sendable": True,
                     "rewrite_feedback": ""

@@ -6,6 +6,7 @@ interface Message {
     text: string;
     category: string;
     recommendations?: string[];
+    imageUrl?: string;
 }
 
 interface UniversalQueryResponse {
@@ -15,7 +16,7 @@ interface UniversalQueryResponse {
     recommendations?: string[];
     observation?: string;
     metadata?: any;
-    emotion?: string; 
+    emotion?: string;
 }
 
 export const useChat = (onResponse: (text: string, category: string) => void) => {
@@ -103,6 +104,10 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
         [waiting, onResponse]
     );
 
+    const addMessage = useCallback((sender: "user" | "ai", text: string, category: string, imageUrl?: string) => {
+        setMessages((prev) => [...prev, { sender, text, category, imageUrl }]);
+    }, []);
+
     return {
         input,
         setInput,
@@ -110,5 +115,6 @@ export const useChat = (onResponse: (text: string, category: string) => void) =>
         waiting,
         currentCategory,
         sendMessage,
+        addMessage,
     };
 };

@@ -160,7 +160,7 @@ class PDFProcessor:
                         el_text = el.text if hasattr(el, "text") else str(el)
                         tables.append({"html": str(el_html or ""), "text": str(el_text)})
 
-                if "CompositeElement" in str(type(chunk)):
+                if any(t in str(type(chunk)) for t in ["CompositeElement", "Text", "NarrativeText", "Title", "ListItem", "Header", "Footer"]):
                     texts.append(chunk)
 
             logger.info(
