@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile/apis/auth_service.dart';
 
@@ -22,17 +23,12 @@ class AgentService {
       throw Exception('Agent Error (${response.statusCode}): ${response.body}');
     }
     final data = jsonDecode(response.body);
-    
-    // Debug logging
-    print('FastAPI Response - Emotion: \'${data['emotion']}\', Category: \'${data['category']}\'');
-    
+        
     final agentResponse = AgentResponse(
       response: data['response'] ?? '',
       emotion: data['emotion'] ?? 'neutral',
     );
-    
-    print('Converted Response - Emotion: \'${agentResponse.emotion}\'');
-    
+        
     return agentResponse;
   }
 }

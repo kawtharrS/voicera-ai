@@ -40,7 +40,6 @@ class VoiceChatController extends ChangeNotifier {
     final speechInitialized = await speech.init();
     
     if (!speechInitialized) {
-      debugPrint('Speech service failed to initialize - microphone may not be available');
       state = VoiceState.error;
       notifyListeners();
       return;
@@ -72,7 +71,6 @@ class VoiceChatController extends ChangeNotifier {
         ).timeout(const Duration(seconds: 3));
       }
     } catch (e) {
-      debugPrint('Connection Failed: $e');
       state = VoiceState.error;
       notifyListeners();
     }
@@ -129,15 +127,16 @@ class VoiceChatController extends ChangeNotifier {
     await speech.stop();
     if (state == VoiceState.listening) {
       state = VoiceState.idle;
-      tts.speak('Processing your question', selectedVoice);
       notifyListeners();
+      
+      await tts.speak('Processing your question', selectedVoice);
     }
   }
 
   Future<void> sendText([String? text]) async {
     final message = text ?? transcription;
     if (message.isEmpty) {
-      tts.speak('Please say something or type a message', selectedVoice);
+      await tts.speak('Please say something or type a message', selectedVoice);
       return;
     }
 
@@ -160,7 +159,10 @@ class VoiceChatController extends ChangeNotifier {
       state = VoiceState.idle;
     } catch (e) {
       state = VoiceState.error;
-      tts.speak('Sorry, I encountered an error. $e', selectedVoice);
+      notifyListeners();
+      
+      await tts.speak('Sorry, I encountered an error. $e', selectedVoice);
+      
     } finally {
       notifyListeners();
     }
@@ -177,7 +179,15 @@ class VoiceChatController extends ChangeNotifier {
       textToRead = 'Press the circle to speak or type a message';
     }
 
-    tts.speak(textToRead, selectedVoice);
+    _speakAsync(textToRead);
+  }
+
+  Future<void> _speakAsync(String text) async {
+    try {
+      await tts.speak(text, selectedVoice);
+    } catch (e) {
+      debugPrint('Error speaking: $e');
+    }
   }
 
   void setFocus(String? label) {
@@ -193,18 +203,16 @@ class VoiceChatController extends ChangeNotifier {
     }
   }
 
-  /// Capture image from camera, send to backend describe API, and speak result.
   Future<void> describeFromCamera() async {
     try {
       state = VoiceState.thinking;
       notifyListeners();
 
-      // Let the user know we're processing an image.
       await tts.speak('Let me look around and describe what I see.', selectedVoice);
 
       final description = await imageService.captureAndDescribe();
+      
       if (description == null) {
-        // User cancelled camera.
         state = VoiceState.idle;
         notifyListeners();
         return;
@@ -218,10 +226,13 @@ class VoiceChatController extends ChangeNotifier {
       state = VoiceState.idle;
       notifyListeners();
     } catch (e) {
-      debugPrint('Error describing image: $e');
       state = VoiceState.error;
       notifyListeners();
-      tts.speak("Sorry, I couldn't describe that image.", selectedVoice);
+      
+      await tts.speak("Sorry, I couldn't describe that image.", selectedVoice);
+      
+      state = VoiceState.idle;
+      notifyListeners();
     }
   }
 }

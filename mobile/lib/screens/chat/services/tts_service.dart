@@ -11,31 +11,29 @@ class TtsService {
 
   Future<void> speak(String text, String voice) async {
     try {
+      
       await _player.stop();
-
       if (_cache.isCached(text, voice)) {
         final cachedPath = _cache.getCachedFilePath(text, voice);
         if (cachedPath != null) {
-          debugPrint('Using cached audio for: $text');
           await _player.setFilePath(cachedPath);
           await _player.play();
           return;
         }
       }
 
-      _cache.cacheAudio(text, voice).catchError((e) {
-        debugPrint('Background caching failed: $e');
-      });
+      final filePath = await _cache.cacheAudio(text, voice);
+      if (filePath != null) {
+        await _player.setFilePath(filePath);
+        await _player.play();
+        return;
+      }
 
       final url =
           '$baseUrl/api/tts?text=${Uri.encodeComponent(text)}&voice=${Uri.encodeComponent(voice)}';
-      await _player.setAudioSource(
-        AudioSource.uri(Uri.parse(url)),
-        preload: true,
-      );
+      await _player.setAudioSource(AudioSource.uri(Uri.parse(url)), preload: true);
       await _player.play();
     } catch (e) {
-      debugPrint('TTS Error: $e');
       rethrow;
     }
   }

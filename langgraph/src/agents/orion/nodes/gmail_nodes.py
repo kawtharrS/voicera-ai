@@ -66,7 +66,24 @@ class GmailNodes:
                 "current_interaction": EmailInteraction(ai_response="Sending your drafted email replies...")
             }
         
-        is_specific_reply = any(k in query for k in ["reply", "respond", "email to", "email from"])
+        is_specific_reply = any(k in query for k in ["reply", "respond", "email to", "email from", "email for"])
+        
+        # Check if user wants to send a completely NEW email
+        send_to_keywords = ["send an email to", "send email to", "message to", "write to", "send an email for", "send email for", "email to", "send to", "mail to"]
+        is_new_email_request = any(k in query for k in send_to_keywords)
+        has_email_address = "@" in query
+        is_sending_verb = any(v in query for v in ["send", "write", "draft", "prepare", "compose"])
+        
+        if is_new_email_request or (has_email_address and is_sending_verb):
+            print(Fore.YELLOW + "User requesting to send a new email..." + Style.RESET_ALL)
+            return {
+                "emails": [],
+                "is_processing": True,
+                "sending_new_email": True,
+                "ai_response": "Extracting details for your new email...",
+                "current_interaction": EmailInteraction(ai_response="Extracting details for your new email...")
+            }
+
         is_empty_query = not query or query.strip() == ""
         
         print(Fore.YELLOW + f"Loading emails from inbox (inclusive={is_specific_reply})..." + Style.RESET_ALL)
@@ -88,7 +105,7 @@ class GmailNodes:
             if not emails:
                 msg = "I couldn't find any unanswered emails in your inbox."
                 if not is_specific_reply:
-                    msg = "I couldn't find any new unanswered emails from the last 24 hours. (Note: I skip emails that already have drafts unless you ask me to 'reply' to a specific one)."
+                    msg = "I couldn't find any new unanswered emails from the last 7 days. (Note: I skip emails that already have drafts unless you ask me to 'reply' to a specific one)."
                 
                 return {
                     "emails": [],
@@ -281,17 +298,29 @@ class GmailNodes:
         user_approved = state.get("user_approved", False)
         query = state.get("query", "").lower()
         
-        if any(k in query for k in ["send it", "send the email", "send this", "yes", "go ahead", "do it", "approve"]):
+        confirmation_keywords = [
+            "send it", "send the email", "send this", "yes", "go ahead", 
+            "do it", "approve", "confirm", "send now", "send an email", "send email",
+            "accept", "accepting"
+        ]
+        
+        has_send_intent = any(k in query for k in confirmation_keywords) or (
+            "send" in query.split() and not any(n in query for n in ["don't", "do not", "not", "cancel", "stop"])
+        )
+        
+        if not user_approved and has_send_intent:
             user_approved = True
             
         current_email = state.get("current_email")
-        generated_email = state.get("generated_email", "")
+        new_details = state.get("new_email_details")
         
-        print(Fore.YELLOW + f"Processing: {current_email.subject if current_email else 'Unknown'}" + Style.RESET_ALL)
+        subject = current_email.subject if current_email else (new_details.get("subject") if new_details else "Unknown")
+        print(Fore.YELLOW + f"Processing confirmation for: {subject}" + Style.RESET_ALL)
+        
         if user_approved:
             print(Fore.GREEN + "Approving email for sending" + Style.RESET_ALL)
         else:
-            print(Fore.YELLOW + "Creating draft for review" + Style.RESET_ALL)
+            print(Fore.YELLOW + "No clear approval found, defaulting to draft for review" + Style.RESET_ALL)
         
         return {"user_approved": user_approved}
 
@@ -374,9 +403,10 @@ class GmailNodes:
         print(Fore.YELLOW + "Creating draft for human review..." + Style.RESET_ALL)
         
         current_email = state.get("current_email")
+        new_details = state.get("new_email_details")
         generated_email = state.get("generated_email", "")
         
-        if not current_email or not generated_email:
+        if not generated_email or (not current_email and not new_details):
             return {
                 "retrieved_documents": "", 
                 "trials": 0,
@@ -385,25 +415,36 @@ class GmailNodes:
             }
 
         try:
-            email_dict = {
-                "id": current_email.id,
-                "threadId": current_email.thread_id,
-                "messageId": current_email.message_id,
-                "sender": current_email.sender,
-                "subject": current_email.subject,
-                "body": current_email.body
-            }
-            self.gmail_tool.create_draft_reply(email_dict, generated_email)
-            print(Fore.GREEN + "Draft created for review" + Style.RESET_ALL)
+            if current_email:
+                email_dict = {
+                    "id": current_email.id,
+                    "threadId": current_email.thread_id,
+                    "messageId": current_email.message_id,
+                    "sender": current_email.sender,
+                    "subject": current_email.subject,
+                    "body": current_email.body
+                }
+                self.gmail_tool.create_draft_reply(email_dict, generated_email)
+                recipient = current_email.sender
+                response_msg = f"I've created a draft reply to the email from {recipient}. Please review it in Gmail before sending."
+            else:
+                self.gmail_tool.create_draft_message(
+                    to=new_details["recipient"],
+                    subject=new_details["subject"],
+                    body=new_details["body"]
+                )
+                recipient = new_details["recipient"]
+                response_msg = f"I've created a draft email for {recipient}. Please review it in Gmail before sending."
+                
+            print(Fore.GREEN + f"Draft created for {recipient}" + Style.RESET_ALL)
             
             emails = state.get("emails", [])
-            remaining_emails = [e for e in emails if e.id != current_email.id]
-            
-            response_msg = f"I've created a draft reply to the email from {current_email.sender}. Please review it in Gmail before sending."
+            remaining_emails = [e for e in emails if e.id != (current_email.id if current_email else None)]
             
             return {
                 "emails": remaining_emails,
                 "current_email": None,
+                "new_email_details": None,
                 "retrieved_documents": "",
                 "generated_email": "",
                 "trials": 0,
@@ -426,6 +467,61 @@ class GmailNodes:
                 "ai_response": error_msg,
                 "current_interaction": {"ai_response": error_msg}
             }
+
+    def extract_new_details(self, state: GraphState) -> GraphState:
+        """Extract recipient, subject, and body for a new email."""
+        print(Fore.YELLOW + "Extracting new email details..." + Style.RESET_ALL)
+        query = state.get("query", "")
+        
+        try:
+            result = self.agents.extract_new_email_details.invoke({"query": query})
+            print(Fore.GREEN + f"Extracted: To={result.recipient}, Sub={result.subject}" + Style.RESET_ALL)
+            
+            summary = f"I've prepared a new email for {result.recipient}.\nSubject: {result.subject}\n\nBody:\n{result.body}"
+            
+            return {
+                "new_email_details": {
+                    "recipient": result.recipient,
+                    "subject": result.subject,
+                    "body": result.body
+                },
+                "generated_email": result.body, # For verification if needed
+                "ai_response": summary + "\n\nShould I send it?",
+                "current_interaction": EmailInteraction(ai_response=summary + "\n\nShould I send it?")
+            }
+        except Exception as e:
+            print(Fore.RED + f"Error extracting email details: {e}" + Style.RESET_ALL)
+            return {
+                "ai_response": f"I couldn't extract the email details: {str(e)}",
+                "current_interaction": EmailInteraction(ai_response=f"I couldn't extract the email details: {str(e)}")
+            }
+
+    def send_new_email(self, state: GraphState) -> GraphState:
+        """Send a completely new email."""
+        print(Fore.YELLOW + "Sending new email..." + Style.RESET_ALL)
+        details = state.get("new_email_details")
+        
+        if not details:
+            return {"ai_response": "No email details found to send."}
+            
+        try:
+            self.gmail_tool.send_message(
+                to=details["recipient"],
+                subject=details["subject"],
+                body=details["body"]
+            )
+            print(Fore.GREEN + "New email sent successfully" + Style.RESET_ALL)
+            
+            response_msg = f"I've successfully sent your email to {details['recipient']}."
+            return {
+                "ai_response": response_msg,
+                "current_interaction": {"ai_response": response_msg},
+                "new_email_details": None,
+                "sending_new_email": False
+            }
+        except Exception as e:
+            print(Fore.RED + f"Error sending new email: {e}" + Style.RESET_ALL)
+            return {"ai_response": f"Failed to send email: {str(e)}"}
 
     def skip_email(self, state: GraphState) -> GraphState:
         """Skip unrelated email."""

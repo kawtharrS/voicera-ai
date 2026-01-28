@@ -159,3 +159,20 @@ You are provided with the **initial email** content written by the customer and 
 * Ensure feedback is clear, concise, and actionable.
 * Focus on content, tone, and professionalism rather than grammar.
 """
+
+EXTRACT_NEW_EMAIL_PROMPT = """
+# **Role:**
+You are an expert email detail extractor. Your task is to extract the recipient email, subject, and body from the user's request to send a new email.
+
+# **Instructions:**
+1. Identify the recipient's email address.
+2. Formulate a suitable subject if not explicitly provided.
+3. Draft the email body based on the user's instructions.
+
+# **USER REQUEST:**
+{query}
+
+# **Notes:**
+* If the recipient is mentioned by name but no email is provided, and you cannot find a placeholder, use "recipient@example.com" or a clear placeholder.
+* Ensure the body is professional and direct.
+"""

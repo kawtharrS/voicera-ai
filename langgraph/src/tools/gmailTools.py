@@ -101,10 +101,10 @@ class GmailTool:
             return []
 
     def fetch_recent_emails(self, max_results: int = 50) -> List[Dict]:
-        """Fetch emails from the last 24 hours."""
+        """Fetch emails from the last 7 days."""
         try:
             now = datetime.now()
-            delay = now - timedelta(hours=24)
+            delay = now - timedelta(days=7)
             after_timestamp = int(delay.timestamp())
             before_timestamp = int(now.timestamp())
             query = f"after:{after_timestamp} before:{before_timestamp}"

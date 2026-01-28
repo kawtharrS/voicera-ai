@@ -111,6 +111,7 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	category := r.URL.Query().Get("category")
+	voice := r.URL.Query().Get("voice")
 
 	fastAPIURL := os.Getenv("FASTAPI_URL")
 	if fastAPIURL == "" {
@@ -118,10 +119,16 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestURL := fmt.Sprintf("%s/api/tts?text=%s", fastAPIURL, url.QueryEscape(text))
+	params := url.Values{}
+	params.Add("text", text)
 	if category != "" {
-		requestURL = fmt.Sprintf("%s&category=%s", requestURL, url.QueryEscape(category))
+		params.Add("category", category)
 	}
+	if voice != "" {
+		params.Add("voice", voice)
+	}
+
+	requestURL := fmt.Sprintf("%s/api/tts?%s", fastAPIURL, params.Encode())
 
 	fmt.Printf("TTS Request: %s\n", requestURL)
 
@@ -140,7 +147,20 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "audio/mpeg")
+	if contentType := resp.Header.Get("Content-Type"); contentType != "" {
+		w.Header().Set("Content-Type", contentType)
+	} else {
+		w.Header().Set("Content-Type", "audio/mpeg")
+	}
+
+	if contentLength := resp.Header.Get("Content-Length"); contentLength != "" {
+		w.Header().Set("Content-Length", contentLength)
+	}
+
+	if acceptRanges := resp.Header.Get("Accept-Ranges"); acceptRanges != "" {
+		w.Header().Set("Accept-Ranges", acceptRanges)
+	}
+
 	w.Header().Set("Content-Disposition", "inline; filename=speech.mp3")
 
 	_, err = io.Copy(w, resp.Body)
