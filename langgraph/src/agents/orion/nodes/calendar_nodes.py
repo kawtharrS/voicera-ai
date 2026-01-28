@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from colorama import Fore, Style
@@ -24,6 +25,18 @@ default_tz = "Asia/Beirut"
 def _get_reference_dt():
     """Return current datetime in default timezone (computed fresh each call)."""
     return datetime.now(ZoneInfo(default_tz))
+
+def _remove_links_from_response(response: str) -> str:
+    """Remove any URLs, links, or HTML links from the response."""
+    # Remove http/https URLs
+    response = re.sub(r'https?://\S+', '', response)
+    # Remove markdown links [text](url)
+    response = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', response)
+    # Remove remaining HTML-like patterns
+    response = re.sub(r'<[^>]+>', '', response)
+    # Clean up extra whitespace
+    response = re.sub(r'\s+', ' ', response).strip()
+    return response
 
 
 class CalendarNodes:
@@ -192,7 +205,7 @@ class CalendarNodes:
             return {
                 "current_interaction": interaction_model.model_copy(
                     update={
-                        "ai_response": formatted_response.response,
+                        "ai_response": _remove_links_from_response(formatted_response.response),
                         "observation": f"Calendar event created and formatted response: {extractor.summary}"
                     }
                 ),
@@ -248,7 +261,7 @@ class CalendarNodes:
             return {
                 "current_interaction": interaction_model.model_copy(
                     update={
-                        "ai_response": formatted_response.response,
+                        "ai_response": _remove_links_from_response(formatted_response.response),
                         "observation": f"Found {count} event(s) and formatted response.",
                     }
                 ),

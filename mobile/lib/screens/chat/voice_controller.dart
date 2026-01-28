@@ -4,6 +4,7 @@ import 'package:mobile/services/notification_service.dart';
 import 'services/tts_service.dart';
 import 'services/agent_service.dart';
 import 'services/speech_service.dart';
+import 'services/image_service.dart';
 import 'package:http/http.dart' as http;
 
 enum VoiceState {
@@ -18,6 +19,7 @@ class VoiceChatController extends ChangeNotifier {
   final TtsService tts;
   final AgentService agent;
   final SpeechService speech;
+  final ImageDescribeService imageService;
 
   VoiceState state = VoiceState.idle;
   String transcription = '';
@@ -29,6 +31,7 @@ class VoiceChatController extends ChangeNotifier {
     required this.tts,
     required this.agent,
     required this.speech,
+    required this.imageService,
   }) {
     _init();
   }
@@ -188,5 +191,37 @@ class VoiceChatController extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error speaking: $e');
     }
-}
+  }
+
+  /// Capture image from camera, send to backend describe API, and speak result.
+  Future<void> describeFromCamera() async {
+    try {
+      state = VoiceState.thinking;
+      notifyListeners();
+
+      // Let the user know we're processing an image.
+      await tts.speak('Let me look around and describe what I see.', selectedVoice);
+
+      final description = await imageService.captureAndDescribe();
+      if (description == null) {
+        // User cancelled camera.
+        state = VoiceState.idle;
+        notifyListeners();
+        return;
+      }
+
+      transcription = description;
+      state = VoiceState.speaking;
+      notifyListeners();
+
+      await tts.speak(description, selectedVoice);
+      state = VoiceState.idle;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error describing image: $e');
+      state = VoiceState.error;
+      notifyListeners();
+      tts.speak("Sorry, I couldn't describe that image.", selectedVoice);
+    }
+  }
 }

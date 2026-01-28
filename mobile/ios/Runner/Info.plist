@@ -49,6 +49,10 @@
 	<string>This app requires microphone access to record your voice for speech-to-text functionality.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>This app requires speech recognition access to convert your voice to text.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to describe surroundings for blind users.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to process captured images.</string>
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>
 </dict>

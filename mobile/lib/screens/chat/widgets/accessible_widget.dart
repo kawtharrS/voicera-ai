@@ -8,6 +8,7 @@ class AccessibleWidget extends StatefulWidget {
   final String label;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onSwipeUp;
   final double borderRadius;
 
   const AccessibleWidget({
@@ -16,6 +17,7 @@ class AccessibleWidget extends StatefulWidget {
     required this.label,
     required this.onTap,
     this.onLongPress,
+    this.onSwipeUp,
     this.borderRadius = 8,
   });
 
@@ -51,7 +53,14 @@ class AccessibleWidgetState extends State<AccessibleWidget> {
           }
         },
         
-        onPanEnd: (_) => handleExit(),
+        onPanEnd: (details) {
+          handleExit();
+          // Use dy velocity from pixelsPerSecond for more reliable swipe detection in a Pan gesture.
+          // Negative dy means upward movement.
+          if (isHighlighted && details.velocity.pixelsPerSecond.dy < -300) {
+            widget.onSwipeUp?.call();
+          }
+        },
         onPanCancel: () => handleExit(),
 
         onTap: () {

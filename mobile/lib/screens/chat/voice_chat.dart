@@ -11,6 +11,7 @@ import 'widgets/accessible_widget.dart';
 import 'services/tts_service.dart';
 import 'services/agent_service.dart';
 import 'services/speech_service.dart';
+import 'services/image_service.dart';
 
 class VoiceChatPage extends StatelessWidget {
   const VoiceChatPage({super.key});
@@ -22,6 +23,7 @@ class VoiceChatPage extends StatelessWidget {
         tts: TtsService(AudioPlayer(), AuthService.baseUrl),
         agent: AgentService(AuthService.goBaseUrl),
         speech: SpeechService(),
+        imageService: ImageDescribeService(),
       ),
       child: const VoiceChatView(),
     );
@@ -103,10 +105,12 @@ class VoiceChatViewState extends State<VoiceChatView> {
                     borderRadius: 110,
                     onTap: controller.toggleListening,
                     onLongPress: controller.readCurrentText,
+                    onSwipeUp: controller.describeFromCamera,
                     child: VoiceOrb(
                       state: controller.state,
                       onTap: () {}, 
                       onLongPress: controller.readCurrentText,
+                      onSwipeUp: controller.describeFromCamera,
                     ),
                   ),
                   const SizedBox(height: 20),
