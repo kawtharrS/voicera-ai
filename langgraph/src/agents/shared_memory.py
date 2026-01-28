@@ -2,7 +2,7 @@ import os
 import httpx
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from agents.store.memory import InMemoryStore
+from langgraph.store.memory import InMemoryStore
 from langchain_core.runnables import RunnableConfig
 
 try:

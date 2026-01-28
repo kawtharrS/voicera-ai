@@ -1,4 +1,4 @@
-from agents.pregel import Pregel
+from langgraph.pregel import Pregel
 
 from agent.graph import graph
 

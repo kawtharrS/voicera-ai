@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Annotated
 from typing_extensions import TypedDict
-from agents.graph.message import add_messages
+from langgraph.graph.message import add_messages
 from langchain_core.messages import BaseMessage
 from .structure_output import StudyPlanOutput
 

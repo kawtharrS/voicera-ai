@@ -1,6 +1,6 @@
 from typing import TypedDict, Annotated, List, Optional
 from langchain_core.messages import BaseMessage
-from agents.graph.message import add_messages
+from langgraph.graph.message import add_messages
 
 class GraphState(TypedDict):
     query: str

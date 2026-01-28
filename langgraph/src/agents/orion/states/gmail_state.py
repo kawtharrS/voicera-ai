@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Any, List, Optional, Annotated
 from typing_extensions import TypedDict
 from langchain_core.messages import BaseMessage
-from agents.graph.message import add_messages
+from langgraph.graph.message import add_messages
 from datetime import datetime
 
 

@@ -1,6 +1,6 @@
-from agents.graph import END, StateGraph
-from agents.checkpoint.memory import InMemorySaver
-from agents.store.memory import InMemoryStore
+from langgraph.graph import END, StateGraph
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
 from ..states.gmail_state import GraphState
 from ..nodes.gmail_nodes import GmailNodes
 
