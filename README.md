@@ -99,7 +99,6 @@ Voicera is powered by an **Agentic Workflow**, a sophisticated multi-agent syste
 
 <br><br>
 
-<!-- Development & Testing -->
 <img src="./readme/title6.svg"/>
 
 | Services                            | CI/CD                       | Testing GO                      | Testing Agents                      | 
