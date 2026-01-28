@@ -88,3 +88,12 @@ class Agent():
             extract_slots_prompt |
             model.openai_model.with_structured_output(StudyPlanOutput)
         )
+
+        course_selection_prompt = PromptTemplate(
+            template=RELEVANT_COURSE_PROMPT,
+            input_variables=["question", "course_list"]
+        )
+        self.select_relevant_course = (
+            course_selection_prompt |
+            model.openai_model.with_structured_output(RelevantCourseOutput)
+        )

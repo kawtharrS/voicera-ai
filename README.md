@@ -84,14 +84,18 @@ Voicera is powered by an **Agentic Workflow**, a sophisticated multi-agent syste
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/screens-mobile/home.jpg) | ![Login](./readme/screens-mobile/login.jpg) | ![Register](./readme/gifs/register.gif) |
 
-| Home Page (Empty) | Home Page (Full) | Device Data |
+| Chat | Notification | Image to Speech |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Home Page Empty](./readme/screens-mobile/login.jpg) | ![Home Page Full](./readme/gifs/chat.gif) | ![Device Data](./readme/screens-mobile/not.jpg) |
+| ![Home Page Empty](./readme/gifs/chat.gif) | ![Home Page Full](./readme/screens-mobile/not.jpg) | ![Device Data](./readme/gifs/imgttmobile.gif) |
 
 #### Admin Screens (Web)
 | Chat screen                             | Write Chat screen                       |
 | --------------------------------------- | ------------------------------------- |
 | ![Landing](./readme/screens-web/chat-home.png) | ![fsdaf](./readme/screens-web/chat.png) |
+
+| Image to text                              | pdf Rag Chat                        |
+| --------------------------------------- | ------------------------------------- |
+| ![Landing](./readme/gifs/imgtt.gif) | ![fsdaf](./readme/screens-web/pdf_analysis.png) |
 
 <br>
 

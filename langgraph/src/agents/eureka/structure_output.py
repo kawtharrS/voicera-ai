@@ -59,3 +59,9 @@ class StudyPlanOutput(BaseModel):
         ...,
         description="List of study time slots for the week"
     )
+
+class RelevantCourseOutput(BaseModel):
+    index: str = Field(
+        ...,
+        description="The index number of the chosen course or 'NONE' if no courses are relevant."
+    )
