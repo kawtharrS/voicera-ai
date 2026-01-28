@@ -82,26 +82,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <!-- Development & Testing -->
 <img src="./readme/title6.svg"/>
 
-### Add Title Here
+### Tests
 
 
-| Services                            | Validation                       | Testing                        |
-| --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/demo/1440x1024.png) | ![fsdaf](./readme/demo/1440x1024.png) | ![fsdaf](./readme/demo/1440x1024.png) |
+| Services                            | CI/CD                       | Testing  GO                      | Testing  Agents                      | 
+| --------------------------------------- | ------------------------------------- | ------------------------------------- | ------------------------------------- |
+| ![Landing](./readme/tests/service.png) | ![fsdaf](./readme/tests/checks.png) | ![fsdaf](./readme/tests/test.png) | ![fsdaf](./readme/tests/agents.png) |
 
 
 <br><br>
 
-<!-- Deployment -->
 <img src="./readme/title7.svg"/>
 
-### Add Title Here
+### Deployment
 
 - Description here.
 
 
-| Postman API 1                            | Postman API 2                       | Postman API 3                        |
+| Postman API Health                          | Postman API Register                       | Postman API User                       |
 | --------------------------------------- | ------------------------------------- | ------------------------------------- |
-| ![Landing](./readme/demo/1440x1024.png) | ![fsdaf](./readme/demo/1440x1024.png) | ![fsdaf](./readme/demo/1440x1024.png) |
+| ![Landing](./readme/postman/health.png) | ![fsdaf](./readme/postman/register.png) | ![fsdaf](./readme/postman/user.png) |
 
 <br><br>
