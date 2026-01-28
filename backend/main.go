@@ -12,23 +12,11 @@ import (
 	"voicera-backend/data"
 )
 
-var router = mux.NewRouter()
-
 func main() {
 	godotenv.Load()
 	data.InitSupabase()
 
-	router.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/logout", common.LogoutHandler).Methods("POST")
-	router.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
-	router.HandleFunc("/api/ask-anything", common.AskAnythingHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
-	router.HandleFunc("/api/image/describe", common.DescribeImageHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/save-memo", common.SaveMemoHandler).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/memos", common.GetMemosHandler).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/save-preference", common.SavePreferences).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/user", common.UserInfoHandler).Methods("GET", "OPTIONS")
+	r := SetupRouter()
 
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
@@ -37,5 +25,21 @@ func main() {
 		handlers.AllowCredentials(),
 	)
 
-	log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
+	log.Fatal(http.ListenAndServe(":8080", corsHandler(r)))
+}
+
+func SetupRouter() *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/api/register", common.RegisterAPIHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/login", common.LoginAPIHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/logout", common.LogoutHandler).Methods("POST")
+	r.HandleFunc("/health", common.FastAPIHealthHandler).Methods("GET")
+	r.HandleFunc("/api/ask-anything", common.AskAnythingHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/tts", common.TTSHandler).Methods("GET")
+	r.HandleFunc("/api/image/describe", common.DescribeImageHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/save-memo", common.SaveMemoHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/memos", common.GetMemosHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/save-preference", common.SavePreferences).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/user", common.UserInfoHandler).Methods("GET", "OPTIONS")
+	return r
 }
