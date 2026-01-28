@@ -74,7 +74,7 @@ def test_tts():
 
 def test_image_describe():
     print("\nTesting /api/image/describe...")
-    img_path = r"c:\Users\user\Desktop\Voicera\api\figures\figure-1-1.jpg"
+    img_path = os.path.join("api", "figures", "figure-1-1.jpg")
     if not os.path.exists(img_path):
         print(f"Warning: Test image not found at {img_path}. Skipping.")
         return

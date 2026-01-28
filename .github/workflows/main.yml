@@ -29,10 +29,36 @@ jobs:
             - name: Install dependencies
               run: |
                 python -m pip install --upgrade pip
+                pip install -r api/requirements.txt
                 pip install requests
 
-            - name: Run Python tests
-              run: python test_endpoints.py
+            - name: Start services and run tests
+              env:
+                FASTAPI_URL: http://localhost:8000
+                JWT_SECRET: default_secret_key
+                SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+                OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+              run: |
+                # Start FastAPI
+                (cd api && python main.py) &
+                
+                # Start Go backend
+                (cd backend && go run main.go) &
+                
+                # Wait for Go backend to be ready
+                echo "Waiting for services to start..."
+                for i in {1..30}; do
+                  if curl -s http://localhost:8080/health | grep -q "hi"; then
+                    echo "Services are up!"
+                    python test_endpoints.py
+                    exit 0
+                  fi
+                  echo "Still waiting... ($i)"
+                  sleep 2
+                done
+                echo "Error: Services failed to start in time"
+                exit 1
 
             - name: Build
               working-directory: ./backend
