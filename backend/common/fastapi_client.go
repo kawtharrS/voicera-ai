@@ -28,7 +28,7 @@ func getFastAPIURL() (string, error) {
 	if url == "" {
 		return "", errors.New("FASTAPI_URL not configured")
 	}
-	return url, nil
+	return strings.TrimSpace(url), nil
 }
 
 func decodeJSON(body io.Reader, target interface{}) error {
@@ -360,6 +360,7 @@ func DescribeImageHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := describeImageViaAPI(fastAPIURL, file, fileHeader.Filename, contentType)
 	if err != nil {
 		fmt.Printf("Error describing image: %v\n", err)
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Ok: false, Message: "Failed to describe image"})
 		return
 	}
 
@@ -392,7 +393,7 @@ func detectContentType(headerContentType, filename string) string {
 		return mimeType
 	}
 
-	return "image/jpeg" 
+	return "image/jpeg"
 }
 
 func describeImageViaAPI(fastAPIURL string, file io.Reader, filename, contentType string) (map[string]interface{}, error) {
