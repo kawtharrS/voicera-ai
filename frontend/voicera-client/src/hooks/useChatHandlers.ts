@@ -9,7 +9,6 @@ interface UseChatHandlersProps {
     finalTranscript: string;
     interimTranscript: string;
     isRecording: boolean;
-    // isDragging removed (was unused)
 }
 
 export const useChatHandlers = ({
