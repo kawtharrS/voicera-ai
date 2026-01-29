@@ -12,7 +12,6 @@
   border: none;
 }
 
-/* Primary variant - orange */
 .primary {
   background-color: #e8955f;
   color: #ffffff;
@@ -22,7 +21,6 @@
   background-color: #d6844e;
 }
 
-/* Secondary variant - white with border */
 .secondary {
   background-color: #ffffff;
   color: #333333;
@@ -34,7 +32,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Back variant - gray */
 .back {
   background-color: #6b6b6b;
   color: #ffffff;
@@ -47,7 +44,6 @@
   background-color: #555555;
 }
 
-/* Full width modifier */
 .fullWidth {
   width: 100%;
 }
