@@ -31,7 +31,7 @@ Built on the foundation of **Community Service** and **Empowerment**:
 <img src="./readme/er_diagram.svg"/>
 
 ### Agentic System 
-<img src="./readme/agents.png"/>
+<img src="./readme/agents.svg"/>
 
 <br>
 
