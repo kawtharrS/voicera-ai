@@ -58,10 +58,6 @@ class ClassroomTool:
     def list_courses(self, course_state: Optional[str] = None) -> List[Dict]:
         """
         List Google Classroom courses with optional state filtering.
-        Args:
-            course_state: Optional filter (ACTIVE, ARCHIVED, PROVISIONED)
-        Returns:
-            List of course dictionaries with id, name, and state
         """
         try:
             courses = []
@@ -164,10 +160,6 @@ class ClassroomTool:
     def download_drive_pdf(self, file_id: str) -> Optional[bytes]:
         """
         Download a PDF file from Google Drive.
-        Args:
-            file_id: Google Drive file ID
-        Returns:
-            PDF file content as bytes, or None if download fails
         """
         try:
             if not self.drive_service:
