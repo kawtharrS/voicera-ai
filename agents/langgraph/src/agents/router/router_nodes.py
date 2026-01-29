@@ -1,11 +1,13 @@
 from colorama import Fore, Style
 from .router_agent import RouterAgent
+from .continuation_agent import ContinuationAgent
 from .router_state import GraphState
 from ..aria.agents.agent import EmotionAgent
 
 class RouterNodes:
     def __init__(self):
         self.agent = RouterAgent()
+        self.continuation_agent = ContinuationAgent()
         self.emotion_agent = EmotionAgent()
 
     def route_query(self, state: GraphState) -> GraphState:
@@ -21,12 +23,10 @@ class RouterNodes:
         print(Fore.CYAN + f"Is first message: {is_first}" + Style.RESET_ALL)
         print(Fore.CYAN + f"Student ID: {student_id}" + Style.RESET_ALL)
         
-        # Check if user is trying to send an email draft from previous Gmail workflow
         query_lower = query.lower()
         send_keywords = ["send", "send it", "send the draft", "send email", "send the email", "send this draft", "send draft"]
         if any(keyword in query_lower for keyword in send_keywords):
-            # If coming from Gmail workflow context, route back to Gmail for sending
-            category = "work"  # Work includes email operations
+            category = "work"  #
             print(Fore.GREEN + f"Query routed to: {category} (email send detected)" + Style.RESET_ALL)
         else:
             result = self.agent.route(query, prefs)
@@ -44,5 +44,66 @@ class RouterNodes:
             "emotion": emotion,
             "is_first_message": is_first
         }
+
+    def determine_next_step(self, state: GraphState) -> GraphState:
+        """Use LLM to intelligently decide on next workflow step."""
+        print(Fore.YELLOW + "Checking for workflow continuation..." + Style.RESET_ALL)
+        
+        query = state.get("query", "")
+        study_plan = state.get("study_plan")
+        calendar_result = state.get("calendar_result")
+        email_draft_id = state.get("email_draft_id")
+        
+        # Use LLM to decide if we should continue
+        try:
+            decision = self.continuation_agent.decide(
+                query=query,
+                has_study_plan=bool(study_plan),
+                has_calendar_result=bool(calendar_result),
+                has_email_draft=bool(email_draft_id)
+            )
+            
+            if decision.decision.value == "continue":
+                print(Fore.GREEN + f"Workflow continuation: {decision.reasoning}" + Style.RESET_ALL)
+                
+                # If we have a study plan but no calendar result, route to calendar
+                if study_plan and not calendar_result:
+                    return {
+                        "query": "Create events from study plan and email a summary",
+                        "category": "work"
+                    }
+                # If we have calendar result and email draft, route to send
+                elif calendar_result and email_draft_id:
+                    return {
+                        "query": "Send the draft",
+                        "category": "work"
+                    }
+            
+            print(Fore.YELLOW + f"Workflow ended: {decision.reasoning}" + Style.RESET_ALL)
+            return {}
+            
+        except Exception as e:
+            print(Fore.RED + f"Error in continuation decision: {e}" + Style.RESET_ALL)
+            return {}
+
+    def check_continuation_condition(self, state: GraphState) -> str:
+        """Condition to determine if we should loop back to the router."""
+        query = state.get("query", "")
+        study_plan = state.get("study_plan")
+        calendar_result = state.get("calendar_result")
+        email_draft_id = state.get("email_draft_id")
+        
+        # Use LLM to decide
+        try:
+            decision = self.continuation_agent.decide(
+                query=query,
+                has_study_plan=bool(study_plan),
+                has_calendar_result=bool(calendar_result),
+                has_email_draft=bool(email_draft_id)
+            )
+            return decision.decision.value
+        except Exception as e:
+            print(Fore.RED + f"Error in continuation condition: {e}" + Style.RESET_ALL)
+            return "end"
             
 

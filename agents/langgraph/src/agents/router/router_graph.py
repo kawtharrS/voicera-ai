@@ -30,10 +30,21 @@ class RouterWorkflow:
             }
         )
         
-        workflow.add_edge("study_agent", END)
+        workflow.add_node("next_step", router_nodes.determine_next_step)
+        
+        workflow.add_edge("study_agent", "next_step")
         workflow.add_edge("personal_agent", END)
-        workflow.add_edge("work_agent", END)
+        workflow.add_edge("work_agent", "next_step")
         workflow.add_edge("setting_agent", END)
+        
+        workflow.add_conditional_edges(
+            "next_step",
+            router_nodes.check_continuation_condition,
+            {
+                "continue": "router",
+                "end": END,
+            },
+        )
         
         self.app = workflow.compile()
 

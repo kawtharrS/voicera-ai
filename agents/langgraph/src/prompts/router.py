@@ -60,3 +60,29 @@ Special Routing Rules:
 
 Return your classification.
 """
+
+CONTINUATION_PROMPT = """
+You are deciding whether to continue a multi-step workflow for scheduling.
+
+Context:
+- User's original query: {query}
+- Study plan in state: {has_study_plan}
+- Calendar events created: {has_calendar_result}
+- Email draft exists: {has_email_draft}
+
+Decision Logic:
+CONTINUE the workflow IF AND ONLY IF:
+1. A study plan exists AND the user hasn't explicitly asked for something else
+2. User is asking about scheduling, creating events, or organizing time
+3. The next logical step is to schedule the study plan to calendar
+
+END the workflow IF:
+1. The study plan has already been scheduled to calendar
+2. The user is asking a different, unrelated question (e.g., about Redis, classroom materials)
+3. The user has moved on to a new topic
+4. Calendar events have been created and the task is complete
+
+IMPORTANT: If the user's query is NOT about scheduling/planning (e.g., "how to run a redis demo"), END the workflow.
+
+Analyze carefully and decide.
+"""

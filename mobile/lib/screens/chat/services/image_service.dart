@@ -29,8 +29,8 @@ class ImageDescribeService {
       photo.path,
     ));
 
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
+    final streamed = await request.send().timeout(const Duration(minutes: 2));
+    final response = await http.Response.fromStream(streamed).timeout(const Duration(minutes: 2));
 
     if (response.statusCode != 200) {
       throw Exception('Image describe error: ${response.statusCode} ${response.body}');

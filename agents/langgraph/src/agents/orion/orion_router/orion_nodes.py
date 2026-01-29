@@ -7,23 +7,10 @@ class RouterNodes:
         self.agent = OrionRouterAgent()
 
     def route_query(self, state: GraphState)-> GraphState:
-        """Route the user query to the appropriate agent."""
+        """Route the user query to the appropriate agent using LLM-based decision making."""
         print(Fore.YELLOW + "Routing query ..."+ Style.RESET_ALL)
         query = state.get("query", "") or ""
-        ql = query.lower()
-
-        email_keywords = ["send the draft", "send draft", "send me this draft", "send this draft", "send the email", "send email", "send it", "send reply", "send the reply", "send this draft gmail"]
-        has_send_keyword = any(k in ql for k in email_keywords)
-
-        draft_id = state.get("email_draft_id")
-        if draft_id and has_send_keyword:
-            print(Fore.GREEN + "Detected request to send calendar-created draft; routing to calendar" + Style.RESET_ALL)
-            return {"category": "calendar"}
         
-        if has_send_keyword:
-            print(Fore.GREEN + "Detected email send/reply request; routing to gmail" + Style.RESET_ALL)
-            return {"category": "gmail"}
-
         try:
             result = self.agent.route(query)
             category = result.category.value
@@ -36,7 +23,7 @@ class RouterNodes:
         except Exception as e:
             print(Fore.RED + f"Error routing query: {e}" + Style.RESET_ALL)
             return {
-                "category": "personal"
+                "category": "calendar"  # Default to calendar as safe fallback
             }
 
     async def save_to_memory(self, state: GraphState) -> GraphState:
