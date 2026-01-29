@@ -9,7 +9,6 @@ Voicera is more than just an application; it is a **digital companion** crafted 
 
 <br>
 
-<!-- project overview -->
 <img src="./readme/title2.svg"/>
 
 ### The Heart of Voicera
@@ -21,7 +20,6 @@ Built on the foundation of **Community Service** and **Empowerment**:
 
 <br>
 
-<!-- System Design -->
 <img src="./readme/title3.svg"/>
 
 ### System Design 
@@ -48,7 +46,6 @@ Voicera is powered by an **Agentic Workflow**, a sophisticated multi-agent syste
 
 <br>
 
-<!-- Project Highlights -->
 <img src="./readme/title4.svg"/>
 
 ### Key Features Wrapped in Care
