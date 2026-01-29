@@ -42,7 +42,7 @@ TYPE_TABLE = "table"
 TYPE_IMAGE = "image"
 TYPE_IMAGE_SUMMARY = "image_summary"
 
-
+model = Model()
 class ImageStore:
     """Manages image storage and retrieval."""
 
@@ -194,7 +194,7 @@ class PDFProcessor:
         self.image_store = ImageStore(IMAGE_STORE_PATH)
         self.content_extractor = ContentExtractor()
 
-        llm = Model.openai_model
+        llm = model.openai_model
         self.summarize_chain = ChainBuilder(llm, ChatOpenAI(model=IMAGE_MODEL)).build_summarization_chain()
         self.image_summarization_chain = ChainBuilder(llm, ChatOpenAI(model=IMAGE_MODEL)).build_image_summarization_chain()
 

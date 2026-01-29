@@ -1,12 +1,11 @@
 from colorama import Fore, Style
 from ..model import Model 
 from .agent import Agent
-from .state import GraphState, Coursework, CourseWorkMaterial, StudentInteraction
+from .state import GraphState, Coursework, CourseWorkMaterial, StudentInteraction, Course
 from tools.classroomTools import ClassroomTool
 from tools.pdf_processor import PDFProcessor
 from prompts.classroom import AI_RESPONSE_PROMPT
 from ..shared_memory import shared_memory
-from state import Course 
 
 model = Model()
 
