@@ -114,13 +114,15 @@ export default function VoiceraSwipeScreen() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await api.post<{ description: string }>("/image/describe", formData, {
+      const response = await api.post<any>("/image/describe", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      const description = response.data.description || "I couldn't describe the image.";
+      const responseData = response.data;
+      const data = responseData.data || responseData;
+      const description = data.description || "I couldn't describe the image.";
       addMessage("user", "What's in this image?", "image", dataUrl);
       addMessage("ai", description, "image");
       speak(description, "image");
