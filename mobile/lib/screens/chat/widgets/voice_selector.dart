@@ -22,7 +22,7 @@ class VoiceSelector extends StatelessWidget {
     'shimmer'
   ];
 
-  void _showVoiceSelector(BuildContext context) {
+  void showVoiceSelector(BuildContext context) {
     final controller = context.read<VoiceChatController>();
     showDialog(
       context: context,
@@ -62,7 +62,7 @@ class VoiceSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return AccessibleWidget(
       label: 'Select voice. Current voice is $selectedVoice',
-      onTap: () => _showVoiceSelector(context),
+      onTap: () => showVoiceSelector(context),
       child: const IconButton(
         icon: Icon(Icons.more_vert),
         onPressed: null, 

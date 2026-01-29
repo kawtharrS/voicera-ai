@@ -32,7 +32,6 @@ class AuthService {
   static String? token;
 
   static String baseUrl = 'http://192.168.0.105:8000';
-
   static String goBaseUrl = 'http://192.168.0.105:8080';
 
   static Map<String, String> get headers {

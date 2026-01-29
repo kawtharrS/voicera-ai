@@ -71,7 +71,6 @@ class _VoiceOrbState extends State<VoiceOrb> with TickerProviderStateMixin {
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
           onVerticalDragEnd: (details) {
-            // Negative velocity = swipe up.
             if (details.primaryVelocity != null && details.primaryVelocity! < -300) {
               widget.onSwipeUp?.call();
             }

@@ -55,8 +55,6 @@ class AccessibleWidgetState extends State<AccessibleWidget> {
         
         onPanEnd: (details) {
           handleExit();
-          // Use dy velocity from pixelsPerSecond for more reliable swipe detection in a Pan gesture.
-          // Negative dy means upward movement.
           if (isHighlighted && details.velocity.pixelsPerSecond.dy < -300) {
             widget.onSwipeUp?.call();
           }

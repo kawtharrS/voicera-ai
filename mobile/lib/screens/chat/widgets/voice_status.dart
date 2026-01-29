@@ -19,7 +19,7 @@ class VoiceStatus extends StatelessWidget {
         Text(
           isRecording
               ? 'Listening to you...'
-              : (state != VoiceState.error ? 'Tap to speak or type a message.' : 'Microphone not available. Check permissions in settings.'),
+              : (state != VoiceState.error ? 'Tap to speak' : 'Microphone not available. Check permissions in settings.'),
           style: const TextStyle(
             color: Colors.black54,
             fontSize: 13,

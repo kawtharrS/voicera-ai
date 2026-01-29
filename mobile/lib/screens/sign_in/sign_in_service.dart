@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/screens/sign_in/helper.dart';
 
 class SignInService {
-  static const String _signInEndpoint = '/api/register';
+  static const String signInEndpoint = '/api/register';
 
   static Future<void> signIn(
     BuildContext context,
@@ -41,7 +41,7 @@ class SignInService {
 
     try {
       final response = await http.post(
-        Uri.parse('${AuthService.goBaseUrl}$_signInEndpoint'),
+        Uri.parse('${AuthService.goBaseUrl}$signInEndpoint'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': name,
