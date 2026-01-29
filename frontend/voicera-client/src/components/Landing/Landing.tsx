@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import styles from "./Landing.module.css";
-import Navbar from "./Navbar";
-import Hero from "./Hero";
-import Services from "./Services";
-import Footer from "./Footer";
-import Login from "../login";
-import SignUp from "../signUp";
+import Navbar from "./Navbar/Navbar";
+import Hero from "./Hero/Hero";
+import Services from "./Services/Services";
+import Footer from "./Footer/Footer";
+import Login from "../login/Login";
+import SignUp from "../signUp/SignUp";
 
 const Landing: React.FC = () => {
   const [showLogin, setLogin] = useState(false);

@@ -95,7 +95,6 @@ export default function VoiceraSwipeScreen() {
     finalTranscript,
     interimTranscript,
     isRecording,
-    isDragging,
   });
 
   const handleImageSelected = async (e: ChangeEvent<HTMLInputElement>) => {

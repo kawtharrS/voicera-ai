@@ -1,14 +1,9 @@
 import React, { useState } from "react";
 import styles from "./SignUp.module.css";
-import InputField from "../common/InputField";
-import Button from "../common/Button";
-import type{SignUpFormData, SignUpProps} from "./index";
-import {
-  UserIcon,
-  LockIcon,
-  GoogleIcon,
-  ChevronLeftIcon,
-} from "../common/Icons";
+import InputField from "../common/InputField/InputField";
+import Button from "../common/Button/Button";
+import type { SignUpFormData, SignUpProps } from "./types";
+import { UserIcon, LockIcon, GoogleIcon, ChevronLeftIcon } from "../common/Icons/Icons";
 import api from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 

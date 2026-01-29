@@ -9,7 +9,7 @@ interface UseChatHandlersProps {
     finalTranscript: string;
     interimTranscript: string;
     isRecording: boolean;
-    isDragging: boolean;
+    // isDragging removed (was unused)
 }
 
 export const useChatHandlers = ({
@@ -20,7 +20,6 @@ export const useChatHandlers = ({
     finalTranscript,
     interimTranscript,
     isRecording,
-    isDragging,
 }: UseChatHandlersProps) => {
     const [roleId, setRoleId] = useState<number | null>(null);
     const [isSending, setIsSending] = useState(false);
