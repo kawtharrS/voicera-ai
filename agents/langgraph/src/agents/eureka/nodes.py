@@ -412,7 +412,5 @@ class ClassroomNodes:
             return {"study_plan": StudyPlanOutput(slots=valid_slots)}
         except Exception as e:
             print(Fore.RED + f"Study plan extraction failed: {e}" + Style.RESET_ALL)
-            import traceback
-            traceback.print_exc()
             return {"study_plan": None}
 
