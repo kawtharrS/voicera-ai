@@ -4,21 +4,11 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from colorama import Fore, Style
-from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 from ..states.calendar_state import GraphState, UserInteraction
-from ..structure_outputs.calendar_structure_output import CategorizeQueryOutput, CreateEventArgs
-from prompts.calendar import CATEGORIZE_QUERY_PROMPT
 from tools.calendarTools import CalendarTool
 from tools.gmailTools import GmailTool
 from ..agents.calendar_agent import CalendarAgent
 from ...shared_memory import shared_memory
-
-openai_model = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0.1,
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-)
 default_tz = "Asia/Beirut"
 
 
@@ -158,19 +148,15 @@ class CalendarNodes:
             "query_category": category,
         }
     
-    def route_after_categorize(self, state:GraphState) -> GraphState:
-        interaction = state.get("current_interaction")
-        q = ""
-        if isinstance(interaction, dict):
-            q = (interaction.get("user_request") or "").lower()
-        elif interaction is not None:
-            q = (getattr(interaction, "user_request", "") or "").lower()
-        if state.get("email_draft_id") and any(k in q for k in ["send the email", "send draft", "send the draft", "send it", "send the summary email"]):
-            return {"route": "send_email_draft"}
-
+    def route_after_categorize(self, state: GraphState) -> GraphState:
+        """Determines the initial route based on query categorization."""
+        interaction_model, query = self._get_current_interaction(state)
+        q = query.lower() if query else ""
+        
         category = state.get("query_category")
         if hasattr(category, "value"):
             category = category.value
+            
         if category == "create":
             route = "create_event"
         elif category == "search":
@@ -181,7 +167,24 @@ class CalendarNodes:
             route = "delete_event"
         else:
             route = "end"
-        return {"route":route}
+            
+        return {"route": route}
+
+    def decide_route(self, state: GraphState) -> str:
+        """Routing function for the conditional edge after categorization."""
+        route = state.get("route", "end")
+        interaction_model, query = self._get_current_interaction(state)
+        ql = query.lower() if query else ""
+
+        if state.get("email_draft_id") and any(k in ql for k in ["send the draft", "send draft", "send the email", "send email", "send it"]):
+            return "send_email_draft"
+
+        if route == "create_event" and state.get("study_plan"):
+            study_keywords = ["create all", "create events", "add all", "study plan", "schedule plan", "several events", "multiple events"]
+            if any(keyword in ql for keyword in study_keywords):
+                return "create_events_from_study_plan"
+
+        return route
 
     
     def create_event(self, state: GraphState) -> GraphState:

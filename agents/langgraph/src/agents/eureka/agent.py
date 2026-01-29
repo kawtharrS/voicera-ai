@@ -8,6 +8,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from ..model import Model
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from .structure_output import *
 from prompts.classroom import *
@@ -79,7 +80,6 @@ class Agent():
             model.openai_model.with_structured_output(ProofReaderOutput)
         )
 
-        # Extract study slots from the AI response
         extract_slots_prompt = PromptTemplate(
             template=EXTRACT_STUDY_SLOTS_PROMPT,
             input_variables=["ai_response"]

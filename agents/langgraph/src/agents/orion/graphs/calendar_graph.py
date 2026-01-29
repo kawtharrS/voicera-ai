@@ -26,28 +26,9 @@ class CalendarWorkflow():
         workflow.add_edge("receive_user_query", "categorize_user_query")
         workflow.add_edge("categorize_user_query", "route_after_categorize")
 
-        def pick_route(state:GraphState)->str:
-            route = state.get("route", "end")
-
-            interaction = state.get("current_interaction")
-            query = ""
-            if isinstance(interaction, dict):
-                query = (interaction.get("user_request", "") or "").lower()
-            elif interaction:
-                query = (getattr(interaction, "user_request", "") or "").lower()
-
-            if state.get("email_draft_id") and any(k in query for k in ["send the draft", "send draft", "send the email", "send email", "send it"]):
-                return "send_email_draft"
-
-            if route == "create_event" and state.get("study_plan"):
-                if any(keyword in query for keyword in ["create all", "create events", "add all", "study plan", "schedule plan", "several events", "multiple events"]):
-                    return "create_events_from_study_plan"
-
-            return route
-        
         workflow.add_conditional_edges(
             "route_after_categorize",
-            pick_route,
+            nodes.decide_route,
             {
                 "create_event":"create_event",
                 "create_events_from_study_plan":"create_events_from_study_plan",

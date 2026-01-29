@@ -22,7 +22,7 @@ class ClassroomWorkflow():
         workflow.add_node("generate_ai_response", nodes.generate_ai_response)
         workflow.add_node("verify_ai_response", nodes.verify_ai_response)
         workflow.add_node("generate_study_plan", nodes.generate_study_plan)
-        workflow.add_node("save_to_langmem", nodes.save_to_langmem)
+        workflow.add_node("save_to_memory", nodes.save_to_memory)
 
         workflow.set_entry_point("load_courses")
 
@@ -44,8 +44,8 @@ class ClassroomWorkflow():
             },
         )
 
-        workflow.add_edge("generate_study_plan", "save_to_langmem")
-        workflow.add_edge("save_to_langmem", END)
+        workflow.add_edge("generate_study_plan", "save_to_memory")
+        workflow.add_edge("save_to_memory", END)
 
         self.app = workflow.compile(checkpointer=checkpointer, store=store)
 

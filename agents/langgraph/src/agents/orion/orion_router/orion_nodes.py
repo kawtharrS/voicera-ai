@@ -12,20 +12,14 @@ class RouterNodes:
         query = state.get("query", "") or ""
         ql = query.lower()
 
-        # Check for email-related keywords (send, reply, etc.)
         email_keywords = ["send the draft", "send draft", "send me this draft", "send this draft", "send the email", "send email", "send it", "send reply", "send the reply", "send this draft gmail"]
         has_send_keyword = any(k in ql for k in email_keywords)
 
-        # If we have a pending email draft created by the calendar flow, route to calendar so it can send it.
-        # This avoids incorrectly going into the Gmail workflow (which is inbox-driven).
         draft_id = state.get("email_draft_id")
         if draft_id and has_send_keyword:
             print(Fore.GREEN + "Detected request to send calendar-created draft; routing to calendar" + Style.RESET_ALL)
             return {"category": "calendar"}
         
-        # If user is asking to send/reply and we just came from Gmail workflow, route back to Gmail
-        # The Gmail workflow maintains context of created drafts
-        category_from_llm = None
         if has_send_keyword:
             print(Fore.GREEN + "Detected email send/reply request; routing to gmail" + Style.RESET_ALL)
             return {"category": "gmail"}
@@ -45,7 +39,7 @@ class RouterNodes:
                 "category": "personal"
             }
 
-    async def save_to_langmem(self, state: GraphState) -> GraphState:
+    async def save_to_memory(self, state: GraphState) -> GraphState:
         """Saves interaction and extracts facts for Orion tasks."""
         print(Fore.YELLOW + "Orion: Syncing to backend and extracting facts..." + Style.RESET_ALL)
         from ...shared_memory import shared_memory
