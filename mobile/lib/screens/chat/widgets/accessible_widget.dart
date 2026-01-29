@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../voice_controller.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 
 class AccessibleWidget extends StatefulWidget {
   final Widget child;
@@ -55,8 +55,6 @@ class AccessibleWidgetState extends State<AccessibleWidget> {
         
         onPanEnd: (details) {
           handleExit();
-          // Use dy velocity from pixelsPerSecond for more reliable swipe detection in a Pan gesture.
-          // Negative dy means upward movement.
           if (isHighlighted && details.velocity.pixelsPerSecond.dy < -300) {
             widget.onSwipeUp?.call();
           }

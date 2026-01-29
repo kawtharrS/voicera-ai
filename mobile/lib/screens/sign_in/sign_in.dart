@@ -1,14 +1,13 @@
-import 'package:mobile/constants/paddings.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 import 'package:mobile/screens/sign_in/sign_in_service.dart';
 
 class SignInPage extends StatefulWidget {
   @override
-  _SignInPageState createState() => _SignInPageState();
+  SignInPageState createState() => SignInPageState();
 }
 
-class _SignInPageState extends State<SignInPage> {
+class SignInPageState extends State<SignInPage> {
   final usernameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -24,7 +23,7 @@ class _SignInPageState extends State<SignInPage> {
     super.dispose();
   }
 
-  void _handleSignIn() async {
+  void handleSignIn() async {
     setState(() {
       isLoading = true;
     });
@@ -112,7 +111,7 @@ class _SignInPageState extends State<SignInPage> {
                   width: double.infinity,
                   height: 49,
                   child: ElevatedButton(
-                    onPressed: isLoading ? null : _handleSignIn,
+                    onPressed: isLoading ? null : handleSignIn,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.orange,
                       disabledBackgroundColor: Colors.grey,

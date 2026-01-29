@@ -28,20 +28,9 @@ class GmailWorkflow():
         workflow.add_node("send_new_email", nodes.send_new_email)
 
         workflow.set_entry_point("load_emails")
-
-        def check_inbox_condition(state: GraphState) -> str:
-            if state.get("retrieving_drafts"):
-                return "retrieve_drafts"
-            if state.get("sending_drafts"):
-                return "send_drafts"
-            if state.get("sending_new_email"):
-                return "extract_details"
-            emails = state.get("emails", [])
-            return "categorize" if emails else "end"
-
         workflow.add_conditional_edges(
             "load_emails",
-            check_inbox_condition,
+            nodes.check_inbox_empty,
             {
                 "categorize": "categorize_email",
                 "send_drafts": "send_all_drafts",
@@ -51,25 +40,14 @@ class GmailWorkflow():
             }
         )
 
-        def route_by_category(state: GraphState) -> str:
-            category = state.get("email_category")
-            if category is None:
-                return END
-            if category == "study":
-                return "construct_rag_queries"
-            elif category in ["work", "general"]:
-                return "write_draft_email"
-            else:
-                return "skip_email"
-
         workflow.add_conditional_edges(
             "categorize_email",
-            route_by_category,
+            nodes.route_by_category,
             {
                 "construct_rag_queries": "construct_rag_queries",
                 "write_draft_email": "write_draft_email",
                 "skip_email": "skip_email",
-                END: END
+                "end": END
             }
         )
 
@@ -78,21 +56,9 @@ class GmailWorkflow():
 
         workflow.add_edge("write_draft_email", "verify_email")
 
-        def should_rewrite(state: GraphState) -> str:
-            sendable = state.get("sendable", False)
-            trials = state.get("trials", 0)
-            max_trials = 3
-            
-            if sendable:
-                return "ask_confirmation"
-            elif trials < max_trials:
-                return "rewrite"
-            else:
-                return "flag_human_review"
-
         workflow.add_conditional_edges(
             "verify_email",
-            should_rewrite,
+            nodes.should_rewrite,
             {
                 "ask_confirmation": "ask_confirmation",
                 "rewrite": "write_draft_email",
@@ -100,17 +66,9 @@ class GmailWorkflow():
             }
         )
 
-        def user_confirmed(state: GraphState) -> str:
-            user_approved = state.get("user_approved", False)
-            if user_approved:
-                if state.get("new_email_details"):
-                    return "send_new"
-                return "send_reply"
-            return "draft"
-
         workflow.add_conditional_edges(
             "ask_confirmation",
-            user_confirmed,
+            nodes.user_confirmed,
             {
                 "send_new": "send_new_email",
                 "send_reply": "send_email",
@@ -122,33 +80,29 @@ class GmailWorkflow():
         workflow.add_edge("extract_details", "ask_confirmation")
         workflow.add_edge("send_new_email", END)
 
-        def has_more_emails(state: GraphState) -> str:
-            emails = state.get("emails", [])
-            return "continue" if emails else "end"
-
         workflow.add_conditional_edges(
             "send_email",
-            has_more_emails,
+            nodes.check_inbox_empty,
             {
-                "continue": "categorize_email",
+                "categorize": "categorize_email",
                 "end": END
             }
         )
 
         workflow.add_conditional_edges(
             "create_draft",
-            has_more_emails,
+            nodes.check_inbox_empty,
             {
-                "continue": "categorize_email",
+                "categorize": "categorize_email",
                 "end": END
             }
         )
 
         workflow.add_conditional_edges(
             "skip_email",
-            has_more_emails,
+            nodes.check_inbox_empty,
             {
-                "continue": "categorize_email",
+                "categorize": "categorize_email",
                 "end": END
             }
         )

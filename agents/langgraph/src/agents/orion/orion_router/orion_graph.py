@@ -12,7 +12,7 @@ class RouterWorkflow:
         workflow.add_node("orion_router", router_nodes.route_query)
         workflow.add_node("gmail_router",GmailWorkflow().app)
         workflow.add_node("calendar_router",CalendarWorkflow().app)
-        workflow.add_node("save_to_langmem", router_nodes.save_to_langmem)
+        workflow.add_node("save_to_memory", router_nodes.save_to_memory)
 
         workflow.set_entry_point("orion_router")
 
@@ -25,9 +25,9 @@ class RouterWorkflow:
             }
         )
 
-        workflow.add_edge("gmail_router", "save_to_langmem")
-        workflow.add_edge("calendar_router", "save_to_langmem")
-        workflow.add_edge("save_to_langmem", END)
+        workflow.add_edge("gmail_router", "save_to_memory")
+        workflow.add_edge("calendar_router", "save_to_memory")
+        workflow.add_edge("save_to_memory", END)
 
         self.app = workflow.compile()
 

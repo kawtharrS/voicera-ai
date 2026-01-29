@@ -5,13 +5,13 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/apis/auth_service.dart';
 
 class AudioCacheService {
-  static final AudioCacheService _instance = AudioCacheService._internal();
-  factory AudioCacheService() => _instance;
+  static final AudioCacheService instance = AudioCacheService._internal();
+  factory AudioCacheService() => instance;
   AudioCacheService._internal();
 
-  Directory? _cacheDir; 
-  final Map<String, String> _cachedFiles = {};
-  bool _isInitialized = false;
+  Directory? cacheDir;
+  final Map<String, String> cachedFiles = {};
+  bool isInitialized = false;
 
   static const List<String> commonPhrases = [
     'Go Back',
@@ -36,28 +36,28 @@ class AudioCacheService {
   ];
 
   Future<void> initialize() async {
-    if (_isInitialized) return;
+    if (isInitialized) return;
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      _cacheDir = Directory('${appDir.path}/audio_cache');
-      if (!await _cacheDir!.exists()) {
-        await _cacheDir!.create(recursive: true);
+      cacheDir = Directory('${appDir.path}/audio_cache');
+      if (!await cacheDir!.exists()) {
+        await cacheDir!.create(recursive: true);
       }
       await loadExistingCache();
-      _isInitialized = true;
+      isInitialized = true;
     } catch (e) {
       rethrow;
     }
   }
 
   Future<void> loadExistingCache() async {
-    if (_cacheDir == null) return;
-    final files = _cacheDir!.listSync();
+    if (cacheDir == null) return;
+    final files = cacheDir!.listSync();
     for (final file in files) {
       if (file is File && file.path.endsWith('.mp3')) {
         final fileName = file.path.split(Platform.pathSeparator).last;
         final key = fileName.replaceAll('.mp3', '').replaceAll('_', ' ');
-        _cachedFiles[_getCacheKey(key, 'alloy')] = file.path;
+        cachedFiles[_getCacheKey(key, 'alloy')] = file.path;
       }
     }
   }
@@ -76,36 +76,33 @@ class AudioCacheService {
 
   bool isCached(String text, String voice) {
     final key = _getCacheKey(text, voice);
-    return _cachedFiles.containsKey(key) &&
-           File(_cachedFiles[key]!).existsSync();
+    return cachedFiles.containsKey(key) && File(cachedFiles[key]!).existsSync();
   }
 
   String? getCachedFilePath(String text, String voice) {
     final key = _getCacheKey(text, voice);
     if (isCached(text, voice)) {
-      return _cachedFiles[key];
+      return cachedFiles[key];
     }
     return null;
   }
 
   Future<String?> cacheAudio(String text, String voice) async {
     try {
-      if (_cacheDir == null) {
+      if (cacheDir == null) {
         await initialize();
       }
 
       final key = _getCacheKey(text, voice);
 
       if (isCached(text, voice)) {
-        return _cachedFiles[key];
+        return cachedFiles[key];
       }
 
       final baseUrl = AuthService.baseUrl;
-      if (baseUrl == null) {
-        return null;
-      }
 
-      final url = '$baseUrl/api/tts?text=${Uri.encodeComponent(text)}&voice=${Uri.encodeComponent(voice)}';
+      final url =
+          '$baseUrl/api/tts?text=${Uri.encodeComponent(text)}&voice=${Uri.encodeComponent(voice)}';
       final response = await http.get(
         Uri.parse(url),
         headers: AuthService.headers,
@@ -113,25 +110,23 @@ class AudioCacheService {
 
       if (response.statusCode == 200) {
         final fileName = _getFileName(text, voice);
-        final filePath = '${_cacheDir!.path}/$fileName';
+        final filePath = '${cacheDir!.path}/$fileName';
         final file = File(filePath);
-        
+
         await file.writeAsBytes(response.bodyBytes);
-        _cachedFiles[key] = filePath;
+        cachedFiles[key] = filePath;
         return filePath;
       }
       return null;
     } catch (e) {
-      debugPrint('Cache audio error: $e');
       return null;
     }
   }
 
   Future<void> preGenerateCommonPhrases({String voice = 'alloy'}) async {
-    if (!_isInitialized) {
+    if (!isInitialized) {
       await initialize();
     }
-
     for (final phrase in commonPhrases) {
       if (!isCached(phrase, voice)) {
         await cacheAudio(phrase, voice);
@@ -141,19 +136,19 @@ class AudioCacheService {
   }
 
   Future<void> clearCache() async {
-    if (_cacheDir != null && await _cacheDir!.exists()) {
-      await _cacheDir!.delete(recursive: true);
-      await _cacheDir!.create(recursive: true);
-      _cachedFiles.clear();
+    if (cacheDir != null && await cacheDir!.exists()) {
+      await cacheDir!.delete(recursive: true);
+      await cacheDir!.create(recursive: true);
+      cachedFiles.clear();
       debugPrint('Cache cleared');
     }
   }
 
   Map<String, dynamic> getCacheStats() {
     return {
-      'totalFiles': _cachedFiles.length,
-      'isInitialized': _isInitialized,
-      'cacheDirectory': _cacheDir?.path,
+      'totalFiles': cachedFiles.length,
+      'isInitialized': isInitialized,
+      'cacheDirectory': cacheDir?.path,
     };
   }
 }

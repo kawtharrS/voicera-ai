@@ -3,7 +3,7 @@ import 'screens/home/home.dart';
 import 'screens/sign_in/sign_in.dart';
 import 'screens/login/login.dart';
 import 'screens/chat/voice_chat.dart';
-import 'constants/colors.dart';
+import 'theme/theme.dart';
 import 'services/notification_service.dart';
 
 void main() async {

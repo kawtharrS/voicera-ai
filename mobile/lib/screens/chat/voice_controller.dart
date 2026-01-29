@@ -57,19 +57,16 @@ class VoiceChatController extends ChangeNotifier {
       final ttsBaseUrl = AuthService.baseUrl;
       final goBaseUrl = AuthService.goBaseUrl;
 
-      if (ttsBaseUrl != null) {
-        await http.get(
-          Uri.parse('$ttsBaseUrl/api/tts?text=test'),
-          headers: AuthService.headers,
-        ).timeout(const Duration(seconds: 3));
-      }
+      await http.get(
+        Uri.parse('$ttsBaseUrl/api/tts?text=test'),
+        headers: AuthService.headers,
+      ).timeout(const Duration(seconds: 3));
 
-      if (goBaseUrl != null) {
-        await http.get(
-          Uri.parse('$goBaseUrl/health'),
-          headers: AuthService.headers,
-        ).timeout(const Duration(seconds: 3));
-      }
+      await http.get(
+        Uri.parse('$goBaseUrl/health'),
+        headers: AuthService.headers,
+      ).timeout(const Duration(seconds: 3));
+      
     } catch (e) {
       state = VoiceState.error;
       notifyListeners();
@@ -152,7 +149,6 @@ class VoiceChatController extends ChangeNotifier {
 
       final negativeEmotions = ['sadness', 'anger', 'fear', 'disgust'];      
       if (negativeEmotions.contains(result.emotion.toLowerCase())) {
-        debugPrint('Negative emotion detected: ${result.emotion}. Scheduling check-in in 1 minute.');
         await NotificationService().scheduleCheckIn(minutes: 1);
       }
       await tts.speak(answer, selectedVoice);
@@ -176,18 +172,14 @@ class VoiceChatController extends ChangeNotifier {
     } else if (state == VoiceState.listening) {
       textToRead = 'Currently listening, please speak';
     } else {
-      textToRead = 'Press the circle to speak or type a message';
+      textToRead = 'Press the circle to speak, swipe up to open the camera';
     }
 
-    _speakAsync(textToRead);
+    speakAsync(textToRead);
   }
 
-  Future<void> _speakAsync(String text) async {
-    try {
-      await tts.speak(text, selectedVoice);
-    } catch (e) {
-      debugPrint('Error speaking: $e');
-    }
+  Future<void> speakAsync(String text) async {
+    await tts.speak(text, selectedVoice);
   }
 
   void setFocus(String? label) {
@@ -196,11 +188,7 @@ class VoiceChatController extends ChangeNotifier {
   }
 
   Future<void> speak(String text) async {
-    try {
-      await tts.speak(text, selectedVoice);
-    } catch (e) {
-      debugPrint('Error speaking: $e');
-    }
+    await tts.speak(text, selectedVoice);
   }
 
   Future<void> describeFromCamera() async {

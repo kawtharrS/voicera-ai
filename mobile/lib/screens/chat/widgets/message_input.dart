@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 
 class MessageInput extends StatefulWidget {
   final String text;
@@ -20,25 +20,25 @@ class MessageInput extends StatefulWidget {
 }
 
 class _MessageInputState extends State<MessageInput> {
-  late TextEditingController _controller;
+  late TextEditingController controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.text);
+    controller = TextEditingController(text: widget.text);
   }
 
   @override
   void didUpdateWidget(MessageInput oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.text != _controller.text) {
-      _controller.text = widget.text;
+    if (widget.text != controller.text) {
+      controller.text = widget.text;
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    controller.dispose();
     super.dispose();
   }
 
@@ -50,7 +50,7 @@ class _MessageInputState extends State<MessageInput> {
         behavior: HitTestBehavior.translucent,
         onLongPress: widget.onLongPress,
         child: TextField(
-          controller: _controller,
+          controller: controller,
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.black87,

@@ -1,15 +1,11 @@
-import os
 from colorama import Fore, Style
-from typing import Optional
-from langchain_openai import ChatOpenAI
 from ..model import Model 
 from .agent import Agent
-from .state import GraphState, Course, Coursework, CourseWorkMaterial, StudentInteraction
+from .state import GraphState, Coursework, CourseWorkMaterial, StudentInteraction, Course
 from tools.classroomTools import ClassroomTool
 from tools.pdf_processor import PDFProcessor
-from prompts.classroom import RELEVANT_COURSEWORK_PROMPT, AI_RESPONSE_PROMPT
+from prompts.classroom import AI_RESPONSE_PROMPT
 from ..shared_memory import shared_memory
-
 
 model = Model()
 
@@ -18,50 +14,6 @@ class ClassroomNodes:
         self.agents = Agent()
         self.classroom_tools = ClassroomTool()
         self.pdf_processor = PDFProcessor(self.classroom_tools)
-
-    def _select_relevant_coursework(self, question: str, courseworks: list, llm) -> Optional[Coursework]:
-        if not courseworks:
-            return None
-            
-        items = [f"{i}. Title: {cw.title if isinstance(cw, Coursework) else cw.get('title', '')}\n   Description: {cw.description if isinstance(cw, Coursework) else cw.get('description', '')}" 
-                 for i, cw in enumerate(courseworks)]
-
-        response = llm.invoke(RELEVANT_COURSEWORK_PROMPT.format(
-            question=question, coursework_list="\n".join(items)
-        )).content.strip()
-
-        if response.upper() == "NONE" or not response.isdigit():
-            return None
-            
-        index = int(response)
-        if 0 <= index < len(courseworks):
-            cw = courseworks[index]
-            return cw if isinstance(cw, Coursework) else Coursework(**cw)
-        return None
-
-    def _select_relevant_course(self, question: str, courses: list, llm) -> Optional[Course]:
-        if not courses:
-            return None
-        if len(courses) == 1:
-            return courses[0]
-            
-        items = [f"{i}. Name: {c.name}\n   Description: {c.description}" 
-                 for i, c in enumerate(courses)]
-
-        result = self.agents.select_relevant_course.invoke({
-            "question": question, "course_list": "\n".join(items)
-        })
-        
-        response = result.index.strip()
-
-        if response.upper() == "NONE" or not response.isdigit():
-            return None
-            
-        index = int(response)
-        if 0 <= index < len(courses):
-            return courses[index]
-        return None
-
 
     def load_courses(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Loading courses..." + Style.RESET_ALL)
@@ -79,12 +31,9 @@ class ClassroomNodes:
         all_coursework = []
         
         for course in courses:
-            try:
-                coursework_list = self.classroom_tools.list_coursework(course.id)
-                all_coursework.extend(coursework_list)
-            except Exception as e:
-                print(Fore.RED + f"Could not load coursework for {course.name}: {str(e)}" + Style.RESET_ALL)
-        
+            coursework_list = self.classroom_tools.list_coursework(course.id)
+            all_coursework.extend(coursework_list)
+
         return {"courseworks": [Coursework(**cw) for cw in all_coursework] if all_coursework else []}
     
     def load_and_index_materials(self, state: GraphState) -> GraphState:
@@ -122,8 +71,8 @@ class ClassroomNodes:
         question = incoming.get("student_question", "") if isinstance(incoming, dict) else incoming.student_question
 
         courses = state.get("courses", [])
-        current_course = self._select_relevant_course(question, courses, model.openai_model)
-        selected_coursework = self._select_relevant_coursework(question, state.get("courseworks", []), model.openai_model)
+        current_course = courses[0] if courses else None
+        selected_coursework = state.get("courseworks", [None])[0]
             
         return {"current_interaction": StudentInteraction(
             current_course=current_course,
@@ -137,7 +86,6 @@ class ClassroomNodes:
         print(Fore.YELLOW + "Categorizing student query..." + Style.RESET_ALL)
 
         query = state["current_interaction"].student_question
-
 
         result = self.agents.categorize_query.invoke({"query": query})
         category = result.category.value
@@ -194,7 +142,7 @@ class ClassroomNodes:
             due = f" Due: {coursework.dueDate}." if hasattr(coursework, 'dueDate') and coursework.dueDate else ""
             coursework_context = f'RELEVANT COURSEWORK: {coursework.title}{due}COURSEWORK DESCRIPTION: {coursework.description}'
         
-        pdf_context = self._retrieve_pdf_context(interaction)
+        pdf_context = self.retrieve_pdf_context(interaction)
         
         student_context = state.get("student_context", "")
         if student_context:
@@ -205,7 +153,6 @@ class ClassroomNodes:
         if isinstance(pdf_context, str) and len(pdf_context) > 12000:
             pdf_context = pdf_context[:12000] + "\n\n[PDF context truncated]"
 
-        # Build a preferences-aware wrapper for the AI response prompt
         language = prefs.get("language") or "English"
         tone = prefs.get("tone") or "helpful"
         agent_name = prefs.get("name") or "your tutor"
@@ -267,26 +214,22 @@ class ClassroomNodes:
                 "rewrite_feedback": ""
             }
     
-    def _retrieve_pdf_context(self, interaction) -> str:
+    def retrieve_pdf_context(self, interaction) -> str:
         """Retrieves relevant PDF chunks (text/table/image summaries) from the vector store."""
         try:
             if isinstance(interaction, dict):
                 current_course = interaction.get("current_course")
                 student_question = interaction.get("student_question", "")
-                recommendations = interaction.get("recommendations", [])
             else:
                 current_course = interaction.current_course
                 student_question = interaction.student_question
-                recommendations = interaction.recommendations
             
             course_id = current_course.id if current_course else None
             if not course_id:
                 return ""
             
-            # Use a cleaner query for better vector search results
             query = student_question
             retriever = self.pdf_processor.get_retriever(k=6, filter_dict={"course_id": course_id}, use_mmr=True)
-            
             results = retriever.invoke(query)
             
             if not results:
@@ -301,21 +244,13 @@ class ClassroomNodes:
                 current_chars = 0
                 
                 for item in results:
-                    if isinstance(item, str):
-                        preview = item[:150].replace('\n', ' ')
-                        print(Fore.GREEN + f"  • Content: {preview}..." + Style.RESET_ALL)
-                        if current_chars < max_chars:
-                            take = item[: max(0, max_chars - current_chars)]
-                            pdf_texts.append(take)
-                            current_chars += len(take)
-                    else:
-                        content = getattr(item, 'page_content', str(item))
-                        preview = content[:150].replace('\n', ' ')
-                        print(Fore.GREEN + f"  • Content: {preview}..." + Style.RESET_ALL)
-                        if current_chars < max_chars:
-                            take = content[: max(0, max_chars - current_chars)]
-                            pdf_texts.append(take)
-                            current_chars += len(take)
+                    content = item if isinstance(item, str) else getattr(item, 'page_content', str(item))
+                    preview = content[:150].replace('\n', ' ')
+                    print(Fore.GREEN + f"  • Content: {preview}..." + Style.RESET_ALL)
+                    if current_chars < max_chars:
+                        take = content[: max(0, max_chars - current_chars)]
+                        pdf_texts.append(take)
+                        current_chars += len(take)
                 
                 suffix = ""
                 if current_chars >= max_chars:
@@ -413,7 +348,7 @@ class ClassroomNodes:
         memory = await shared_memory.retrieve(student_id)
         return {"student_context": memory}
 
-    async def save_to_langmem(self, state: GraphState) -> GraphState:
+    async def save_to_memory(self, state: GraphState) -> GraphState:
         print(Fore.YELLOW + "Saving interaction to long-term memory..." + Style.RESET_ALL)
         interaction = state.get("current_interaction")
         student_id = state.get("student_id")
@@ -454,15 +389,12 @@ class ClassroomNodes:
             return {"study_plan": None}
         
         try:
-            # Extract study slots from the AI response
             result = self.agents.extract_study_slots.invoke({"ai_response": ai_response})
             
-            # Validate the result
             if not result or not hasattr(result, 'slots') or not result.slots:
                 print(Fore.YELLOW + "No study slots could be extracted from the response" + Style.RESET_ALL)
                 return {"study_plan": None}
             
-            # Validate each slot has required fields
             valid_slots = []
             for slot in result.slots:
                 if all(hasattr(slot, attr) for attr in ['day', 'start_time', 'end_time', 'activity']):
@@ -476,7 +408,6 @@ class ClassroomNodes:
             for slot in valid_slots[:5]:
                 print(Fore.CYAN + f"  • {slot.day} {slot.start_time}-{slot.end_time}: {slot.activity}" + Style.RESET_ALL)
             
-            # Return validated result
             from .structure_output import StudyPlanOutput
             return {"study_plan": StudyPlanOutput(slots=valid_slots)}
         except Exception as e:
@@ -484,8 +415,4 @@ class ClassroomNodes:
             import traceback
             traceback.print_exc()
             return {"study_plan": None}
-
-    def reset_interaction(self, state: GraphState) -> GraphState:
-        return {"current_interaction": StudentInteraction()}
-
 

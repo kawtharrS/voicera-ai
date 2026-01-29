@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/screens/chat/voice_controller.dart';
-import 'package:mobile/constants/colors.dart';
+import 'package:mobile/theme/theme.dart';
 
 class VoiceOrb extends StatefulWidget {
   final VoiceState state;
@@ -71,7 +71,6 @@ class _VoiceOrbState extends State<VoiceOrb> with TickerProviderStateMixin {
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
           onVerticalDragEnd: (details) {
-            // Negative velocity = swipe up.
             if (details.primaryVelocity != null && details.primaryVelocity! < -300) {
               widget.onSwipeUp?.call();
             }

@@ -15,7 +15,7 @@ class LoginService {
     passwordText = passwordText.trim();
 
     if (emailText.isEmpty || passwordText.isEmpty) {
-      _showSnackBar(context, 'Please enter email and password');
+      showSnackBar(context, 'Please enter email and password');
       return;
     }
 
@@ -35,7 +35,7 @@ class LoginService {
 
       if (response.statusCode == 200 && data['ok'] == true) {
         AuthService.token = data['token'];
-        _showSnackBar(context, 'Login successful!');
+        showSnackBar(context, 'Login successful!');
         
         if (context.mounted) {
           Navigator.pushReplacementNamed(context, '/chat');
@@ -43,14 +43,14 @@ class LoginService {
       } 
       else {
         final errorMessage = data['message'] ?? 'Login failed. Please try again.';
-        _showSnackBar(context, errorMessage);
+        showSnackBar(context, errorMessage);
       }
     } on Exception catch (e) {
-      _showSnackBar(context, 'Error: ${e.toString()}');
+      showSnackBar(context, 'Error: ${e.toString()}');
     }
   }
 
-  static void _showSnackBar(BuildContext context, String message) {
+  static void showSnackBar(BuildContext context, String message) {
     if (!context.mounted) return;
     
     ScaffoldMessenger.of(context).showSnackBar(

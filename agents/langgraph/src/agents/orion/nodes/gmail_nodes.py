@@ -1,14 +1,7 @@
-import os
 from colorama import Fore, Style
-from langchain_openai import ChatOpenAI
 from ..states.gmail_state import GraphState, Email, EmailInteraction
-from ..structure_outputs.gmail_structure_output import CategorizeEmailOutput
-from prompts.gmail import CATEGORIZE_EMAIL_PROMPT
 from tools.gmailTools import GmailTool
 from ..agents.gmail_agent import GmailAgent
-from ...model import Model
-
-model = Model()
 
 class GmailNodes:
     def __init__(self):
@@ -16,7 +9,6 @@ class GmailNodes:
         self.agents = GmailAgent(self.gmail_tool)
 
     def _build_email_writer_input(self, state: GraphState, current_email: Email, prefs: dict) -> str:
-        """Constructs the email writer input including user preferences and specific query instructions."""
         language = prefs.get("language") or "English"
         tone = prefs.get("tone") or "professional"
         agent_name = prefs.get("name") or "your assistant"
@@ -39,7 +31,6 @@ class GmailNodes:
         return base + instruction_block + prefs_block
 
     def load_emails(self, state: GraphState) -> GraphState:
-        """Load unanswered emails from Gmail inbox or send/retrieve existing drafts."""
         query = state.get("query", "").lower()
         print(Fore.CYAN + f"[load_emails] Received query: '{query}'" + Style.RESET_ALL)
         
@@ -68,7 +59,6 @@ class GmailNodes:
         
         is_specific_reply = any(k in query for k in ["reply", "respond", "email to", "email from", "email for"])
         
-        # Check if user wants to send a completely NEW email
         send_to_keywords = ["send an email to", "send email to", "message to", "write to", "send an email for", "send email for", "email to", "send to", "mail to"]
         is_new_email_request = any(k in query for k in send_to_keywords)
         has_email_address = "@" in query
@@ -127,9 +117,16 @@ class GmailNodes:
             }
 
     def check_inbox_empty(self, state: GraphState) -> str:
-        """Check if there are emails to process."""
+        """Check if there are emails to process or other flows to trigger."""
+        if state.get("retrieving_drafts"):
+            return "retrieve_drafts"
+        if state.get("sending_drafts"):
+            return "send_drafts"
+        if state.get("sending_new_email"):
+            return "extract_details"
+        
         emails = state.get("emails", [])
-        return "process" if emails else "empty"
+        return "categorize" if emails else "end"
 
     def categorize_email(self, state: GraphState) -> GraphState:
         """Categorize the current email."""
@@ -171,6 +168,8 @@ class GmailNodes:
     def route_by_category(self, state: GraphState) -> str:
         """Route email based on category."""
         category = state.get("email_category")
+        if category is None:
+            return "end"
         if category == "study":
             return "construct_rag_queries"
         elif category in ["work", "general"]:
@@ -324,6 +323,15 @@ class GmailNodes:
         
         return {"user_approved": user_approved}
 
+    def user_confirmed(self, state: GraphState) -> str:
+        """Determine next step after human confirmation."""
+        user_approved = state.get("user_approved", False)
+        if user_approved:
+            if state.get("new_email_details"):
+                return "send_new"
+            return "send_reply"
+        return "draft"
+
     def should_rewrite(self, state: GraphState) -> str:
         """Check if email should be rewritten or sent."""
         sendable = state.get("sendable", False)
@@ -331,7 +339,7 @@ class GmailNodes:
         max_trials = 3
         
         if sendable:
-            return "send"
+            return "ask_confirmation"
         elif trials < max_trials:
             print(Fore.YELLOW + f"Rewriting email (attempt {trials}/{max_trials})" + Style.RESET_ALL)
             return "rewrite"

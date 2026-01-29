@@ -26,8 +26,6 @@ class EmotionAgent:
         )
     
     def detect(self, text: str, preferences: dict | None = None) -> EmotionDetectionOutput:
-        """Detect emotion from text.
-        """
         pref_text = ""
         if preferences:
             lang = preferences.get("language") or preferences.get("lang") or "unspecified"
