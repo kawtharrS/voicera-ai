@@ -23,6 +23,7 @@ const Landing: React.FC = () => {
       <Navbar onSignUpClick={() => setSignup(true)} />
       <Hero onLoginClick={() => setLogin(true)} />
       <Services />
+
       <Footer />
     </div>
   );

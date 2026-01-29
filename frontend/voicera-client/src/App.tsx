@@ -1,10 +1,10 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "./pages/Login";     
-import LandingPage from "./pages/Landing";  
+import LoginPage from "./pages/Login";
+import LandingPage from "./pages/Landing";
 import SignUpPage from "./pages/SignUp";
-import ChatPage from "./pages/Chat";
 import PrefrencesPage from "./pages/Prefrences";
+import VoiceraSwipeScreen from "./components/chatting/chat";
 
 const isAuthenticated = () => {
   if (typeof window === "undefined") return false;
@@ -36,7 +36,7 @@ function App() {
         path="/chat"
         element={
           <ProtectedRoute>
-            <ChatPage />
+            <VoiceraSwipeScreen />
           </ProtectedRoute>
         }
       />
