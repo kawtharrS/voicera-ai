@@ -1,5 +1,3 @@
-export { default } from "./SignUp";
-
 export interface SignUpFormData {
   name: string;
   email: string;
