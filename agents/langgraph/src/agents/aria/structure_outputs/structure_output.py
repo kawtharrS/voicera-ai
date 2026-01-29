@@ -1,18 +1,5 @@
 from pydantic import BaseModel, Field
-from enum import Enum
-from typing import Optional
-
-
-class Emotion(str, Enum):
-    joy = "joy"
-    sadness = "sadness"
-    anger = "anger"
-    fear = "fear"
-    surprise = "surprise"
-    disgust = "disgust"
-    neutral = "neutral"
-    unknown = "unknown"
-
+from states.state import Emotion
 
 class EmotionDetectionOutput(BaseModel):
     emotion: Emotion = Field(

@@ -3,7 +3,6 @@ from enum import Enum
 
 
 class Emotion(str, Enum):
-    """Supported emotion categories"""
     joy = "joy"
     sadness = "sadness"
     anger = "anger"
@@ -15,14 +14,11 @@ class Emotion(str, Enum):
 
 
 class EmotionEntry(TypedDict, total=False):
-    """Single emotion history entry"""
     emotion: str
     timestamp: Optional[str]
 
 
-class EmotionDetectionState(TypedDict, total=False):
-    """State for emotion detection while maintaining normal chat flow"""
-    
+class EmotionDetectionState(TypedDict, total=False):    
     text: Optional[str]
     current_interaction: Optional[str]
     
