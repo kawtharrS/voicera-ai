@@ -640,6 +640,7 @@ class CalendarNodes:
                 ),
                 "calendar_result": {"created": created_events, "email_draft_id": draft_id},
                 "email_draft_id": draft_id or state.get("email_draft_id"),
+                "study_plan": None,
             }
         except Exception as e:
             print(Fore.RED + f"Error creating events: {e}" + Style.RESET_ALL)

@@ -67,11 +67,17 @@ class AudioCacheService {
   }
 
   String _getFileName(String text, String voice) {
-    final sanitized = text
+    String sanitized = text
         .toLowerCase()
         .replaceAll(RegExp(r'[^\w\s]'), '')
         .replaceAll(RegExp(r'\s+'), '_');
-    return '${sanitized}_$voice.mp3';
+    
+    if (sanitized.length > 50) {
+      sanitized = sanitized.substring(0, 50);
+    }
+    
+    final hash = text.hashCode.abs().toString();
+    return '${sanitized}_${hash}_$voice.mp3';
   }
 
   bool isCached(String text, String voice) {
@@ -106,7 +112,7 @@ class AudioCacheService {
       final response = await http.get(
         Uri.parse(url),
         headers: AuthService.headers,
-      );
+      ).timeout(const Duration(seconds: 180));
 
       if (response.statusCode == 200) {
         final fileName = _getFileName(text, voice);

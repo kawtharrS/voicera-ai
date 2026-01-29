@@ -19,4 +19,5 @@ class GraphState(TypedDict):
     is_first_message: Optional[bool]
     study_plan: Optional[dict]
     email_draft_id: Optional[str]
+    calendar_result: Optional[dict]
     
