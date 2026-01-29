@@ -51,7 +51,7 @@ class SharedMemoryManager:
         except Exception as e:
             print(f"Backend save failed: {e}")
 
-    async def retrieve(self, user_id: str, query: str = "") -> str:
+    async def retrieve(self, user_id: str) -> str:
         """Retrieve long-term memories for a user via the Go backend /api/memos endpoint."""
         if not user_id:
             return ""
@@ -99,10 +99,9 @@ class SharedMemoryManager:
                 return ""
 
             result = "\n".join(lines)
-            print(f"[Memory] Retrieved {len(lines)} memos for user {user_id} from backend")
             return result
         except Exception as e:
-            print(f"[Memory] backend retrieval failed: {e}")
+            print(f"backend retrieval failed: {e}")
             return ""
 
     def is_ready(self) -> bool:
